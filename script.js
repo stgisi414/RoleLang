@@ -280,8 +280,16 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchPartnerAudio(text) {
       const response = await fetch(TTS_API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: text }),
+          headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer wsec_81c54a71adb28dff26425889f84fbdfee3b446707529b33bd0e2a54eb3a43944',
+              'Origin': 'https://rolelang.xyz'
+          },
+          body: JSON.stringify({ 
+              text: text,
+              voice_id: "pNInz6obpgDQGcFmaJgB",
+              model_id: "eleven_turbo_v2"
+          }),
       });
       if (!response.ok) throw new Error(`TTS API error: ${response.statusText}`);
       return response.blob();
