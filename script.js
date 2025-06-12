@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const GEMINI_API_KEY = 'AIzaSyDIFeql6HUpkZ8JJlr_kuN0WDFHUyOhijA'; 
   const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-thinking-exp-01-21:generateContent?key=${GEMINI_API_KEY}`;
   const TTS_API_URL = 'https://langcamp.us/elevenlbs-exchange-audio/exchange-audio';
-  const IMAGE_API_URL = 'https://ainovel.site/api/generate-image';
+  const IMAGE_API_URL = 'https://rolelang.xyz/api/generate-image';
 
   let lessonPlan = null;
   let currentTurnIndex = 0;
@@ -300,11 +300,15 @@ document.addEventListener('DOMContentLoaded', () => {
           illustrationPlaceholder.classList.add('hidden');
           imageLoader.classList.remove('hidden');
           
-          // Try the external API first
-          const response = await fetch(IMAGE_API_URL, {
+          const response = await fetch('https://rolelang.xyz/api/generate-image', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ prompt: `${prompt}, digital art, minimalist` }),
+              body: JSON.stringify({ 
+                  prompt: `${prompt}, digital art, minimalist`,
+                  imageSize: 'square_hd',
+                  numInferenceSteps: 60,
+                  guidanceScale: 12
+              }),
           });
           
           if (!response.ok) {
@@ -312,7 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           
           const data = await response.json();
-          if (data.imageUrl) {
+          if (data.success && data.imageUrl) {
               illustrationImg.src = data.imageUrl;
               illustrationImg.onload = () => {
                   imageLoader.classList.add('hidden');
@@ -322,7 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   showFallbackIllustration();
               };
           } else {
-               throw new Error("No image URL returned from API.");
+               throw new Error(data.message || "No image URL returned from API.");
           }
       } catch (error) {
           console.error("Failed to fetch illustration:", error);
