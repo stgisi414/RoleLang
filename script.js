@@ -299,27 +299,47 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
           illustrationPlaceholder.classList.add('hidden');
           imageLoader.classList.remove('hidden');
+          
+          // Try the external API first
           const response = await fetch(IMAGE_API_URL, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ prompt: `${prompt}, digital art, minimalist` }),
           });
-          if (!response.ok) throw new Error(`Image API error: ${response.statusText}`);
+          
+          if (!response.ok) {
+              throw new Error(`Image API error: ${response.statusText}`);
+          }
+          
           const data = await response.json();
           if (data.imageUrl) {
               illustrationImg.src = data.imageUrl;
               illustrationImg.onload = () => {
                   imageLoader.classList.add('hidden');
                   illustrationImg.classList.remove('hidden');
-              }
+              };
+              illustrationImg.onerror = () => {
+                  showFallbackIllustration();
+              };
           } else {
                throw new Error("No image URL returned from API.");
           }
       } catch (error) {
           console.error("Failed to fetch illustration:", error);
-          imageLoader.classList.add('hidden');
-          illustrationPlaceholder.classList.remove('hidden');
+          showFallbackIllustration();
       }
+  }
+  
+  function showFallbackIllustration() {
+      imageLoader.classList.add('hidden');
+      illustrationPlaceholder.innerHTML = `
+          <div class="text-center text-gray-400">
+              <i class="fas fa-comments text-6xl mb-4"></i>
+              <p class="text-lg">Roleplay Scenario</p>
+              <p class="text-sm mt-2">Image generation temporarily unavailable</p>
+          </div>
+      `;
+      illustrationPlaceholder.classList.remove('hidden');
   }
 
   function showExplanation(content) {
