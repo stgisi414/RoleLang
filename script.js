@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Event Listeners ---
   startLessonBtn.addEventListener('click', initializeLesson);
   micBtn.addEventListener('click', toggleSpeechRecognition);
-  
+
   // Add event listeners for lesson buttons
   document.addEventListener('click', (event) => {
       if (event.target.classList.contains('lesson-btn')) {
@@ -141,6 +141,9 @@ document.addEventListener('DOMContentLoaded', () => {
           // Set speech recognition language
           recognition.lang = getLangCode(language);
 
+          // Stop topic rotations when lesson starts
+          stopTopicRotations();
+
           landingScreen.classList.add('hidden');
           lessonScreen.classList.remove('hidden');
 
@@ -180,11 +183,11 @@ document.addEventListener('DOMContentLoaded', () => {
           lineDiv.addEventListener('click', (e) => {
               // Prevent multiple rapid clicks
               if (audioTimeout) return;
-              
+
               audioTimeout = setTimeout(() => {
                   audioTimeout = null;
               }, 1000);
-              
+
               playLineAudio(turn.line);
           });
 
@@ -236,30 +239,30 @@ document.addEventListener('DOMContentLoaded', () => {
       if (currentTurnData.party === 'A') { // User's turn
           micBtn.disabled = true;
           micStatus.textContent = "Listen to the example first...";
-          
+
           try {
               // Play user's line first for them to hear
               const cleanText = removeParentheses(currentTurnData.line);
               const audioBlob = await fetchPartnerAudio(cleanText);
               const audioUrl = URL.createObjectURL(audioBlob);
               const audio = new Audio(audioUrl);
-              
+
               audio.addEventListener('loadeddata', () => {
                   audio.play().catch(error => {
                       console.error("Audio play failed:", error);
                       enableUserMic();
                   });
               });
-              
+
               audio.addEventListener('ended', () => {
                   enableUserMic();
               });
-              
+
               audio.addEventListener('error', (e) => {
                   console.error("Audio error:", e);
                   enableUserMic();
               });
-              
+
           } catch (error) {
               console.error("Failed to fetch user audio:", error);
               enableUserMic();
@@ -272,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
               const audioBlob = await fetchPartnerAudio(cleanText);
               const audioUrl = URL.createObjectURL(audioBlob);
               const audio = new Audio(audioUrl);
-              
+
               // Ensure audio loads before playing
               audio.addEventListener('loadeddata', () => {
                   audio.play().catch(error => {
@@ -284,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
                       }, 2000);
                   });
               });
-              
+
               audio.addEventListener('ended', () => {
                   micStatus.textContent = "Audio finished.";
                   setTimeout(() => {
@@ -292,7 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
                       advanceTurn();
                   }, 500);
               });
-              
+
               audio.addEventListener('error', (e) => {
                   console.error("Audio error:", e);
                   micStatus.textContent = "Audio error, continuing...";
@@ -301,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
                       advanceTurn();
                   }, 1000);
               });
-              
+
           } catch (error) {
               console.error("Failed to fetch partner audio:", error);
               micStatus.textContent = "Audio unavailable, continuing...";
@@ -312,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
       }
   }
-  
+
   function enableUserMic() {
       micBtn.disabled = false;
       micStatus.textContent = "Your turn. Press the mic and read the line.";
@@ -361,7 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchPartnerAudio(text) {
       const currentLanguage = languageSelect.value;
       const voiceConfig = getVoiceConfig(currentLanguage);
-      
+
       const response = await fetch(TTS_API_URL, {
           method: 'POST',
           headers: { 
@@ -401,7 +404,7 @@ document.addEventListener('DOMContentLoaded', () => {
           })
       });
       const result = await response.json();
-      
+
       if (result.success) {
           return result;
       } else {
@@ -413,14 +416,14 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
           illustrationPlaceholder.classList.add('hidden');
           imageLoader.classList.remove('hidden');
-          
+
           // Use enhanced image generation with better options
           const result = await generateImage(`${prompt}, digital art, minimalist, educational illustration`, {
               imageSize: 'square_hd',
               numInferenceSteps: 50,
               guidanceScale: 10
           });
-          
+
           if (result.imageUrl) {
               console.log('Generated image with seed:', result.seed);
               illustrationImg.src = result.imageUrl;
@@ -439,7 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
           showFallbackIllustration();
       }
   }
-  
+
   function showFallbackIllustration() {
       imageLoader.classList.add('hidden');
       illustrationPlaceholder.innerHTML = `
@@ -496,7 +499,7 @@ document.addEventListener('DOMContentLoaded', () => {
               // Alternative: "EXAVITQu4vr4xnSDxMaL" - Female Japanese voice
           }
       };
-      
+
       // Return language-specific config or default English voice
       return voiceConfigs[language] || {
           voice_id: "pNInz6obpgDQGcFmaJgB", // Default English voice
