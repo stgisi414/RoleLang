@@ -1,0 +1,66 @@
+a comprehensive example showing how to use the /api/generate-image endpoint from rolelang.xyz. Here's how to use it:
+
+Basic JavaScript Usage:
+async function generateImage(prompt, options = {}) {
+    const response = await fetch('https://rolelang.xyz/api/generate-image', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            prompt: prompt,
+            imageSize: options.imageSize || 'square_hd',
+            numInferenceSteps: options.numInferenceSteps || 60,
+            guidanceScale: options.guidanceScale || 12,
+            ...options
+        })
+    });
+    const result = await response.json();
+    
+    if (result.success) {
+        return result.imageUrl;
+    } else {
+        throw new Error(result.message);
+    }
+}
+// Usage
+generateImage('a beautiful dragon in a fantasy landscape')
+    .then(imageUrl => {
+        document.getElementById('myImage').src = imageUrl;
+    });
+API Parameters:
+Required:
+
+prompt (string): Description of the image to generate
+Optional:
+
+imageSize: "square", "square_hd", "portrait_4_3", "portrait_16_9", "landscape_4_3", "landscape_16_9"
+referenceImageUrl: For image-to-image generation
+seed: For reproducible results
+numInferenceSteps: 1-100 (default: 60)
+guidanceScale: 1-20 (default: 12)
+strength: 0-1 (default: 0.8, for image-to-image)
+Response Format:
+{
+  "success": true,
+  "imageUrl": "https://...",
+  "seed": 12345,
+  "prompt": "..."
+}
+Domain Restrictions:
+The API only accepts requests from:
+
+https://chronicles-of-pedena-stefdgisi.replit.app
+https://ai-rpg.quest
+Example with Image-to-Image:
+const result = await fetch('https://rolelang.xyz/api/generate-image', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        prompt: 'transform this into a cyberpunk scene',
+        referenceImageUrl: 'https://example.com/base-image.jpg',
+        strength: 0.7,
+        imageSize: 'landscape_16_9'
+    })
+});
+The API uses fal.ai SDXL Lightning for fast, high-quality image generation with typical response times of 30-60 seconds.
