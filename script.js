@@ -86,7 +86,9 @@ document.addEventListener('DOMContentLoaded', () => {
       "Ordering pizza delivery", "Buying train tickets", "Getting tourist information", "Asking about the menu",
       "Buying postcards", "Getting directions to hospital", "Asking about wi-fi", "Buying shoes",
       "Getting a receipt", "Asking for water", "Buying candy", "Getting help with luggage",
-      "Asking about the weather", "Buying a gift", "Getting a room key", "Asking for salt and pepper"
+      "Asking about the weather", "Buying a gift", "Getting a room key", "Asking for salt and pepper",
+      "Learning basic Chinese greetings", "Ordering dim sum", "Taking a taxi in Beijing", "Buying tea",
+      "Asking for Korean BBQ menu", "Learning Korean honorifics", "Using Seoul subway", "Buying kimchi"
     ],
     intermediate: [
       "Job interview conversation", "Making a doctor appointment", "Discussing weekend plans", "Renting an apartment",
@@ -101,7 +103,9 @@ document.addEventListener('DOMContentLoaded', () => {
       "Talking about investments", "Discussing parenting", "Making hotel complaints", "Talking about photography",
       "Discussing cooking recipes", "Planning retirement", "Talking about mental health", "Discussing online shopping",
       "Making school applications", "Talking about volunteer work", "Discussing transportation", "Planning a reunion",
-      "Talking about gardening", "Discussing language learning", "Making warranty claims", "Talking about pets"
+      "Talking about gardening", "Discussing language learning", "Making warranty claims", "Talking about pets",
+      "Discussing Chinese business culture", "Planning Lunar New Year celebration", "Talking about Traditional Chinese Medicine", "Discussing Chinese calligraphy",
+      "Learning about Korean work culture", "Discussing K-pop and Korean entertainment", "Talking about Korean festivals", "Planning a trip to Jeju Island"
     ],
     advanced: [
       "Negotiating a business deal", "Discussing politics and current events", "Explaining a complex technical problem", "Debating philosophical concepts",
@@ -116,7 +120,9 @@ document.addEventListener('DOMContentLoaded', () => {
       "Debating social justice", "Explaining neuroscience", "Discussing geopolitics", "Analyzing economic inequality",
       "Debating media manipulation", "Explaining genetic engineering", "Discussing space exploration", "Analyzing cultural imperialism",
       "Debating privacy rights", "Explaining renewable energy", "Discussing post-colonial theory", "Analyzing financial derivatives",
-      "Debating automation impact", "Explaining machine learning", "Discussing existentialism", "Analyzing global governance"
+      "Debating automation impact", "Explaining machine learning", "Discussing existentialism", "Analyzing global governance",
+      "Analyzing Chinese economic development", "Discussing Confucian philosophy", "Debating One Belt One Road initiative", "Explaining Traditional Chinese Medicine principles",
+      "Discussing Korean reunification", "Analyzing the Korean Wave (Hallyu)", "Debating Korean chaebols", "Explaining Korean technological advancement"
     ]
   };
 
@@ -656,7 +662,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function getLangCode(language) {
       const langCodes = {
           'English': 'en-US', 'Spanish': 'es-ES', 'French': 'fr-FR', 'German': 'de-DE',
-          'Italian': 'it-IT', 'Japanese': 'ja-JP',
+          'Italian': 'it-IT', 'Japanese': 'ja-JP', 'Chinese': 'zh-CN', 'Korean': 'ko-KR',
       };
       return langCodes[language] || 'en-US';
   }
@@ -693,6 +699,16 @@ document.addEventListener('DOMContentLoaded', () => {
               voice_id: "jBpfuIE2acCO8z3wKNLl", // Male Japanese voice
               language_code: "ja"
               // Alternative: "EXAVITQu4vr4xnSDxMaL" - Female Japanese voice
+          },
+          'Chinese': {
+              voice_id: "2EiwWnXFnvU5JabPnv8n", // Male Chinese voice
+              language_code: "zh"
+              // Alternative: "AZnzlk1XvdvUeBnXmlld" - Female Chinese voice
+          },
+          'Korean': {
+              voice_id: "0YYGYz8RYnCMXjx9TZE6", // Male Korean voice
+              language_code: "ko"
+              // Alternative: "ODq5zmih8GrVes37Dizd" - Female Korean voice
           }
       };
 
