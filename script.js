@@ -200,17 +200,43 @@ document.addEventListener('DOMContentLoaded', () => {
               const audioBlob = await fetchPartnerAudio(currentTurnData.line);
               const audioUrl = URL.createObjectURL(audioBlob);
               const audio = new Audio(audioUrl);
-              audio.play();
-              audio.onended = () => {
-                  currentTurnIndex++;
-                  advanceTurn();
-              };
+              
+              // Ensure audio loads before playing
+              audio.addEventListener('loadeddata', () => {
+                  audio.play().catch(error => {
+                      console.error("Audio play failed:", error);
+                      // Continue to next turn even if audio fails
+                      setTimeout(() => {
+                          currentTurnIndex++;
+                          advanceTurn();
+                      }, 2000);
+                  });
+              });
+              
+              audio.addEventListener('ended', () => {
+                  micStatus.textContent = "Audio finished.";
+                  setTimeout(() => {
+                      currentTurnIndex++;
+                      advanceTurn();
+                  }, 500);
+              });
+              
+              audio.addEventListener('error', (e) => {
+                  console.error("Audio error:", e);
+                  micStatus.textContent = "Audio error, continuing...";
+                  setTimeout(() => {
+                      currentTurnIndex++;
+                      advanceTurn();
+                  }, 1000);
+              });
+              
           } catch (error) {
-              console.error("Failed to play partner audio:", error);
+              console.error("Failed to fetch partner audio:", error);
+              micStatus.textContent = "Audio unavailable, continuing...";
               setTimeout(() => {
                   currentTurnIndex++;
                   advanceTurn();
-              }, 1000);
+              }, 1500);
           }
       }
   }
@@ -221,9 +247,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (normalize(spokenText).includes(normalize(requiredText))) {
           micStatus.textContent = "Correct! Well done.";
-          document.getElementById(`turn-${currentTurnIndex}`).style.borderColor = '#4ade80'; // green-400
+          const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
+          currentLineEl.style.borderColor = '#4ade80'; // green-400
+          micBtn.disabled = true; // Disable mic while transitioning
           currentTurnIndex++;
-          setTimeout(advanceTurn, 1500);
+          setTimeout(() => {
+              advanceTurn();
+          }, 1500);
       } else {
           micStatus.textContent = "Not quite. Try reading the line again.";
           const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
@@ -231,6 +261,11 @@ document.addEventListener('DOMContentLoaded', () => {
           void currentLineEl.offsetWidth; // Trigger reflow
           currentLineEl.classList.add('active');
           currentLineEl.style.borderColor = '#f87171'; // red-400
+          // Allow user to try again immediately
+          setTimeout(() => {
+              micStatus.textContent = "Press the mic and try again.";
+              currentLineEl.style.borderColor = ''; // Reset border color
+          }, 2000);
       }
   }
 
