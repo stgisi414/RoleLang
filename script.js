@@ -19,6 +19,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalBody = document.getElementById('modal-body');
   const closeModalBtn = document.getElementById('close-modal-btn');
 
+  // Native language dropdown elements
+  const nativeLangBtn = document.getElementById('native-lang-btn');
+  const nativeLangDropdown = document.getElementById('native-lang-dropdown');
+  const nativeFlagEl = document.getElementById('native-flag');
+  const nativeLangTextEl = document.getElementById('native-lang-text');
+
   // --- API & State ---
   // IMPORTANT: Replace with your actual Gemini API Key.
   // It's highly recommended to use a backend proxy to protect this key in a real application.
@@ -31,6 +37,39 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentTurnIndex = 0;
   let isRecognizing = false;
   let topicRotationIntervals = [];
+  let nativeLang = 'en'; // Default to English
+
+  // Detect browser language and set native language
+  const detectNativeLanguage = () => {
+    const browserLang = navigator.language || navigator.userLanguage || 'en';
+    const langCode = browserLang.split('-')[0].toLowerCase();
+    
+    // Map of supported native languages
+    const nativeLangMap = {
+      'en': { code: 'en', flag: '🇺🇸', name: 'English' },
+      'es': { code: 'es', flag: '🇪🇸', name: 'Español' },
+      'fr': { code: 'fr', flag: '🇫🇷', name: 'Français' },
+      'de': { code: 'de', flag: '🇩🇪', name: 'Deutsch' },
+      'it': { code: 'it', flag: '🇮🇹', name: 'Italiano' },
+      'pt': { code: 'pt', flag: '🇵🇹', name: 'Português' },
+      'ru': { code: 'ru', flag: '🇷🇺', name: 'Русский' },
+      'zh': { code: 'zh', flag: '🇨🇳', name: '中文' },
+      'ja': { code: 'ja', flag: '🇯🇵', name: '日本語' },
+      'ko': { code: 'ko', flag: '🇰🇷', name: '한국어' }
+    };
+    
+    const detectedLang = nativeLangMap[langCode] || nativeLangMap['en'];
+    setNativeLanguage(detectedLang.code, detectedLang.flag, detectedLang.name);
+  };
+
+  const setNativeLanguage = (langCode, flag, name) => {
+    nativeLang = langCode;
+    nativeFlagEl.textContent = flag;
+    nativeLangTextEl.textContent = name;
+    
+    // Store in localStorage for persistence
+    localStorage.setItem('rolelang_native_lang', JSON.stringify({ code: langCode, flag, name }));
+  };
 
   // Topic pools for each difficulty level
   const topicPools = {
@@ -120,6 +159,32 @@ document.addEventListener('DOMContentLoaded', () => {
       // Close modal if clicking on the backdrop
       if (event.target === modal) {
           modal.classList.add('hidden');
+      }
+  });
+
+  // Native language dropdown event listeners
+  nativeLangBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      nativeLangDropdown.classList.toggle('hidden');
+  });
+
+  // Handle native language option selection
+  document.addEventListener('click', (event) => {
+      if (event.target.classList.contains('native-lang-option') || event.target.closest('.native-lang-option')) {
+          const option = event.target.closest('.native-lang-option');
+          const langCode = option.getAttribute('data-lang');
+          const flag = option.getAttribute('data-flag');
+          const name = option.textContent.trim();
+          
+          setNativeLanguage(langCode, flag, name);
+          nativeLangDropdown.classList.add('hidden');
+      }
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (event) => {
+      if (!nativeLangBtn.contains(event.target) && !nativeLangDropdown.contains(event.target)) {
+          nativeLangDropdown.classList.add('hidden');
       }
   });
 
@@ -699,6 +764,23 @@ Example of required JSON output format:
 Now, please generate the JSON for the ${language} lesson about "${topic}".`;
   }
 
-  // Initialize topic rotations when page loads
+  // Initialize native language detection
+  const initializeNativeLanguage = () => {
+      // Check if native language is already stored
+      const stored = localStorage.getItem('rolelang_native_lang');
+      if (stored) {
+          try {
+              const { code, flag, name } = JSON.parse(stored);
+              setNativeLanguage(code, flag, name);
+          } catch (e) {
+              detectNativeLanguage();
+          }
+      } else {
+          detectNativeLanguage();
+      }
+  };
+
+  // Initialize everything
+  initializeNativeLanguage();
   startTopicRotations();
 });

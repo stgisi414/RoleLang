@@ -22,6 +22,60 @@
                 <img src="https://placehold.co/40x40/1f2937/a5f3fc?text=RL" alt="RoleLang Logo" class="h-10 w-10 rounded-full border-2 border-cyan-400/50">
                 <span class="text-2xl font-bold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-sky-300 to-cyan-500">RoleLang</span>
             </div>
+            
+            <!-- Native Language Flag Dropdown -->
+            <div class="relative">
+                <button id="native-lang-btn" class="flex items-center space-x-2 px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg hover:bg-gray-700/50 transition-colors">
+                    <span id="native-flag" class="text-xl">🇺🇸</span>
+                    <span id="native-lang-text" class="text-sm text-gray-300 hidden sm:block">English</span>
+                    <i class="fas fa-chevron-down text-xs text-gray-400"></i>
+                </button>
+                
+                <div id="native-lang-dropdown" class="absolute right-0 top-full mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl hidden z-50">
+                    <div class="py-2">
+                        <button class="native-lang-option w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors flex items-center space-x-3" data-lang="en" data-flag="🇺🇸">
+                            <span class="text-lg">🇺🇸</span>
+                            <span class="text-white">English</span>
+                        </button>
+                        <button class="native-lang-option w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors flex items-center space-x-3" data-lang="es" data-flag="🇪🇸">
+                            <span class="text-lg">🇪🇸</span>
+                            <span class="text-white">Español</span>
+                        </button>
+                        <button class="native-lang-option w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors flex items-center space-x-3" data-lang="fr" data-flag="🇫🇷">
+                            <span class="text-lg">🇫🇷</span>
+                            <span class="text-white">Français</span>
+                        </button>
+                        <button class="native-lang-option w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors flex items-center space-x-3" data-lang="de" data-flag="🇩🇪">
+                            <span class="text-lg">🇩🇪</span>
+                            <span class="text-white">Deutsch</span>
+                        </button>
+                        <button class="native-lang-option w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors flex items-center space-x-3" data-lang="it" data-flag="🇮🇹">
+                            <span class="text-lg">🇮🇹</span>
+                            <span class="text-white">Italiano</span>
+                        </button>
+                        <button class="native-lang-option w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors flex items-center space-x-3" data-lang="pt" data-flag="🇵🇹">
+                            <span class="text-lg">🇵🇹</span>
+                            <span class="text-white">Português</span>
+                        </button>
+                        <button class="native-lang-option w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors flex items-center space-x-3" data-lang="ru" data-flag="🇷🇺">
+                            <span class="text-lg">🇷🇺</span>
+                            <span class="text-white">Русский</span>
+                        </button>
+                        <button class="native-lang-option w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors flex items-center space-x-3" data-lang="zh" data-flag="🇨🇳">
+                            <span class="text-lg">🇨🇳</span>
+                            <span class="text-white">中文</span>
+                        </button>
+                        <button class="native-lang-option w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors flex items-center space-x-3" data-lang="ja" data-flag="🇯🇵">
+                            <span class="text-lg">🇯🇵</span>
+                            <span class="text-white">日本語</span>
+                        </button>
+                        <button class="native-lang-option w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors flex items-center space-x-3" data-lang="ko" data-flag="🇰🇷">
+                            <span class="text-lg">🇰🇷</span>
+                            <span class="text-white">한국어</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </header>
 
         <!-- Main Content Area -->
