@@ -149,10 +149,10 @@ document.addEventListener('DOMContentLoaded', () => {
       conversationContainer.innerHTML = ''; // Clear previous conversation
       lessonPlan.dialogue.forEach((turn, index) => {
           const lineDiv = document.createElement('div');
-          lineDiv.classList.add('dialogue-line', 'text-white');
+          lineDiv.classList.add('dialogue-line', 'text-white', 'cursor-pointer');
           lineDiv.id = `turn-${index}`;
 
-          let lineContent = `<strong>${turn.party}:</strong> ${turn.line}`;
+          let lineContent = `<strong>${turn.party}:</strong> ${turn.line} <i class="fas fa-volume-up text-gray-400 ml-2 hover:text-sky-300"></i>`;
 
           lineDiv.innerHTML = lineContent;
 
@@ -162,18 +162,48 @@ document.addEventListener('DOMContentLoaded', () => {
               lineDiv.classList.add('partner-line');
           }
 
+          // Add debounced click listener for audio playback
+          let audioTimeout;
+          lineDiv.addEventListener('click', (e) => {
+              // Prevent multiple rapid clicks
+              if (audioTimeout) return;
+              
+              audioTimeout = setTimeout(() => {
+                  audioTimeout = null;
+              }, 1000);
+              
+              playLineAudio(turn.line);
+          });
+
           // Add click listener for explanations
           if (turn.explanation) {
             const explanationSpan = document.createElement('span');
             explanationSpan.innerHTML = ` <i class="fas fa-info-circle text-sky-300"></i>`;
             explanationSpan.classList.add('explanation-link');
-            explanationSpan.onclick = () => showExplanation(turn.explanation);
+            explanationSpan.onclick = (e) => {
+                e.stopPropagation(); // Prevent audio playback
+                showExplanation(turn.explanation);
+            };
             lineDiv.appendChild(explanationSpan);
           }
 
           conversationContainer.appendChild(lineDiv);
       });
       advanceTurn();
+  }
+
+  async function playLineAudio(text) {
+      try {
+          const cleanText = removeParentheses(text);
+          const audioBlob = await fetchPartnerAudio(cleanText);
+          const audioUrl = URL.createObjectURL(audioBlob);
+          const audio = new Audio(audioUrl);
+          audio.play().catch(error => {
+              console.error("Audio playback failed:", error);
+          });
+      } catch (error) {
+          console.error("Failed to fetch audio for playback:", error);
+      }
   }
 
   async function advanceTurn() {
@@ -191,13 +221,42 @@ document.addEventListener('DOMContentLoaded', () => {
       currentLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
       if (currentTurnData.party === 'A') { // User's turn
-          micBtn.disabled = false;
-          micStatus.textContent = "Your turn. Press the mic and read the line.";
+          micBtn.disabled = true;
+          micStatus.textContent = "Listen to the example first...";
+          
+          try {
+              // Play user's line first for them to hear
+              const cleanText = removeParentheses(currentTurnData.line);
+              const audioBlob = await fetchPartnerAudio(cleanText);
+              const audioUrl = URL.createObjectURL(audioBlob);
+              const audio = new Audio(audioUrl);
+              
+              audio.addEventListener('loadeddata', () => {
+                  audio.play().catch(error => {
+                      console.error("Audio play failed:", error);
+                      enableUserMic();
+                  });
+              });
+              
+              audio.addEventListener('ended', () => {
+                  enableUserMic();
+              });
+              
+              audio.addEventListener('error', (e) => {
+                  console.error("Audio error:", e);
+                  enableUserMic();
+              });
+              
+          } catch (error) {
+              console.error("Failed to fetch user audio:", error);
+              enableUserMic();
+          }
       } else { // Partner's turn
           micBtn.disabled = true;
           micStatus.textContent = "Partner is speaking...";
           try {
-              const audioBlob = await fetchPartnerAudio(currentTurnData.line);
+              const cleanText = removeParentheses(currentTurnData.line);
+              const audioBlob = await fetchPartnerAudio(cleanText);
               const audioUrl = URL.createObjectURL(audioBlob);
               const audio = new Audio(audioUrl);
               
@@ -239,6 +298,15 @@ document.addEventListener('DOMContentLoaded', () => {
               }, 1500);
           }
       }
+  }
+  
+  function enableUserMic() {
+      micBtn.disabled = false;
+      micStatus.textContent = "Your turn. Press the mic and read the line.";
+  }
+
+  function removeParentheses(text) {
+      return text.replace(/\s*\([^)]*\)/g, '').trim();
   }
 
   function verifyUserSpeech(spokenText) {
