@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // IMPORTANT: Replace with your actual Gemini API Key.
   // It's highly recommended to use a backend proxy to protect this key in a real application.
   const GEMINI_API_KEY = 'AIzaSyDIFeql6HUpkZ8JJlr_kuN0WDFHUyOhijA'; 
-  const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
+  const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-thinking-exp-01-21:generateContent?key=${GEMINI_API_KEY}`;
   const TTS_API_URL = 'https://langcamp.us/elevenlbs-exchange-audio/exchange-audio';
   const IMAGE_API_URL = 'https://ainovel.site/api/generate-image';
 
