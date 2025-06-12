@@ -295,25 +295,44 @@ document.addEventListener('DOMContentLoaded', () => {
       return response.blob();
   }
 
+  async function generateImage(prompt, options = {}) {
+      const response = await fetch(IMAGE_API_URL, {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+              prompt: prompt,
+              imageSize: options.imageSize || 'square_hd',
+              numInferenceSteps: options.numInferenceSteps || 60,
+              guidanceScale: options.guidanceScale || 12,
+              ...options
+          })
+      });
+      const result = await response.json();
+      
+      if (result.success) {
+          return result;
+      } else {
+          throw new Error(result.message || 'Image generation failed');
+      }
+  }
+
   async function fetchAndDisplayIllustration(prompt) {
       try {
           illustrationPlaceholder.classList.add('hidden');
           imageLoader.classList.remove('hidden');
           
-          // Try the external API first
-          const response = await fetch(IMAGE_API_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ prompt: `${prompt}, digital art, minimalist` }),
+          // Use enhanced image generation with better options
+          const result = await generateImage(`${prompt}, digital art, minimalist, educational illustration`, {
+              imageSize: 'square_hd',
+              numInferenceSteps: 50,
+              guidanceScale: 10
           });
           
-          if (!response.ok) {
-              throw new Error(`Image API error: ${response.statusText}`);
-          }
-          
-          const data = await response.json();
-          if (data.imageUrl) {
-              illustrationImg.src = data.imageUrl;
+          if (result.imageUrl) {
+              console.log('Generated image with seed:', result.seed);
+              illustrationImg.src = result.imageUrl;
               illustrationImg.onload = () => {
                   imageLoader.classList.add('hidden');
                   illustrationImg.classList.remove('hidden');
