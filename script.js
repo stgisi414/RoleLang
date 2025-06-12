@@ -297,7 +297,8 @@ document.addEventListener('DOMContentLoaded', () => {
                   similarity_boost: 0.75,
                   style: 0.0,
                   use_speaker_boost: true
-              }
+              },
+              language_code: voiceConfig.language_code
           }),
       });
       if (!response.ok) throw new Error(`TTS API error: ${response.statusText}`);
@@ -390,29 +391,35 @@ document.addEventListener('DOMContentLoaded', () => {
       const voiceConfigs = {
           'Spanish': {
               voice_id: "XrExE9yKIg1WjnnlVkGX", // Male Spanish voice
+              language_code: "es"
               // Alternative: "VR6AewLTigWG4xSOukaG" - Female Spanish voice
           },
           'French': {
               voice_id: "ThT5KcBeYPX3keUQqHPh", // Male French voice
+              language_code: "fr"
               // Alternative: "Xb7hH8MSUJpSbSDYk0k2" - Female French voice
           },
           'German': {
               voice_id: "1VxqO5bMEfZrTtfKpKwa", // Male German voice
+              language_code: "de"
               // Alternative: "nPczCjzI2devNBz1zQrb" - Female German voice
           },
           'Italian': {
               voice_id: "XB0fDUnXU5powFXDhCwa", // Male Italian voice
+              language_code: "it"
               // Alternative: "jsCqWAovK2LkecY7zXl4" - Female Italian voice
           },
           'Japanese': {
               voice_id: "jBpfuIE2acCO8z3wKNLl", // Male Japanese voice
+              language_code: "ja"
               // Alternative: "EXAVITQu4vr4xnSDxMaL" - Female Japanese voice
           }
       };
       
       // Return language-specific config or default English voice
       return voiceConfigs[language] || {
-          voice_id: "pNInz6obpgDQGcFmaJgB" // Default English voice
+          voice_id: "pNInz6obpgDQGcFmaJgB", // Default English voice
+          language_code: "en"
       };
   }
 
