@@ -278,6 +278,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function fetchPartnerAudio(text) {
+      const currentLanguage = languageSelect.value;
+      const voiceConfig = getVoiceConfig(currentLanguage);
+      
       const response = await fetch(TTS_API_URL, {
           method: 'POST',
           headers: { 
@@ -287,8 +290,14 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           body: JSON.stringify({ 
               text: text,
-              voice_id: "pNInz6obpgDQGcFmaJgB",
-              model_id: "eleven_turbo_v2"
+              voice_id: voiceConfig.voice_id,
+              model_id: "eleven_multilingual_v2",
+              voice_settings: {
+                  stability: 0.5,
+                  similarity_boost: 0.75,
+                  style: 0.0,
+                  use_speaker_boost: true
+              }
           }),
       });
       if (!response.ok) throw new Error(`TTS API error: ${response.statusText}`);
@@ -374,6 +383,37 @@ document.addEventListener('DOMContentLoaded', () => {
           'Italian': 'it-IT', 'Japanese': 'ja-JP',
       };
       return langCodes[language] || 'en-US';
+  }
+
+  function getVoiceConfig(language) {
+      // Language-specific voice configurations for ElevenLabs multilingual_v2
+      const voiceConfigs = {
+          'Spanish': {
+              voice_id: "XrExE9yKIg1WjnnlVkGX", // Male Spanish voice
+              // Alternative: "VR6AewLTigWG4xSOukaG" - Female Spanish voice
+          },
+          'French': {
+              voice_id: "ThT5KcBeYPX3keUQqHPh", // Male French voice
+              // Alternative: "Xb7hH8MSUJpSbSDYk0k2" - Female French voice
+          },
+          'German': {
+              voice_id: "1VxqO5bMEfZrTtfKpKwa", // Male German voice
+              // Alternative: "nPczCjzI2devNBz1zQrb" - Female German voice
+          },
+          'Italian': {
+              voice_id: "XB0fDUnXU5powFXDhCwa", // Male Italian voice
+              // Alternative: "jsCqWAovK2LkecY7zXl4" - Female Italian voice
+          },
+          'Japanese': {
+              voice_id: "jBpfuIE2acCO8z3wKNLl", // Male Japanese voice
+              // Alternative: "EXAVITQu4vr4xnSDxMaL" - Female Japanese voice
+          }
+      };
+      
+      // Return language-specific config or default English voice
+      return voiceConfigs[language] || {
+          voice_id: "pNInz6obpgDQGcFmaJgB" // Default English voice
+      };
   }
 
   function createGeminiPrompt(language, topic) {
