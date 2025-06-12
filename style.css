@@ -37,6 +37,12 @@ body {
     background-size: 40px 40px;
 }
 
+/* Crop illustration image to show top portion */
+#lesson-illustration {
+    object-position: top center;
+    object-fit: cover;
+}
+
 /* Custom Scrollbar for the conversation container */
 #conversation-container::-webkit-scrollbar {
     width: 8px;
