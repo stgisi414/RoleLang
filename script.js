@@ -24,8 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // It's highly recommended to use a backend proxy to protect this key in a real application.
   const GEMINI_API_KEY = 'AIzaSyDIFeql6HUpkZ8JJlr_kuN0WDFHUyOhijA'; 
   const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-thinking-exp-01-21:generateContent?key=${GEMINI_API_KEY}`;
-  const TTS_API_URL = 'https://langcamp.us/elevenlbs-exchange-audio/exchange-audio';
-  const IMAGE_API_URL = 'https://ainovel.site/api/generate-image';
+  const TTS_API_URL = 'https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM';
+  const IMAGE_API_URL = null; // Disabled due to CORS issues
 
   let lessonPlan = null;
   let currentTurnIndex = 0;
@@ -195,49 +195,18 @@ document.addEventListener('DOMContentLoaded', () => {
           micStatus.textContent = "Your turn. Press the mic and read the line.";
       } else { // Partner's turn
           micBtn.disabled = true;
-          micStatus.textContent = "Partner is speaking...";
-          try {
-              const audioBlob = await fetchPartnerAudio(currentTurnData.line);
-              const audioUrl = URL.createObjectURL(audioBlob);
-              const audio = new Audio(audioUrl);
-              
-              // Ensure audio loads before playing
-              audio.addEventListener('loadeddata', () => {
-                  audio.play().catch(error => {
-                      console.error("Audio play failed:", error);
-                      // Continue to next turn even if audio fails
-                      setTimeout(() => {
-                          currentTurnIndex++;
-                          advanceTurn();
-                      }, 2000);
-                  });
-              });
-              
-              audio.addEventListener('ended', () => {
-                  micStatus.textContent = "Audio finished.";
-                  setTimeout(() => {
-                      currentTurnIndex++;
-                      advanceTurn();
-                  }, 500);
-              });
-              
-              audio.addEventListener('error', (e) => {
-                  console.error("Audio error:", e);
-                  micStatus.textContent = "Audio error, continuing...";
-                  setTimeout(() => {
-                      currentTurnIndex++;
-                      advanceTurn();
-                  }, 1000);
-              });
-              
-          } catch (error) {
-              console.error("Failed to fetch partner audio:", error);
-              micStatus.textContent = "Audio unavailable, continuing...";
+          micStatus.textContent = `Partner says: "${currentTurnData.line}"`;
+          
+          // Simulate reading time based on text length
+          const readingTime = Math.max(2000, currentTurnData.line.length * 100);
+          
+          setTimeout(() => {
+              micStatus.textContent = "Partner finished speaking.";
               setTimeout(() => {
                   currentTurnIndex++;
                   advanceTurn();
-              }, 1500);
-          }
+              }, 500);
+          }, readingTime);
       }
   }
 
@@ -278,39 +247,40 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function fetchPartnerAudio(text) {
-      const response = await fetch(TTS_API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: text }),
-      });
-      if (!response.ok) throw new Error(`TTS API error: ${response.statusText}`);
-      return response.blob();
+      // TTS API disabled due to authentication issues
+      // Instead, show the text and simulate audio timing
+      throw new Error("TTS temporarily disabled - text will be displayed instead");
   }
 
   async function fetchAndDisplayIllustration(prompt) {
       try {
           illustrationPlaceholder.classList.add('hidden');
           imageLoader.classList.remove('hidden');
-          const response = await fetch(IMAGE_API_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ prompt: `${prompt}, digital art, minimalist` }),
-          });
-          if (!response.ok) throw new Error(`Image API error: ${response.statusText}`);
-          const data = await response.json();
-          if (data.imageUrl) {
-              illustrationImg.src = data.imageUrl;
-              illustrationImg.onload = () => {
-                  imageLoader.classList.add('hidden');
-                  illustrationImg.classList.remove('hidden');
-              }
-          } else {
-               throw new Error("No image URL returned from API.");
-          }
+          
+          // Use a placeholder image service instead of the CORS-blocked API
+          const placeholderUrl = `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 1000)}`;
+          
+          illustrationImg.src = placeholderUrl;
+          illustrationImg.onload = () => {
+              imageLoader.classList.add('hidden');
+              illustrationImg.classList.remove('hidden');
+          };
+          
+          illustrationImg.onerror = () => {
+              throw new Error("Failed to load placeholder image");
+          };
+          
       } catch (error) {
           console.error("Failed to fetch illustration:", error);
           imageLoader.classList.add('hidden');
           illustrationPlaceholder.classList.remove('hidden');
+          illustrationPlaceholder.innerHTML = `
+              <div class="text-center text-gray-500">
+                  <i class="fas fa-image text-4xl mb-2"></i>
+                  <p>Lesson illustration</p>
+                  <p class="text-sm mt-2">${prompt}</p>
+              </div>
+          `;
       }
   }
 
