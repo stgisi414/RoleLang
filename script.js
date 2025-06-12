@@ -590,7 +590,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getLangCode(language) {
       const langCodes = {
-          'Spanish': 'es-ES', 'French': 'fr-FR', 'German': 'de-DE',
+          'English': 'en-US', 'Spanish': 'es-ES', 'French': 'fr-FR', 'German': 'de-DE',
           'Italian': 'it-IT', 'Japanese': 'ja-JP',
       };
       return langCodes[language] || 'en-US';
@@ -599,6 +599,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function getVoiceConfig(language) {
       // Language-specific voice configurations for ElevenLabs multilingual_v2
       const voiceConfigs = {
+          'English': {
+              voice_id: "pNInz6obpgDQGcFmaJgB", // Male English voice
+              language_code: "en"
+              // Alternative: "EXAVITQu4vr4xnSDxMaL" - Female English voice
+          },
           'Spanish': {
               voice_id: "XrExE9yKIg1WjnnlVkGX", // Male Spanish voice
               language_code: "es"
@@ -634,11 +639,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function createGeminiPrompt(language, topic) {
+      const isEnglish = language === 'English';
+      const translationInstruction = isEnglish 
+          ? "For the user's lines (party A), do not include translations since this is English practice."
+          : `For the user's lines (party A), also include the English translation in parentheses. Example: "Bonjour (Hello)".`;
+      
       return `
 You are a language tutor creating a lesson for a web application named "RoleLang".
 Your task is to generate a complete, structured lesson plan in JSON format. Do not include any explanatory text outside of the JSON structure itself.
 
-The user wants to learn ${language}.
+The user wants to ${isEnglish ? 'practice' : 'learn'} ${language}.
 The roleplaying scenario is: "${topic}".
 
 Please generate a JSON object with the following structure:
@@ -649,7 +659,7 @@ Please generate a JSON object with the following structure:
   - The conversation must involve at least two parties, 'A' (the user) and 'B' (the partner).
   - Each object in the array must have two properties:
       - "party": "A" or "B"
-      - "line": The line of dialogue in the target language (${language}). For the user's lines (party A), also include the English translation in parentheses. Example: "Bonjour (Hello)".
+      - "line": The line of dialogue in the target language (${language}). ${translationInstruction}
       - "explanation" (optional): An object with "title" and "body" properties. Include this ONLY when a specific grammar rule, vocabulary word, or cultural note in that line is important to explain. The title should be the concept (e.g., "Gender of Nouns"), and the body should be a concise, simple explanation (1-2 sentences).
 
 Example of required JSON output format:
