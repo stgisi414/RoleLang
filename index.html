@@ -51,7 +51,45 @@
                         <input type="text" id="topic-input" placeholder="E.g., Ordering coffee, checking into a hotel" class="w-full p-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none transition text-white">
                     </div>
 
-                    <div class="fade-in-element delay-3">
+                    <!-- Choose a Lesson Section -->
+                    <div class="mb-6 fade-in-element delay-3">
+                        <h3 class="text-lg font-medium text-gray-300 mb-4 text-center">Or Choose a Lesson:</h3>
+                        
+                        <!-- Beginner Level -->
+                        <div class="mb-4">
+                            <h4 class="text-sm font-medium text-green-400 mb-2">Beginner</h4>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button class="lesson-btn bg-green-600/20 hover:bg-green-600/30 text-green-300 text-xs py-2 px-3 rounded-md transition-all border border-green-600/30" data-topic="Introducing yourself">Introducing yourself</button>
+                                <button class="lesson-btn bg-green-600/20 hover:bg-green-600/30 text-green-300 text-xs py-2 px-3 rounded-md transition-all border border-green-600/30" data-topic="Ordering food at a restaurant">Ordering food</button>
+                                <button class="lesson-btn bg-green-600/20 hover:bg-green-600/30 text-green-300 text-xs py-2 px-3 rounded-md transition-all border border-green-600/30" data-topic="Asking for directions">Asking directions</button>
+                                <button class="lesson-btn bg-green-600/20 hover:bg-green-600/30 text-green-300 text-xs py-2 px-3 rounded-md transition-all border border-green-600/30" data-topic="Shopping for clothes">Shopping clothes</button>
+                            </div>
+                        </div>
+
+                        <!-- Intermediate Level -->
+                        <div class="mb-4">
+                            <h4 class="text-sm font-medium text-yellow-400 mb-2">Intermediate</h4>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button class="lesson-btn bg-yellow-600/20 hover:bg-yellow-600/30 text-yellow-300 text-xs py-2 px-3 rounded-md transition-all border border-yellow-600/30" data-topic="Job interview conversation">Job interview</button>
+                                <button class="lesson-btn bg-yellow-600/20 hover:bg-yellow-600/30 text-yellow-300 text-xs py-2 px-3 rounded-md transition-all border border-yellow-600/30" data-topic="Making a doctor appointment">Doctor appointment</button>
+                                <button class="lesson-btn bg-yellow-600/20 hover:bg-yellow-600/30 text-yellow-300 text-xs py-2 px-3 rounded-md transition-all border border-yellow-600/30" data-topic="Discussing weekend plans">Weekend plans</button>
+                                <button class="lesson-btn bg-yellow-600/20 hover:bg-yellow-600/30 text-yellow-300 text-xs py-2 px-3 rounded-md transition-all border border-yellow-600/30" data-topic="Renting an apartment">Renting apartment</button>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Level -->
+                        <div class="mb-4">
+                            <h4 class="text-sm font-medium text-red-400 mb-2">Advanced</h4>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button class="lesson-btn bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs py-2 px-3 rounded-md transition-all border border-red-600/30" data-topic="Negotiating a business deal">Business negotiation</button>
+                                <button class="lesson-btn bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs py-2 px-3 rounded-md transition-all border border-red-600/30" data-topic="Discussing politics and current events">Political discussion</button>
+                                <button class="lesson-btn bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs py-2 px-3 rounded-md transition-all border border-red-600/30" data-topic="Explaining a complex technical problem">Technical explanation</button>
+                                <button class="lesson-btn bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs py-2 px-3 rounded-md transition-all border border-red-600/30" data-topic="Debating philosophical concepts">Philosophy debate</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="fade-in-element delay-4">
                         <button id="start-lesson-btn" class="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 duration-300 focus:outline-none focus:ring-4 focus:ring-cyan-700">
                             Start Lesson
                         </button>

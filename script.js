@@ -47,6 +47,19 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Event Listeners ---
   startLessonBtn.addEventListener('click', initializeLesson);
   micBtn.addEventListener('click', toggleSpeechRecognition);
+  
+  // Add event listeners for lesson buttons
+  document.addEventListener('click', (event) => {
+      if (event.target.classList.contains('lesson-btn')) {
+          const topic = event.target.getAttribute('data-topic');
+          topicInput.value = topic;
+          // Visual feedback
+          event.target.style.transform = 'scale(0.95)';
+          setTimeout(() => {
+              event.target.style.transform = '';
+          }, 150);
+      }
+  });
   closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
   modal.addEventListener('click', (event) => {
       // Close modal if clicking on the backdrop
