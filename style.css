@@ -62,12 +62,12 @@ body {
 /* Native language dropdown styling */
 #native-lang-dropdown {
     z-index: 99;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background-color: rgba(31, 41, 55, 0.95) !important;
+    border: 1px solid rgba(75, 85, 99, 0.8);
 }
 
 .native-lang-option:hover {
-    background-color: rgba(55, 65, 81, 0.8);
+    background-color: rgba(55, 65, 81, 0.9);
 }
 
 /* Loading spinner animation */
