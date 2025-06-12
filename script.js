@@ -6,7 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const languageSelect = document.getElementById('language-select');
   const topicInput = document.getElementById('topic-input');
 
+  const illustrationContainer = document.getElementById('illustration-container');
   const illustrationImg = document.getElementById('lesson-illustration');
+  const illustrationPlaceholder = document.getElementById('illustration-placeholder');
   const imageLoader = document.getElementById('image-loader');
   const conversationContainer = document.getElementById('conversation-container');
   const micBtn = document.getElementById('mic-btn');
@@ -15,11 +17,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const modal = document.getElementById('explanation-modal');
   const modalBody = document.getElementById('modal-body');
-  const closeModalBtn = document.querySelector('.close-btn');
+  const closeModalBtn = document.getElementById('close-modal-btn');
 
   // --- API & State ---
-  const GEMINI_API_KEY = 'AIzaSyDIFeql6HUpkZ8JJlr_kuN0WDFHUyOhijA'; // <-- IMPORTANT: Replace with your key
-  const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-thinking-exp-01-21:generateContent?key=${GEMINI_API_KEY}`;
+  // IMPORTANT: Replace with your actual Gemini API Key.
+  // It's highly recommended to use a backend proxy to protect this key in a real application.
+  const GEMINI_API_KEY = 'AIzaSyDIFeql6HUpkZ8JJlr_kuN0WDFHUyOhijA'; 
+  const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
   const TTS_API_URL = 'https://langcamp.us/elevenlbs-exchange-audio/exchange-audio';
   const IMAGE_API_URL = 'https://ainovel.site/api/generate-image';
 
@@ -44,7 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
   startLessonBtn.addEventListener('click', initializeLesson);
   micBtn.addEventListener('click', toggleSpeechRecognition);
   closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
-  window.addEventListener('click', (event) => {
+  modal.addEventListener('click', (event) => {
+      // Close modal if clicking on the backdrop
       if (event.target === modal) {
           modal.classList.add('hidden');
       }
@@ -53,13 +58,15 @@ document.addEventListener('DOMContentLoaded', () => {
   if (recognition) {
       recognition.onstart = () => {
           isRecognizing = true;
-          micBtn.classList.add('listening');
+          micBtn.classList.add('bg-green-600');
+          micBtn.classList.remove('bg-red-600');
           micStatus.textContent = "Listening...";
       };
 
       recognition.onend = () => {
           isRecognizing = false;
-          micBtn.classList.remove('listening');
+          micBtn.classList.remove('bg-green-600');
+          micBtn.classList.add('bg-red-600');
           micStatus.textContent = "Press the mic and read the highlighted line.";
       };
 
@@ -77,9 +84,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Core Functions ---
 
-  /**
-   * Fetches the lesson plan from Gemini and starts the lesson.
-   */
   async function initializeLesson() {
       const language = languageSelect.value;
       const topic = topicInput.value;
@@ -89,13 +93,18 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
       }
 
+      if (GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
+          alert('Please replace "YOUR_GEMINI_API_KEY_HERE" in script.js with your actual Gemini API key.');
+          return;
+      }
+
+
       // Update UI
-      landingScreen.classList.add('hidden');
-      lessonScreen.classList.remove('hidden');
       loadingSpinner.classList.remove('hidden');
       conversationContainer.innerHTML = '';
-      illustrationImg.style.display = 'none';
-      imageLoader.style.display = 'block';
+      illustrationImg.classList.add('hidden');
+      illustrationPlaceholder.classList.remove('hidden');
+      imageLoader.classList.add('hidden');
 
       const prompt = createGeminiPrompt(language, topic);
 
@@ -107,51 +116,66 @@ document.addEventListener('DOMContentLoaded', () => {
           });
 
           if (!response.ok) {
-              throw new Error(`Gemini API error: ${response.statusText}`);
+              const errorData = await response.json();
+              throw new Error(`Gemini API error: ${response.statusText} - ${JSON.stringify(errorData)}`);
           }
 
           const data = await response.json();
+          // Find the JSON part and parse it
           const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
           lessonPlan = JSON.parse(jsonString);
 
           // Set speech recognition language
           recognition.lang = getLangCode(language);
 
-          await fetchAndDisplayIllustration(lessonPlan.illustration_prompt);
+          landingScreen.classList.add('hidden');
+          lessonScreen.classList.remove('hidden');
+
+          fetchAndDisplayIllustration(lessonPlan.illustration_prompt);
           startConversation();
 
       } catch (error) {
           console.error("Failed to initialize lesson:", error);
-          lessonScreen.innerHTML = `<p>Error loading lesson. Please try again. Details: ${error.message}</p>`;
+          alert(`Error loading lesson. Please check the console for details. Error: ${error.message}`);
+          landingScreen.classList.remove('hidden');
+          lessonScreen.classList.add('hidden');
       } finally {
           loadingSpinner.classList.add('hidden');
       }
   }
 
-  /**
-   * Starts and displays the conversation from the fetched lesson plan.
-   */
   function startConversation() {
       currentTurnIndex = 0;
+      conversationContainer.innerHTML = ''; // Clear previous conversation
       lessonPlan.dialogue.forEach((turn, index) => {
           const lineDiv = document.createElement('div');
-          lineDiv.classList.add('dialogue-line');
+          lineDiv.classList.add('dialogue-line', 'text-white');
           lineDiv.id = `turn-${index}`;
-          lineDiv.innerHTML = `<strong>${turn.party}:</strong> ${turn.line}`;
+
+          let lineContent = `<strong>${turn.party}:</strong> ${turn.line}`;
+
+          lineDiv.innerHTML = lineContent;
 
           if (turn.party === 'A') {
               lineDiv.classList.add('user-line');
           } else {
               lineDiv.classList.add('partner-line');
           }
+
+          // Add click listener for explanations
+          if (turn.explanation) {
+            const explanationSpan = document.createElement('span');
+            explanationSpan.innerHTML = ` <i class="fas fa-info-circle text-sky-300"></i>`;
+            explanationSpan.classList.add('explanation-link');
+            explanationSpan.onclick = () => showExplanation(turn.explanation);
+            lineDiv.appendChild(explanationSpan);
+          }
+
           conversationContainer.appendChild(lineDiv);
       });
       advanceTurn();
   }
 
-  /**
-   * Manages the progression of the conversation.
-   */
   async function advanceTurn() {
       if (currentTurnIndex >= lessonPlan.dialogue.length) {
           micStatus.textContent = "Lesson complete! 🎉";
@@ -161,25 +185,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const currentTurnData = lessonPlan.dialogue[currentTurnIndex];
 
-      // Deactivate all previous lines
       document.querySelectorAll('.dialogue-line.active').forEach(el => el.classList.remove('active'));
-
-      // Activate the current line
       const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
       currentLineEl.classList.add('active');
       currentLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-      // Check for an explanation popup trigger
-      if (currentTurnData.explanation) {
-          showExplanation(currentTurnData.explanation);
-      }
-
-      if (currentTurnData.party === 'A') {
-          // It's the user's turn
+      if (currentTurnData.party === 'A') { // User's turn
           micBtn.disabled = false;
           micStatus.textContent = "Your turn. Press the mic and read the line.";
-      } else {
-          // It's the partner's turn
+      } else { // Partner's turn
           micBtn.disabled = true;
           micStatus.textContent = "Partner is speaking...";
           try {
@@ -193,7 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
               };
           } catch (error) {
               console.error("Failed to play partner audio:", error);
-              // If audio fails, proceed after a short delay
               setTimeout(() => {
                   currentTurnIndex++;
                   advanceTurn();
@@ -202,34 +215,25 @@ document.addEventListener('DOMContentLoaded', () => {
       }
   }
 
-  /**
-   * Verifies the user's spoken words against the required text.
-   */
   function verifyUserSpeech(spokenText) {
-      const requiredText = lessonPlan.dialogue[currentTurnIndex].line;
-
-      // Simple normalization for comparison
+      const requiredText = lessonPlan.dialogue[currentTurnIndex].line.split('(')[0]; // Ignore translation
       const normalize = (text) => text.trim().toLowerCase().replace(/[.,!?;]/g, '');
 
       if (normalize(spokenText).includes(normalize(requiredText))) {
           micStatus.textContent = "Correct! Well done.";
+          document.getElementById(`turn-${currentTurnIndex}`).style.borderColor = '#4ade80'; // green-400
           currentTurnIndex++;
-          setTimeout(advanceTurn, 1500); // Give user time to read feedback
+          setTimeout(advanceTurn, 1500);
       } else {
           micStatus.textContent = "Not quite. Try reading the line again.";
           const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
-          currentLineEl.style.transition = 'none';
-          currentLineEl.style.backgroundColor = '#ffcdd2'; // Highlight error
-          setTimeout(() => {
-              currentLineEl.style.backgroundColor = '';
-              currentLineEl.style.transition = 'background-color 0.3s';
-          }, 1000);
+          currentLineEl.classList.remove('active');
+          void currentLineEl.offsetWidth; // Trigger reflow
+          currentLineEl.classList.add('active');
+          currentLineEl.style.borderColor = '#f87171'; // red-400
       }
   }
 
-  /**
-   * Starts or stops the speech recognition service.
-   */
   function toggleSpeechRecognition() {
       if (isRecognizing) {
           recognition.stop();
@@ -238,77 +242,58 @@ document.addEventListener('DOMContentLoaded', () => {
       }
   }
 
-  /**
-   * Fetches the partner's line as audio from the TTS API.
-   */
   async function fetchPartnerAudio(text) {
       const response = await fetch(TTS_API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text: text }),
       });
-      if (!response.ok) {
-          throw new Error(`TTS API error: ${response.statusText}`);
-      }
+      if (!response.ok) throw new Error(`TTS API error: ${response.statusText}`);
       return response.blob();
   }
 
-  /**
-   * Fetches an illustration from the image generation API.
-   */
   async function fetchAndDisplayIllustration(prompt) {
       try {
-          imageLoader.style.display = 'block';
-          illustrationImg.style.display = 'none';
+          illustrationPlaceholder.classList.add('hidden');
+          imageLoader.classList.remove('hidden');
           const response = await fetch(IMAGE_API_URL, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ prompt: `${prompt}, digital art` }),
+              body: JSON.stringify({ prompt: `${prompt}, digital art, minimalist` }),
           });
           if (!response.ok) throw new Error(`Image API error: ${response.statusText}`);
           const data = await response.json();
           if (data.imageUrl) {
               illustrationImg.src = data.imageUrl;
               illustrationImg.onload = () => {
-                  imageLoader.style.display = 'none';
-                  illustrationImg.style.display = 'block';
+                  imageLoader.classList.add('hidden');
+                  illustrationImg.classList.remove('hidden');
               }
           } else {
                throw new Error("No image URL returned from API.");
           }
       } catch (error) {
           console.error("Failed to fetch illustration:", error);
-          imageLoader.style.display = 'none'; // Hide loader even if it fails
+          imageLoader.classList.add('hidden');
+          illustrationPlaceholder.classList.remove('hidden');
       }
   }
 
-  /**
-   * Displays the explanation modal with content from Gemini.
-   */
   function showExplanation(content) {
-      modalBody.innerHTML = `<h3>${content.title}</h3><p>${content.body}</p>`;
+      modalBody.innerHTML = `<h3 class="text-xl font-bold mb-2 text-cyan-300">${content.title}</h3><p class="text-gray-300">${content.body}</p>`;
       modal.classList.remove('hidden');
   }
 
   // --- Helper Functions ---
 
-  /**
-   * Gets the BCP 47 language code for the Web Speech API.
-   */
   function getLangCode(language) {
       const langCodes = {
-          'Spanish': 'es-ES',
-          'French': 'fr-FR',
-          'German': 'de-DE',
-          'Italian': 'it-IT',
-          'Japanese': 'ja-JP',
+          'Spanish': 'es-ES', 'French': 'fr-FR', 'German': 'de-DE',
+          'Italian': 'it-IT', 'Japanese': 'ja-JP',
       };
       return langCodes[language] || 'en-US';
   }
 
-  /**
-   * Creates the structured prompt for the Gemini API.
-   */
   function createGeminiPrompt(language, topic) {
       return `
 You are a language tutor creating a lesson for a web application named "RoleLang".
@@ -320,15 +305,15 @@ The roleplaying scenario is: "${topic}".
 Please generate a JSON object with the following structure:
 1.  "scenario": A brief, one-sentence description of the lesson's context.
 2.  "language": The language being taught (e.g., "${language}").
-3.  "illustration_prompt": A simple, descriptive prompt (5-10 words) for an AI image generator that captures the essence of the lesson. This will be used to create a visual aid. Example: "Two people ordering coffee at a cafe counter".
+3.  "illustration_prompt": A simple, descriptive prompt (5-10 words) for an AI image generator that captures the essence of the lesson. Example: "Two people ordering coffee at a cafe counter".
 4.  "dialogue": An array of turn-based dialogue objects.
-  - The conversation must involve at least two parties, 'A' (the user) and 'B' (the partner). It can sometimes include 'C' or 'D'.
-  - Each object in the array represents one line of dialogue and must have three properties:
-      - "party": "A", "B", "C", etc.
+  - The conversation must involve at least two parties, 'A' (the user) and 'B' (the partner).
+  - Each object in the array must have two properties:
+      - "party": "A" or "B"
       - "line": The line of dialogue in the target language (${language}). For the user's lines (party A), also include the English translation in parentheses. Example: "Bonjour (Hello)".
-      - "explanation" (optional): An object with "title" and "body" properties. Include this ONLY when a specific grammar rule, vocabulary word, or cultural note in that line is important to explain. The title should be the concept (e.g., "Gender of Nouns"), and the body should be a concise, simple explanation (1-2 sentences). Trigger this on the line where the concept is first introduced.
+      - "explanation" (optional): An object with "title" and "body" properties. Include this ONLY when a specific grammar rule, vocabulary word, or cultural note in that line is important to explain. The title should be the concept (e.g., "Gender of Nouns"), and the body should be a concise, simple explanation (1-2 sentences).
 
-Here is an example of the required JSON output format:
+Example of required JSON output format:
 
 {
 "scenario": "A customer orders a coffee and a croissant at a French café.",
@@ -353,11 +338,7 @@ Here is an example of the required JSON output format:
   },
   {
     "party": "A",
-    "line": "Je vais prendre aussi un croissant. (I will also have a croissant.)",
-    "explanation": {
-      "title": "Vocabulary: 'un croissant'",
-      "body": "'Un' is the masculine singular article for 'a' or 'an'. 'Croissant' is a masculine noun, so we use 'un croissant'."
-    }
+    "line": "Je vais prendre aussi un croissant. (I will also have a croissant.)"
   },
   {
     "party": "B",
@@ -366,7 +347,6 @@ Here is an example of the required JSON output format:
 ]
 }
 
-Now, please generate the JSON for the ${language} lesson about "${topic}".
-`;
+Now, please generate the JSON for the ${language} lesson about "${topic}".`;
   }
 });
