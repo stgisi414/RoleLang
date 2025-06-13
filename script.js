@@ -687,17 +687,38 @@ document.addEventListener('DOMContentLoaded', () => {
         const allSituations = ['realistic', 'futuristic', 'historical', 'drama', 'comedy', 'horror'];
         
         // Hide all situation categories first
-        document.querySelectorAll('.situation-category').forEach(category => {
+        const allSituationElements = document.querySelectorAll('.situation-category, .mb-4[data-category]');
+        allSituationElements.forEach(category => {
             category.style.display = 'none';
         });
+        
+        // Also hide the non-data-category situation containers
+        const realisticEl = document.querySelector('.mb-4:has(#realistic-container)');
+        const futuristicEl = document.querySelector('.mb-4:has(#futuristic-container)');
+        if (realisticEl) realisticEl.style.display = 'none';
+        if (futuristicEl) futuristicEl.style.display = 'none';
         
         // Randomly select 3 categories to display
         const shuffledSituations = [...allSituations].sort(() => 0.5 - Math.random());
         const selectedSituations = shuffledSituations.slice(0, 3);
         
+        console.log('Selected situations:', selectedSituations); // Debug log
+        
         // Show selected categories and populate them
         selectedSituations.forEach((situation, index) => {
-            const categoryElement = document.querySelector(`[data-category="${situation}"]`);
+            let categoryElement;
+            
+            // Handle the different ways categories are structured in HTML
+            if (situation === 'realistic') {
+                categoryElement = document.querySelector('.mb-4:has(#realistic-container)') || 
+                                 document.querySelector(`[data-category="${situation}"]`);
+            } else if (situation === 'futuristic') {
+                categoryElement = document.querySelector('.mb-4:has(#futuristic-container)') || 
+                                 document.querySelector(`[data-category="${situation}"]`);
+            } else {
+                categoryElement = document.querySelector(`[data-category="${situation}"]`);
+            }
+            
             const container = document.getElementById(`${situation}-container`);
             
             if (categoryElement && container) {
