@@ -967,6 +967,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add variables to track sentence-by-sentence recording
     let currentSentences = [];
     let currentSentenceIndex = 0;
+    let speechAttempts = 0;
 
     // Helper function to split text into sentences
     function splitIntoSentences(text) {
@@ -1262,6 +1263,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function verifyUserSpeech(spokenText) {
         try {
+            speechAttempts++;
             const currentLanguage = languageSelect.value;
             const currentTurnData = lessonPlan.dialogue[currentTurnIndex];
 
@@ -1298,20 +1300,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     Your task is to determine if a student's spoken text is a correct phonetic match for a given sentence, ignoring punctuation and spacing.
 
-    IMPORTANT CONSIDERATIONS:
+    IMPORTANT CONSIDERATIONS FOR CHINESE:
+    - Chinese speech recognition often struggles with technical terms, English words, and mixed content
+    - Browser speech recognition for Chinese has significant limitations with tones and pronunciation variations
+    - Focus heavily on overall meaning and context rather than exact character matching
+    - Be very lenient with technical vocabulary like "人工智能" (AI), "代码" (code), "网页应用" (web application)
+    - If the spoken text contains any key concepts from the expected sentence, consider it a match
+    - Chinese speech recognition frequently mistranscribes or omits technical terms entirely
+    - Accept partial matches if core vocabulary is present, even if grammar or word order differs
+    - Consider regional accent variations and pronunciation differences
+    - If more than 50% of the core meaning is captured, consider it a successful attempt
+
+    GENERAL CONSIDERATIONS:
     - Be flexible with mixed-language content (e.g., English words/acronyms within other languages)
     - Speech recognition may not capture English letters/acronyms correctly when embedded in other languages
     - Focus on the overall meaning and pronunciation rather than exact character matching
-    - Consider that "AI" might be transcribed as Chinese characters or omitted entirely
-    - If the spoken text captures the main meaning despite missing English acronyms, consider it a match
+    - If the spoken text captures the main meaning despite missing parts, consider it a match
 
     Your response MUST be a simple JSON object with two fields:
-    1. "is_match": a boolean (true or false).
-    2. "feedback": A brief, one-sentence explanation for your decision. IMPORTANT: This "feedback" field MUST be written in the user's native language, which is ${nativeLangName}.
+    1. "is_match": a boolean (true or false). For Chinese, be VERY generous with this assessment.
+    2. "feedback": A brief, encouraging explanation. IMPORTANT: This "feedback" field MUST be written in the user's native language, which is ${nativeLangName}.
 
     Here is the information for your evaluation:
     - The student was expected to say: "${expectedLine}"
     - The student's speech recognition produced: "${spokenText}"
+
+    Remember: For Chinese learners, speech recognition technology is often inadequate. Be very forgiving and focus on effort and partial understanding.
 
     Now, provide the JSON response.`;
 
@@ -1340,11 +1354,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('Gemini verification result:', result);
 
                 if (result.is_match) {
+                    speechAttempts = 0; // Reset attempts on success
                     handleCorrectSpeech();
                 } else {
                     // Use the localized feedback from Gemini, with a localized fallback.
                     const feedback = result.feedback || translateText('tryAgain');
-                    micStatus.textContent = feedback;
+                    micStatus.innerHTML = feedback;
+                    
+                    // Add skip button for Chinese after 3 attempts
+                    if (currentLanguage === 'Chinese' && speechAttempts >= 3) {
+                        const skipBtn = document.createElement('button');
+                        skipBtn.className = 'ml-2 bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm';
+                        skipBtn.textContent = '跳过 (Skip)';
+                        skipBtn.onclick = () => {
+                            speechAttempts = 0;
+                            skipBtn.remove();
+                            handleCorrectSpeech();
+                        };
+                        micStatus.appendChild(document.createElement('br'));
+                        micStatus.appendChild(skipBtn);
+                    }
+                    
                     const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
                     currentLineEl.classList.remove('active');
                     void currentLineEl.offsetWidth;
@@ -1404,6 +1434,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleCorrectSpeech() {
+        speechAttempts = 0; // Reset attempts when correct
         if (currentSentences.length > 1) {
             // Multi-sentence mode
             currentSentenceIndex++;
