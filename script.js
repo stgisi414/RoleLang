@@ -1242,7 +1242,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentTurnData = lessonPlan.dialogue[currentTurnIndex];
 
             // --- Japanese-Specific Verification using AI ---
-            if (currentLanguage === 'Japanese') {
+                if (currentLanguage === 'Japanese' || currentLanguage === 'Korean' || currentLanguage === 'Chinese') {
                 micStatus.textContent = 'Verifying with AI...';
 
                 // *** THIS IS THE FIX: Determine the correct single sentence to verify. ***
