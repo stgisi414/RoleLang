@@ -98,6 +98,34 @@ body {
   display: none;
 }
 
+/* Main heading flash and shimmer animations */
+@keyframes flash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+}
+
+.main-heading-animated {
+    color: #38bdf8 !important; /* sky-400 light blue */
+    background: linear-gradient(
+        90deg,
+        #38bdf8,
+        #87ceeb,
+        #ffffff,
+        #87ceeb,
+        #38bdf8
+    );
+    background-size: 200% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: flash 2s ease-in-out infinite, shimmer 3s linear infinite;
+}
+
 /* Dialogue line styling */
 .dialogue-line {
     padding: 0.75rem 1rem;
