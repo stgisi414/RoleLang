@@ -133,235 +133,159 @@ body {
     color: #e0f2fe; /* text-blue-100 */
 }
 
-/* Topic button animations - Smooth as jelly */
-@keyframes slideInLeft {
+/* Topic button animations - Smooth and gentle */
+@keyframes gentleSlideInLeft {
     from { 
         opacity: 0; 
-        transform: translateX(-40px) scale(0.8); 
-        filter: blur(2px);
+        transform: translateX(-20px); 
     }
     to { 
         opacity: 1; 
-        transform: translateX(0) scale(1); 
-        filter: blur(0);
+        transform: translateX(0); 
     }
 }
 
-@keyframes slideInRight {
+@keyframes gentleSlideInRight {
     from { 
         opacity: 0; 
-        transform: translateX(40px) scale(0.8); 
-        filter: blur(2px);
+        transform: translateX(20px); 
     }
     to { 
         opacity: 1; 
-        transform: translateX(0) scale(1); 
-        filter: blur(0);
+        transform: translateX(0); 
     }
 }
 
-@keyframes slideInUp {
+@keyframes gentleSlideInUp {
     from { 
         opacity: 0; 
-        transform: translateY(40px) scale(0.8); 
-        filter: blur(2px);
+        transform: translateY(20px); 
     }
     to { 
         opacity: 1; 
-        transform: translateY(0) scale(1); 
-        filter: blur(0);
+        transform: translateY(0); 
     }
 }
 
-@keyframes slideInDown {
+@keyframes gentleSlideInDown {
     from { 
         opacity: 0; 
-        transform: translateY(-40px) scale(0.8); 
-        filter: blur(2px);
+        transform: translateY(-20px); 
     }
     to { 
         opacity: 1; 
-        transform: translateY(0) scale(1); 
-        filter: blur(0);
+        transform: translateY(0); 
     }
 }
 
-@keyframes scaleIn {
+@keyframes gentleScaleIn {
     from { 
         opacity: 0; 
-        transform: scale(0.5) rotate(-5deg); 
-        filter: blur(3px);
-    }
-    50% { 
-        opacity: 0.8; 
-        transform: scale(1.1) rotate(2deg); 
-        filter: blur(1px);
+        transform: scale(0.9); 
     }
     to { 
         opacity: 1; 
-        transform: scale(1) rotate(0deg); 
-        filter: blur(0);
+        transform: scale(1); 
     }
 }
 
-@keyframes rotateIn {
+@keyframes gentleFadeIn {
     from { 
         opacity: 0; 
-        transform: rotate(-20deg) scale(0.6); 
-        filter: blur(3px);
-    }
-    50% { 
-        opacity: 0.8; 
-        transform: rotate(5deg) scale(1.05); 
-        filter: blur(1px);
+        transform: scale(0.95); 
     }
     to { 
         opacity: 1; 
-        transform: rotate(0deg) scale(1); 
-        filter: blur(0);
+        transform: scale(1); 
     }
 }
 
-@keyframes fadeInBounce {
-    0% { 
-        opacity: 0; 
-        transform: scale(0.2) translateY(20px); 
-        filter: blur(4px);
-    }
-    40% { 
-        opacity: 0.7; 
-        transform: scale(1.15) translateY(-5px); 
-        filter: blur(1px);
-    }
-    70% { 
-        opacity: 0.9; 
-        transform: scale(0.95) translateY(2px); 
-        filter: blur(0.5px);
-    }
-    100% { 
-        opacity: 1; 
-        transform: scale(1) translateY(0); 
-        filter: blur(0);
-    }
-}
-
-@keyframes slideInFade {
+/* Gentle exit animations */
+@keyframes gentleFadeOut {
     from { 
-        opacity: 0; 
-        transform: translateX(-30px) scale(0.7) rotate(-3deg); 
-        filter: blur(3px);
-    }
-    60% { 
-        opacity: 0.8; 
-        transform: translateX(5px) scale(1.05) rotate(1deg); 
-        filter: blur(1px);
+        opacity: 1; 
+        transform: scale(1); 
     }
     to { 
-        opacity: 1; 
-        transform: translateX(0) scale(1) rotate(0deg); 
-        filter: blur(0);
-    }
-}
-
-/* Smooth exit animations */
-@keyframes smoothFadeOut {
-    0% { 
-        opacity: 1; 
-        transform: scale(1) rotate(0deg); 
-        filter: blur(0);
-    }
-    50% { 
-        opacity: 0.5; 
-        transform: scale(0.9) rotate(2deg); 
-        filter: blur(1px);
-    }
-    100% { 
         opacity: 0; 
-        transform: scale(0.7) rotate(-5deg); 
-        filter: blur(3px);
+        transform: scale(0.95); 
     }
 }
 
-@keyframes slideOutLeft {
-    0% { 
+@keyframes gentleSlideOutLeft {
+    from { 
         opacity: 1; 
-        transform: translateX(0) scale(1); 
-        filter: blur(0);
+        transform: translateX(0); 
     }
-    100% { 
+    to { 
         opacity: 0; 
-        transform: translateX(-50px) scale(0.8); 
-        filter: blur(2px);
+        transform: translateX(-20px); 
     }
 }
 
-@keyframes slideOutRight {
-    0% { 
+@keyframes gentleSlideOutRight {
+    from { 
         opacity: 1; 
-        transform: translateX(0) scale(1); 
-        filter: blur(0);
+        transform: translateX(0); 
     }
-    100% { 
+    to { 
         opacity: 0; 
-        transform: translateX(50px) scale(0.8); 
-        filter: blur(2px);
+        transform: translateX(20px); 
     }
 }
 
-@keyframes scaleOutRotate {
-    0% { 
+@keyframes gentleSlideOutUp {
+    from { 
         opacity: 1; 
-        transform: scale(1) rotate(0deg); 
-        filter: blur(0);
+        transform: translateY(0); 
     }
-    100% { 
+    to { 
         opacity: 0; 
-        transform: scale(0.5) rotate(15deg); 
-        filter: blur(3px);
+        transform: translateY(-20px); 
     }
 }
 
-/* Enhanced entrance animations with cubic-bezier for smooth motion */
+/* Gentle entrance animations with smooth easing */
 .topic-animate-in-1 { 
-    animation: slideInLeft 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; 
+    animation: gentleSlideInLeft 0.5s ease-out forwards; 
 }
 .topic-animate-in-2 { 
-    animation: slideInRight 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; 
+    animation: gentleSlideInRight 0.5s ease-out forwards; 
 }
 .topic-animate-in-3 { 
-    animation: slideInUp 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; 
+    animation: gentleSlideInUp 0.5s ease-out forwards; 
 }
 .topic-animate-in-4 { 
-    animation: slideInDown 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; 
+    animation: gentleSlideInDown 0.5s ease-out forwards; 
 }
 .topic-animate-in-5 { 
-    animation: scaleIn 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; 
+    animation: gentleScaleIn 0.5s ease-out forwards; 
 }
 .topic-animate-in-6 { 
-    animation: rotateIn 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; 
+    animation: gentleFadeIn 0.5s ease-out forwards; 
 }
 .topic-animate-in-7 { 
-    animation: fadeInBounce 1.0s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; 
+    animation: gentleSlideInLeft 0.5s ease-out forwards; 
 }
 .topic-animate-in-8 { 
-    animation: slideInFade 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; 
+    animation: gentleSlideInRight 0.5s ease-out forwards; 
 }
 
-/* Multiple exit animation options */
+/* Gentle exit animation options */
 .topic-animate-out {
-    animation: smoothFadeOut 0.6s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards;
+    animation: gentleFadeOut 0.4s ease-in forwards;
 }
 
 .topic-animate-out-1 {
-    animation: slideOutLeft 0.6s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards;
+    animation: gentleSlideOutLeft 0.4s ease-in forwards;
 }
 
 .topic-animate-out-2 {
-    animation: slideOutRight 0.6s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards;
+    animation: gentleSlideOutRight 0.4s ease-in forwards;
 }
 
 .topic-animate-out-3 {
-    animation: scaleOutRotate 0.6s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards;
+    animation: gentleSlideOutUp 0.4s ease-in forwards;
 }
 
 /* Container transition smoothing and fixed heights */
@@ -392,12 +316,12 @@ body {
 
 /* Smooth hover effects for topic buttons */
 .lesson-btn {
-    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    will-change: transform, filter;
+    transition: all 0.2s ease-out;
+    will-change: transform;
 }
 
 .lesson-btn:hover {
-    transform: translateY(-2px) scale(1.02);
-    filter: brightness(1.1) saturate(1.1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }

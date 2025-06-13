@@ -243,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add smooth hover transitions
         button.addEventListener('mouseenter', () => {
           if (!button.classList.contains('animating')) {
-            button.style.transform = 'translateY(-2px) scale(1.02)';
+            button.style.transform = 'translateY(-1px)';
           }
         });
         
@@ -252,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
             button.style.transform = '';
           }
         });
-      }, index * 150); // Slightly faster but still smooth
+      }, index * 100); // Faster stagger for smoother feel
     });
   }
   
@@ -269,8 +269,8 @@ document.addEventListener('DOMContentLoaded', () => {
           if (button.parentNode) {
             button.parentNode.removeChild(button);
           }
-        }, 600); // Match the CSS animation duration
-      }, index * 80); // Staggered exit timing
+        }, 400); // Match the reduced CSS animation duration
+      }, index * 50); // Faster staggered exit timing
     });
   }
   
@@ -289,8 +289,8 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
           const newTopics = getRandomTopics(level, 4);
           animateTopicsIn(container, newTopics, level);
-        }, 700); // Slightly reduced overlap time
-      }, containerIndex * 200); // Stagger each container by 200ms
+        }, 500); // Faster transition overlap
+      }, containerIndex * 150); // Reduced stagger timing
     });
   }
   
