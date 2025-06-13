@@ -1238,7 +1238,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function verifyUserSpeech(spokenText) {
         try {
-            // This 'try...catch' block now wraps ALL logic to prevent any silent crashes.
             const currentLanguage = languageSelect.value;
             const currentTurnData = lessonPlan.dialogue[currentTurnIndex];
 
@@ -1252,8 +1251,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     // If we are in a multi-sentence turn, use the specific sentence at the current index.
                     expectedLine = currentSentences[currentSentenceIndex];
                 } else {
-                    // Otherwise, it's a single-sentence turn, so use the whole line.
-                    expectedLine = removeParentheses(currentTurnData.line.display);
+                    // Otherwise, it's a single-sentence turn, so use the whole line's clean_text.
+                    expectedLine = currentTurnData.line.clean_text;
                 }
                 // *** END OF FIX ***
 
@@ -1324,12 +1323,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     }, 4000);
                 }
             } else {
-                // --- Logic for all other languages ---
+                // --- Logic for all other languages (NOW UPDATED) ---
                 let requiredText;
                 if (currentSentences.length > 1) {
+                    // For multi-sentence lines, we still rely on the split sentences array
                     requiredText = currentSentences[currentSentenceIndex] || '';
                 } else {
-                    requiredText = removeParentheses(currentTurnData.line.display);
+                    // For single sentences, use the new 'clean_text' field
+                    requiredText = currentTurnData.line.clean_text;
                 }
 
                 const normalize = (text) => text.trim().toLowerCase().replace(/[.,!?;:"'`´''""。！？]/g, '').replace(/\s+/g, ' ');
@@ -1672,85 +1673,57 @@ document.addEventListener('DOMContentLoaded', () => {
   window.testAllVoiceIds = testAllVoiceIds;
 
     function createGeminiPrompt(language, topic) {
-        const isEnglish = language === 'English';
-        const translationInstruction = isEnglish
-            ? "For the user's lines (party A), do not include translations."
-            : `For the user's lines (party A), also include the English translation in parentheses within the "display" text only. Example: "Bonjour (Hello)".`;
+          const isEnglish = language === 'English';
+          const translationInstruction = isEnglish
+              ? "For the user's lines (party A), do not include translations in the 'display' text."
+              : `For the user's lines (party A), include the English translation in parentheses within the "display" text only. Example: "Bonjour (Hello)".`;
 
-        let japaneseScriptInstruction = '';
-        if (language === 'Japanese') {
-            japaneseScriptInstruction = `
-    IMPORTANT JAPANESE REQUIREMENTS:
-    - For each dialogue line, you MUST provide two versions in the "line" object:
-      1. "display": The normal Japanese sentence with Kanji, Hiragana, and Katakana.
-      2. "hiragana": A pure hiragana version of the same sentence. This is for speech recognition matching.
-    - The sentence structure and punctuation (like '。' or '、') MUST be identical between the "display" and "hiragana" versions.
-    - DO NOT use Romaji in either version.
-    - For user lines (party 'A'), the English translation should ONLY be in the "display" field, not in the "hiragana" field.
-    - Example for a user line:
-      "line": {
-        "display": "今日はコーヒーを飲みます。(Today I will drink coffee.)",
-        "hiragana": "きょうはこーひーをのみます。"
-      }
-    - Example for a partner line:
-      "line": {
-        "display": "承知いたしました。",
-        "hiragana": "しょうちいたしました。"
-      }
-    `;
-        }
-
-        return `
-    You are a language tutor creating a lesson for a web application named "RoleLang".
-    Your task is to generate a complete, structured lesson plan in JSON format. Do not include any explanatory text outside of the JSON structure itself.
-
-    The user wants to learn ${language}.
-    The roleplaying scenario is: "${topic}".
-    ${language === 'Japanese' ? japaneseScriptInstruction : ''}
-
-    IMPORTANT: Use realistic fake names for characters in the dialogue. Choose culturally appropriate names for the language being taught.
-    DO NOT use placeholders like [YOUR NAME]. Always use specific, realistic names.
-
-    Please generate a JSON object with the following structure:
-    1.  "scenario": A brief, one-sentence description of the lesson's context.
-    2.  "language": The language being taught (e.g., "${language}").
-    3.  "illustration_prompt": A simple, descriptive prompt (5-10 words) for an AI image generator.
-    4.  "dialogue": An array of turn-based dialogue objects.
-      - Each object in the array must have these properties:
-          - "party": "A" (the user) or "B" (the partner).
-          - "line": This MUST be an object for all languages.
-              - For non-Japanese languages, just repeat the text in both fields.
-              - For Japanese, follow the specific instructions above.
+          const lineObjectStructure = `
               - "display": The line of dialogue to be displayed to the user. ${translationInstruction}
-              - "hiragana": The line of dialogue for machine processing (for Japanese, this is pure hiragana; for others, it's the same as display).
-          - "explanation" (optional): An object with "title" and "body" properties for important grammar or vocabulary notes.
+              - "clean_text": The line of dialogue WITHOUT any parenthetical translations. THIS IS FOR SPEECH RECOGNITION. It must be identical to the "display" text, just without the translation part.
+          `;
 
-    Example of required JSON output format for a JAPANESE lesson:
-
-    {
-      "scenario": "Takeshi asks for directions to the train station.",
-      "language": "Japanese",
-      "illustration_prompt": "Tourist asking for directions in a Japanese city",
-      "dialogue": [
-        {
-          "party": "A",
+          let japaneseScriptInstruction = '';
+          if (language === 'Japanese') {
+              japaneseScriptInstruction = `
+        IMPORTANT JAPANESE REQUIREMENTS:
+        - Your "line" object for Japanese MUST contain three fields:
+          1. "display": The normal Japanese sentence with Kanji, including the English translation in parentheses for user lines.
+          2. "clean_text": The same Japanese sentence, but WITHOUT the parenthetical English translation.
+          3. "hiragana": A pure hiragana version of "clean_text".
+        - Example for a Japanese user line:
           "line": {
-            "display": "すみません、駅はどこですか。(Excuse me, where is the station?)",
-            "hiragana": "すみません、えきはどこですか。"
+            "display": "今日はコーヒーを飲みます。(Today I will drink coffee.)",
+            "clean_text": "今日はコーヒーを飲みます。",
+            "hiragana": "きょうはこーひーをのみます。"
           }
-        },
-        {
-          "party": "B",
-          "line": {
-            "display": "この道をまっすぐ行ってください。",
-            "hiragana": "このみちをまっすぐいってください。"
+        `;
           }
-        }
-      ]
-    }
 
-    Now, please generate the JSON for the ${language} lesson about "${topic}".`;
-    }
+          return `
+      You are a language tutor creating a lesson for a web application named "RoleLang".
+      Your task is to generate a complete, structured lesson plan in JSON format. Do not include any explanatory text outside of the JSON structure itself.
+
+      The user wants to learn ${language}.
+      The roleplaying scenario is: "${topic}".
+      ${language === 'Japanese' ? japaneseScriptInstruction : ''}
+
+      IMPORTANT: Use realistic fake names for characters in the dialogue. Choose culturally appropriate names for the language being taught.
+      DO NOT use placeholders like [YOUR NAME]. Always use specific, realistic names.
+
+      Please generate a JSON object with the following structure:
+      1.  "scenario": A brief, one-sentence description of the lesson's context.
+      2.  "language": The language being taught (e.g., "${language}").
+      3.  "illustration_prompt": A simple, descriptive prompt (5-10 words) for an AI image generator.
+      4.  "dialogue": An array of turn-based dialogue objects.
+        - Each object in the array must have these properties:
+            - "party": "A" (the user) or "B" (the partner).
+            - "line": This MUST be an object for all languages. It must contain the following fields:
+                ${lineObjectStructure}
+            - "explanation" (optional): An object with "title" and "body" properties for important grammar or vocabulary notes.
+
+      Now, please generate the JSON for the ${language} lesson about "${topic}".`;
+      }
 
   // Initialize native language detection
   const initializeNativeLanguage = () => {
