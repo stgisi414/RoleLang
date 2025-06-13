@@ -385,7 +385,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (history.length === 0) {
       historyContainer.innerHTML = `
-        <div class="text-center py-8 text-gray-400">
+        <div class="col-span-2 flex flex-col items-center justify-center py-8 text-gray-400">
           <i class="fas fa-history text-3xl mb-2"></i>
           <p>${translateText('noCompletedLessons')}</p>
         </div>
