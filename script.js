@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const STATE_KEY = 'rolelang_app_state';
   const LESSON_HISTORY_KEY = 'rolelang_lesson_history';
   const MAX_LESSON_HISTORY = 100;
-  
+
   function saveState() {
     const state = {
       lessonPlan: lessonPlan,
@@ -61,28 +61,28 @@ document.addEventListener('DOMContentLoaded', () => {
       audioSpeed: audioSpeedSelect ? audioSpeedSelect.value : '1',
       lastSaved: Date.now()
     };
-    
+
     try {
       localStorage.setItem(STATE_KEY, JSON.stringify(state));
     } catch (error) {
       console.warn('Failed to save state to localStorage:', error);
     }
   }
-  
+
   function loadState() {
     try {
       const savedState = localStorage.getItem(STATE_KEY);
       if (!savedState) return null;
-      
+
       const state = JSON.parse(savedState);
-      
+
       // Check if state is recent (within 7 days)
       const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
       if (state.lastSaved < sevenDaysAgo) {
         localStorage.removeItem(STATE_KEY);
         return null;
       }
-      
+
       return state;
     } catch (error) {
       console.warn('Failed to load state from localStorage:', error);
@@ -90,11 +90,11 @@ document.addEventListener('DOMContentLoaded', () => {
       return null;
     }
   }
-  
+
   function clearState() {
     localStorage.removeItem(STATE_KEY);
   }
-  
+
   function restoreState(state) {
     // Restore form values
     if (state.selectedLanguage) {
@@ -103,46 +103,46 @@ document.addEventListener('DOMContentLoaded', () => {
     if (state.topicInput) {
       topicInput.value = state.topicInput;
     }
-    
+
     // Restore lessons visibility
     if (state.lessonsVisible) {
       lessonsContainer.classList.remove('hidden');
       const chevronIcon = toggleLessonsBtn.querySelector('i');
       chevronIcon.style.transform = 'rotate(180deg)';
     }
-    
+
     // Restore audio speed
     if (state.audioSpeed && audioSpeedSelect) {
       audioSpeedSelect.value = state.audioSpeed;
     }
-    
+
     // Restore lesson if it exists
     if (state.lessonPlan && state.currentScreen === 'lesson') {
       lessonPlan = state.lessonPlan;
       currentTurnIndex = state.currentTurnIndex;
-      
+
       // Set speech recognition language
       if (recognition) {
         recognition.lang = getLangCode(state.selectedLanguage);
       }
-      
+
       // Switch to lesson screen
       landingScreen.classList.add('hidden');
       lessonScreen.classList.remove('hidden');
-      
+
       // Restore conversation
       restoreConversation();
-      
+
       // Restore illustration
       if (lessonPlan.illustration_url) {
         restoreIllustration(lessonPlan.illustration_url);
       } else if (lessonPlan.illustration_prompt) {
         fetchAndDisplayIllustration(lessonPlan.illustration_prompt);
       }
-      
+
       // Resume from current turn
       advanceTurn();
-      
+
       // Stop topic rotations when in lesson
       stopTopicRotations();
     }
@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateTranslations() {
     // Update document title
     document.title = translateText('title');
-    
+
     // Update all elements with data-translate attribute
     document.querySelectorAll('[data-translate]').forEach(element => {
       const key = element.getAttribute('data-translate');
@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const detectNativeLanguage = () => {
     const browserLang = navigator.language || navigator.userLanguage || 'en';
     const langCode = browserLang.split('-')[0].toLowerCase();
-    
+
     // Map of supported native languages
     const nativeLangMap = {
       'en': { code: 'en', flag: '🇺🇸', name: 'English' },
@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
       'ja': { code: 'ja', flag: '🇯🇵', name: '日本語' },
       'ko': { code: 'ko', flag: '🇰🇷', name: '한국어' }
     };
-    
+
     const detectedLang = nativeLangMap[langCode] || nativeLangMap['en'];
     setNativeLanguage(detectedLang.code, detectedLang.flag, detectedLang.name);
   };
@@ -202,15 +202,15 @@ document.addEventListener('DOMContentLoaded', () => {
     nativeLang = langCode;
     nativeFlagEl.textContent = flag;
     nativeLangTextEl.textContent = name;
-    
+
     // Update translations
     currentTranslations = translations[langCode] || translations.en;
     updateTranslations();
-    
+
     // Refresh topics with new language
     stopTopicRotations();
     startTopicRotations();
-    
+
     // Store in localStorage for persistence
     localStorage.setItem('rolelang_native_lang', JSON.stringify({ code: langCode, flag, name }));
   };
@@ -289,7 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const langCode = option.getAttribute('data-lang');
           const flag = option.getAttribute('data-flag');
           const name = option.textContent.trim();
-          
+
           setNativeLanguage(langCode, flag, name);
           nativeLangDropdown.classList.add('hidden');
       }
@@ -319,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       recognition.onerror = (event) => {
           console.error("Speech recognition error:", event.error);
-          
+
           // Special handling for Japanese and other languages that may not be supported
           const currentLanguage = languageSelect.value;
           if (currentLanguage === 'Japanese' && (event.error === 'language-not-supported' || event.error === 'no-speech')) {
@@ -337,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Lesson History Functions ---
-  
+
   function saveLessonToHistory(lessonPlan, selectedLanguage, originalTopic) {
     try {
       const history = getLessonHistory();
@@ -356,17 +356,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }),
         lessonPlan: lessonPlan
       };
-      
+
       // Add to beginning of array
       history.unshift(lessonRecord);
-      
+
       // Keep only the most recent MAX_LESSON_HISTORY lessons
       if (history.length > MAX_LESSON_HISTORY) {
         history.splice(MAX_LESSON_HISTORY);
       }
-      
+
       localStorage.setItem(LESSON_HISTORY_KEY, JSON.stringify(history));
-      
+
       // Refresh history display if visible
       if (!document.getElementById('history-container').classList.contains('hidden')) {
         displayLessonHistory();
@@ -375,7 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.warn('Failed to save lesson to history:', error);
     }
   }
-  
+
   function getLessonHistory() {
     try {
       const history = localStorage.getItem(LESSON_HISTORY_KEY);
@@ -385,11 +385,11 @@ document.addEventListener('DOMContentLoaded', () => {
       return [];
     }
   }
-  
+
   function displayLessonHistory() {
     const historyContainer = document.getElementById('history-lessons-container');
     const history = getLessonHistory();
-    
+
     if (history.length === 0) {
       historyContainer.innerHTML = `
         <div class="col-span-2 flex flex-col items-center justify-center py-8 text-gray-400">
@@ -399,9 +399,9 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
       return;
     }
-    
+
     historyContainer.innerHTML = '';
-    
+
     // Display up to 6 most recent lessons in a grid
     const recentLessons = history.slice(0, 6);
     recentLessons.forEach((lesson, index) => {
@@ -412,66 +412,66 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="text-white text-sm font-medium mb-1 line-clamp-2">${lesson.topic}</div>
         <div class="text-gray-400 text-xs">${lesson.completedAt}</div>
       `;
-      
+
       lessonCard.addEventListener('click', () => {
         reviewLesson(lesson);
       });
-      
+
       // Add animation
       lessonCard.style.opacity = '0';
       lessonCard.classList.add(`topic-animate-in-${(index % 6) + 1}`);
-      
+
       historyContainer.appendChild(lessonCard);
     });
   }
-  
+
   function reviewLesson(lessonRecord) {
     // Set up the lesson for review
     lessonPlan = lessonRecord.lessonPlan;
     currentTurnIndex = 0;
-    
+
     // Update form values
     languageSelect.value = lessonRecord.language;
     topicInput.value = lessonRecord.topic;
-    
+
     // Set speech recognition language
     if (recognition) {
       recognition.lang = getLangCode(lessonRecord.language);
     }
-    
+
     // Clear previous state and switch to lesson screen
     clearState();
     landingScreen.classList.add('hidden');
     lessonScreen.classList.remove('hidden');
-    
+
     // Stop topic rotations
     stopTopicRotations();
-    
+
     // Set up lesson
     if (lessonPlan.illustration_url) {
       restoreIllustration(lessonPlan.illustration_url);
     } else if (lessonPlan.illustration_prompt) {
       fetchAndDisplayIllustration(lessonPlan.illustration_prompt);
     }
-    
+
     startConversation();
-    
+
     // Add review indicator
     const reviewIndicator = document.createElement('div');
     reviewIndicator.className = 'absolute top-16 left-4 bg-purple-600 text-white px-3 py-1 rounded-lg text-sm z-10';
     reviewIndicator.innerHTML = '<i class="fas fa-history mr-2"></i>Review Mode';
     lessonScreen.appendChild(reviewIndicator);
-    
+
     // Save state for review session
     saveState();
   }
 
   // --- Toggle Functions ---
-  
+
   function toggleLessonsVisibility() {
     const isHidden = lessonsContainer.classList.contains('hidden');
     const chevronIcon = toggleLessonsBtn.querySelector('i');
-    
+
     if (isHidden) {
       lessonsContainer.classList.remove('hidden');
       chevronIcon.style.transform = 'rotate(180deg)';
@@ -485,16 +485,16 @@ document.addEventListener('DOMContentLoaded', () => {
       // Stop topic rotations when hiding lessons
       stopTopicRotations();
     }
-    
+
     // Save state when lessons visibility changes
     saveState();
   }
-  
+
   function toggleHistoryVisibility() {
     const historyContainer = document.getElementById('history-container');
     const isHidden = historyContainer.classList.contains('hidden');
     const chevronIcon = document.getElementById('toggle-history-btn').querySelector('i');
-    
+
     if (isHidden) {
       historyContainer.classList.remove('hidden');
       chevronIcon.style.transform = 'rotate(180deg)';
@@ -506,14 +506,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Topic Rotation Functions ---
-  
+
   function getRandomTopics(level, count = 4) {
     const topicPools = getTopicPools();
     const pool = topicPools[level] || [];
     const shuffled = [...pool].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, count);
   }
-  
+
   function createTopicButton(topic, level) {
     const button = document.createElement('button');
     button.className = `lesson-btn bg-${level === 'beginner' ? 'green' : level === 'intermediate' ? 'yellow' : 'red'}-600/20 hover:bg-${level === 'beginner' ? 'green' : level === 'intermediate' ? 'yellow' : 'red'}-600/30 text-${level === 'beginner' ? 'green' : level === 'intermediate' ? 'yellow' : 'red'}-300 text-xs py-2 px-3 rounded-md transition-all border border-${level === 'beginner' ? 'green' : level === 'intermediate' ? 'yellow' : 'red'}-600/30`;
@@ -522,25 +522,25 @@ document.addEventListener('DOMContentLoaded', () => {
     button.style.opacity = '0';
     return button;
   }
-  
+
   function animateTopicsIn(container, topics, level) {
     // Add smooth transition class to container
     container.classList.add('topic-container-transition');
-    
+
     topics.forEach((topic, index) => {
       setTimeout(() => {
         const button = createTopicButton(topic, level);
         const randomAnimation = animationClasses[Math.floor(Math.random() * animationClasses.length)];
         button.classList.add(randomAnimation);
         container.appendChild(button);
-        
+
         // Add smooth hover transitions
         button.addEventListener('mouseenter', () => {
           if (!button.classList.contains('animating')) {
             button.style.transform = 'translateY(-1px)';
           }
         });
-        
+
         button.addEventListener('mouseleave', () => {
           if (!button.classList.contains('animating')) {
             button.style.transform = '';
@@ -549,16 +549,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }, index * 100); // Faster stagger for smoother feel
     });
   }
-  
+
   function animateTopicsOut(container) {
     const buttons = container.querySelectorAll('.lesson-btn');
-    
+
     buttons.forEach((button, index) => {
       setTimeout(() => {
         button.classList.add('animating');
         const randomExitAnimation = exitAnimationClasses[Math.floor(Math.random() * exitAnimationClasses.length)];
         button.classList.add(randomExitAnimation);
-        
+
         setTimeout(() => {
           if (button.parentNode) {
             button.parentNode.removeChild(button);
@@ -567,19 +567,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }, index * 50); // Faster staggered exit timing
     });
   }
-  
+
   function rotateTopics() {
     const containers = {
       beginner: document.getElementById('beginner-container'),
       intermediate: document.getElementById('intermediate-container'),
       advanced: document.getElementById('advanced-container')
     };
-    
+
     Object.entries(containers).forEach(([level, container], containerIndex) => {
       // Stagger the start of each container's animation for smoother overall effect
       setTimeout(() => {
         animateTopicsOut(container);
-        
+
         setTimeout(() => {
           const newTopics = getRandomTopics(level, 4);
           animateTopicsIn(container, newTopics, level);
@@ -587,17 +587,17 @@ document.addEventListener('DOMContentLoaded', () => {
       }, containerIndex * 150); // Reduced stagger timing
     });
   }
-  
+
   function startTopicRotations() {
     // Initial population with staggered start
     setTimeout(() => {
       rotateTopics();
     }, 500); // Small delay for initial load
-    
+
     // Set up intervals for each level (8 seconds for smoother experience)
     topicRotationIntervals.push(setInterval(rotateTopics, 8000));
   }
-  
+
   function stopTopicRotations() {
     topicRotationIntervals.forEach(interval => clearInterval(interval));
     topicRotationIntervals = [];
@@ -672,7 +672,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (recognition) {
             const langCode = getLangCode(language);
             recognition.lang = langCode;
-            
+
             // Special handling for Japanese - add warning if speech recognition may not work well
             if (language === 'Japanese') {
               console.warn('Japanese speech recognition may have limited accuracy. Consider using the visual verification.');
@@ -786,7 +786,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Western: .!? | Chinese/Japanese: 。！？ | Korean: .!?
       const sentences = text.split(/([.!?。！？]+\s*)/).filter(s => s.trim().length > 0);
       const result = [];
-      
+
       for (let i = 0; i < sentences.length; i += 2) {
           const sentence = sentences[i];
           const punctuation = sentences[i + 1] || '';
@@ -794,7 +794,7 @@ document.addEventListener('DOMContentLoaded', () => {
               result.push((sentence + punctuation).trim());
           }
       }
-      
+
       return result.length > 0 ? result : [text];
   }
 
@@ -802,12 +802,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (currentTurnIndex >= lessonPlan.dialogue.length) {
           micStatus.textContent = translateText('lessonComplete');
           micBtn.disabled = true;
-          
+
           // Save completed lesson to history
           const selectedLanguage = languageSelect.value;
           const originalTopic = topicInput.value;
           saveLessonToHistory(lessonPlan, selectedLanguage, originalTopic);
-          
+
           // Clear state when lesson is complete
           clearState();
           return;
@@ -828,7 +828,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const cleanText = removeParentheses(currentTurnData.line);
           currentSentences = splitIntoSentences(cleanText);
           currentSentenceIndex = 0;
-          
+
           micBtn.disabled = true;
           micStatus.textContent = translateText('listenFirst');
 
@@ -863,7 +863,7 @@ document.addEventListener('DOMContentLoaded', () => {
           // Reset sentence tracking for partner turns
           currentSentences = [];
           currentSentenceIndex = 0;
-          
+
           micBtn.disabled = true;
           micStatus.textContent = translateText('partnerSpeaking');
           try {
@@ -896,7 +896,7 @@ document.addEventListener('DOMContentLoaded', () => {
               audio.addEventListener('error', (e) => {
                   console.error("Audio error:", e);
                   micStatus.textContent = translateText('audioError');
-                  setTimeout(() => {
+                  setTimeout(async () => {
                       currentTurnIndex++;
                       advanceTurn();
                   }, 1000);
@@ -935,7 +935,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return text.replace(/\s*\([^)]*\)/g, '').trim();
   }
 
-  function verifyUserSpeech(spokenText) {
+  async function verifyUserSpeech(spokenText) {
       // Determine what text to compare against
       let requiredText;
       if (currentSentences.length > 1) {
@@ -945,22 +945,11 @@ document.addEventListener('DOMContentLoaded', () => {
           // Single sentence mode: compare against full line
           requiredText = lessonPlan.dialogue[currentTurnIndex].line.split('(')[0]; // Ignore translation
       }
-      
-      // Function to convert Japanese text to hiragana
-      const toHiragana = (text) => {
-          return text.replace(/[\u30A1-\u30FA]/g, (char) => {
-              // Convert katakana to hiragana
-              return String.fromCharCode(char.charCodeAt(0) - 0x60);
-          }).replace(/[\u4E00-\u9FAF]/g, (char) => {
-              // For kanji, we'll keep them as-is since perfect conversion requires a dictionary
-              // In practice, speech recognition usually returns hiragana/katakana
-              return char;
-          });
-      };
 
-      // Enhanced normalization function
-      const normalize = (text) => {
-          const currentLanguage = languageSelect.value;
+      const currentLanguage = languageSelect.value;
+
+      // Enhanced normalization function with Gemini conversion for Japanese
+      const normalize = async (text) => {
           let normalized = text.trim().toLowerCase()
               .replace(/[.,!?;:"'`´''""。！？]/g, '') // Remove punctuation including Japanese
               .replace(/\s+/g, ' ') // Normalize whitespace
@@ -971,31 +960,32 @@ document.addEventListener('DOMContentLoaded', () => {
               .replace(/[ùúûü]/g, 'u')
               .replace(/[ñ]/g, 'n')
               .replace(/[ç]/g, 'c');
-          
-          // Convert to hiragana for Japanese
+
+          // Use Gemini for comprehensive Japanese hiragana conversion
           if (currentLanguage === 'Japanese') {
-              normalized = toHiragana(normalized);
+              normalized = await convertJapaneseToHiraganaWithGemini(normalized);
           }
-          
+
           return normalized;
       };
 
-      const normalizedSpoken = normalize(spokenText);
-      const normalizedRequired = normalize(requiredText);
-      
-      // Calculate similarity using Levenshtein distance
-      function levenshteinDistance(str1, str2) {
-          const matrix = [];
-          for (let i = 0; i <= str2.length; i++) {
-              matrix[i] = [i];
-          }
-          for (let j = 0; j <= str1.length; j++) {
-              matrix[0][j] = j;
-          }
-          for (let i = 1; i <= str2.length; i++) {
-              for (let j = 1; j <= str1.length; j++) {
-                  if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
-                      matrix[i][j] = matrix[i - 1][j - 1];
+      try {
+          const normalizedSpoken = await normalize(spokenText);
+          const normalizedRequired = await normalize(requiredText);
+
+          // Calculate similarity using Levenshtein distance
+          function levenshteinDistance(str1, str2) {
+              const matrix = [];
+              for (let i = 0; i <= str2.length; i++) {
+                  matrix[i] = [i];
+              }
+              for (let j = 0; j <= str1.length; j++) {
+                  matrix[0][j] = j;
+              }
+              for (let i = 1; i <= str2.length; i++) {
+                  for (let j = 1; j <= str1.length; j++) {
+                      if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+                          matrix[i][j] = matrix[i - 1][j - 1];
                   } else {
                       matrix[i][j] = Math.min(
                           matrix[i - 1][j - 1] + 1,
@@ -1024,12 +1014,59 @@ document.addEventListener('DOMContentLoaded', () => {
       const distance = levenshteinDistance(normalizedSpoken, normalizedRequired);
       const maxLength = Math.max(normalizedSpoken.length, normalizedRequired.length);
       const similarity = 1 - (distance / maxLength);
-      
+
       // Accept if similarity is 75% or higher
       if (similarity >= 0.75) {
           handleCorrectSpeech();
       } else {
           handleIncorrectSpeech(similarity, normalizedRequired, normalizedSpoken);
+      }
+  } catch (error) {
+      console.error("Error in verifyUserSpeech:", error);
+      micStatus.textContent = translateText('errorVerifying');
+  }
+  }
+
+  async function convertJapaneseToHiraganaWithGemini(text) {
+      try {
+          const prompt = `Convert the following Japanese text to hiragana: "${text}". If it's already in hiragana, just return it.`;
+          const response = await fetch(GEMINI_API_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  contents: [{ parts: [{ text: prompt }] }],
+                  safetySettings: [
+                      {
+                          category: "HARM_CATEGORY_HARASSMENT",
+                          threshold: "BLOCK_NONE"
+                      },
+                      {
+                          category: "HARM_CATEGORY_HATE_SPEECH",
+                          threshold: "BLOCK_NONE"
+                      },
+                      {
+                          category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                          threshold: "BLOCK_NONE"
+                      },
+                      {
+                          category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                          threshold: "BLOCK_NONE"
+                      }
+                  ]
+              }),
+          });
+
+          if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(`Gemini API error: ${response.statusText} - ${JSON.stringify(errorData)}`);
+          }
+
+          const data = await response.json();
+          const hiraganaText = data.candidates[0].content.parts[0].text.trim();
+          return hiraganaText;
+      } catch (error) {
+          console.error("Failed to convert to hiragana:", error);
+          return text; // Return original text on failure
       }
   }
 
@@ -1037,7 +1074,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (currentSentences.length > 1) {
           // Multi-sentence mode
           currentSentenceIndex++;
-          
+
           if (currentSentenceIndex >= currentSentences.length) {
               // All sentences completed
               micStatus.textContent = translateText('allSentencesCorrect');
@@ -1076,17 +1113,17 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('Required:', normalizedRequired);
       console.log('Spoken:', normalizedSpoken);
       console.log('Similarity:', (similarity * 100).toFixed(1) + '%');
-      
+
       const sentenceInfo = currentSentences.length > 1 ? 
           ` (Sentence ${currentSentenceIndex + 1}/${currentSentences.length})` : '';
-      
+
       micStatus.textContent = translateText('tryAgain') + ` (${(similarity * 100).toFixed(0)}% match)${sentenceInfo}`;
       const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
       currentLineEl.classList.remove('active');
       void currentLineEl.offsetWidth;
       currentLineEl.classList.add('active');
       currentLineEl.style.borderColor = '#f87171'; // red-400
-      
+
       setTimeout(() => {
           if (currentSentences.length > 1) {
               enableUserMicForSentence();
@@ -1102,7 +1139,7 @@ document.addEventListener('DOMContentLoaded', () => {
           recognition.stop();
       } else {
           const currentLanguage = languageSelect.value;
-          
+
           // Test if the language is supported before starting
           if (currentLanguage === 'Japanese') {
               try {
@@ -1184,13 +1221,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
           if (result.imageUrl) {
               console.log('Generated image with seed:', result.seed);
-              
+
               // Save image URL to lesson plan for state persistence
               if (lessonPlan) {
                   lessonPlan.illustration_url = result.imageUrl;
                   saveState();
               }
-              
+
               illustrationImg.src = result.imageUrl;
               illustrationImg.onload = () => {
                   imageLoader.classList.add('hidden');
@@ -1346,7 +1383,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const translationInstruction = isEnglish 
           ? "For the user's lines (party A), do not include translations since this is English practice."
           : `For the user's lines (party A), also include the English translation in parentheses. Example: "Bonjour (Hello)".`;
-      
+
       // Special Japanese script instructions based on difficulty level
       let japaneseScriptInstruction = '';
       if (language === 'Japanese') {
@@ -1354,10 +1391,10 @@ document.addEventListener('DOMContentLoaded', () => {
           const topicPools = getTopicPools();
           const beginnerTopics = topicPools.beginner || [];
           const intermediateTopics = topicPools.intermediate || [];
-          
+
           const isBeginnerTopic = beginnerTopics.some(t => t.toLowerCase().includes(topic.toLowerCase()) || topic.toLowerCase().includes(t.toLowerCase()));
-          const isIntermediateTopic = intermediateTopics.some(t => t.toLowerCase().includes(topic.toLowerCase()) || topic.toLowerCase().includes(t.toLowerCase()));
-          
+          const isIntermediateTopic = intermediateTopics.some(t => t.toLowerCase().includes(topic.toLowerCase()));
+
           if (isBeginnerTopic) {
               japaneseScriptInstruction = `
 IMPORTANT JAPANESE SCRIPT REQUIREMENTS:
@@ -1387,7 +1424,7 @@ IMPORTANT JAPANESE SCRIPT REQUIREMENTS:
 - NO ROMAJI - only use Japanese scripts with proper kanji usage.`;
           }
       }
-      
+
       return `
 You are a language tutor creating a lesson for a web application named "RoleLang".
 Your task is to generate a complete, structured lesson plan in JSON format. Do not include any explanatory text outside of the JSON structure itself.
@@ -1476,29 +1513,29 @@ Now, please generate the JSON for the ${language} lesson about "${topic}".`;
   // Reset lesson to beginning
   function resetLesson() {
     if (!lessonPlan) return;
-    
+
     // Reset turn index to beginning
     currentTurnIndex = 0;
-    
+
     // Clear any active states and reset dialogue lines
     document.querySelectorAll('.dialogue-line.active').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.dialogue-line').forEach(el => {
       el.style.borderColor = '';
     });
-    
+
     // Reset mic button state
     micBtn.disabled = false;
     micBtn.classList.remove('bg-green-600');
     micBtn.classList.add('bg-red-600');
-    
+
     // Reset status message
     micStatus.textContent = translateText('micStatus');
-    
+
     // Stop any ongoing speech recognition
     if (isRecognizing && recognition) {
       recognition.stop();
     }
-    
+
     // Save state and restart conversation
     saveState();
     advanceTurn();
@@ -1508,7 +1545,7 @@ Now, please generate the JSON for the ${language} lesson about "${topic}".`;
   function addBackToLandingButton() {
     // Check if button already exists
     if (document.getElementById('back-to-landing-btn')) return;
-    
+
     const backBtn = document.createElement('button');
     backBtn.id = 'back-to-landing-btn';
     backBtn.className = 'absolute top-4 left-4 bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-colors text-sm';
@@ -1522,14 +1559,14 @@ Now, please generate the JSON for the ${language} lesson about "${topic}".`;
       lessonScreen.classList.add('hidden');
       startTopicRotations();
     };
-    
+
     lessonScreen.appendChild(backBtn);
   }
 
   // Initialize everything
   initializeNativeLanguage();
   updateTranslations(); // Initial translation update
-  
+
   // Load saved state
   const savedState = loadState();
   if (savedState) {
