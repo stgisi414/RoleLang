@@ -46,6 +46,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // State management
   const STATE_KEY = 'rolelang_app_state';
+  const LESSON_HISTORY_KEY = 'rolelang_lesson_history';
+  const MAX_LESSON_HISTORY = 100;
   
   function saveState() {
     const state = {
@@ -244,6 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
   startLessonBtn.addEventListener('click', initializeLesson);
   micBtn.addEventListener('click', toggleSpeechRecognition);
   toggleLessonsBtn.addEventListener('click', toggleLessonsVisibility);
+  document.getElementById('toggle-history-btn').addEventListener('click', toggleHistoryVisibility);
   resetLessonBtn.addEventListener('click', resetLesson);
 
   // Add event listeners for lesson buttons
@@ -326,6 +329,136 @@ document.addEventListener('DOMContentLoaded', () => {
       };
   }
 
+  // --- Lesson History Functions ---
+  
+  function saveLessonToHistory(lessonPlan, selectedLanguage, originalTopic) {
+    try {
+      const history = getLessonHistory();
+      const lessonRecord = {
+        id: Date.now(),
+        timestamp: new Date().toISOString(),
+        language: selectedLanguage,
+        topic: originalTopic,
+        scenario: lessonPlan.scenario,
+        completedAt: new Date().toLocaleDateString(undefined, { 
+          year: 'numeric', 
+          month: 'short', 
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        lessonPlan: lessonPlan
+      };
+      
+      // Add to beginning of array
+      history.unshift(lessonRecord);
+      
+      // Keep only the most recent MAX_LESSON_HISTORY lessons
+      if (history.length > MAX_LESSON_HISTORY) {
+        history.splice(MAX_LESSON_HISTORY);
+      }
+      
+      localStorage.setItem(LESSON_HISTORY_KEY, JSON.stringify(history));
+      
+      // Refresh history display if visible
+      if (!document.getElementById('history-container').classList.contains('hidden')) {
+        displayLessonHistory();
+      }
+    } catch (error) {
+      console.warn('Failed to save lesson to history:', error);
+    }
+  }
+  
+  function getLessonHistory() {
+    try {
+      const history = localStorage.getItem(LESSON_HISTORY_KEY);
+      return history ? JSON.parse(history) : [];
+    } catch (error) {
+      console.warn('Failed to load lesson history:', error);
+      return [];
+    }
+  }
+  
+  function displayLessonHistory() {
+    const historyContainer = document.getElementById('history-lessons-container');
+    const history = getLessonHistory();
+    
+    if (history.length === 0) {
+      historyContainer.innerHTML = `
+        <div class="text-center py-8 text-gray-400">
+          <i class="fas fa-history text-3xl mb-2"></i>
+          <p>${translateText('noCompletedLessons')}</p>
+        </div>
+      `;
+      return;
+    }
+    
+    historyContainer.innerHTML = '';
+    
+    // Display up to 6 most recent lessons in a grid
+    const recentLessons = history.slice(0, 6);
+    recentLessons.forEach((lesson, index) => {
+      const lessonCard = document.createElement('div');
+      lessonCard.className = 'bg-purple-600/20 hover:bg-purple-600/30 border border-purple-600/30 rounded-lg p-3 cursor-pointer transition-all';
+      lessonCard.innerHTML = `
+        <div class="text-purple-300 text-xs mb-1">${lesson.language}</div>
+        <div class="text-white text-sm font-medium mb-1 line-clamp-2">${lesson.topic}</div>
+        <div class="text-gray-400 text-xs">${lesson.completedAt}</div>
+      `;
+      
+      lessonCard.addEventListener('click', () => {
+        reviewLesson(lesson);
+      });
+      
+      // Add animation
+      lessonCard.style.opacity = '0';
+      lessonCard.classList.add(`topic-animate-in-${(index % 6) + 1}`);
+      
+      historyContainer.appendChild(lessonCard);
+    });
+  }
+  
+  function reviewLesson(lessonRecord) {
+    // Set up the lesson for review
+    lessonPlan = lessonRecord.lessonPlan;
+    currentTurnIndex = 0;
+    
+    // Update form values
+    languageSelect.value = lessonRecord.language;
+    topicInput.value = lessonRecord.topic;
+    
+    // Set speech recognition language
+    if (recognition) {
+      recognition.lang = getLangCode(lessonRecord.language);
+    }
+    
+    // Clear previous state and switch to lesson screen
+    clearState();
+    landingScreen.classList.add('hidden');
+    lessonScreen.classList.remove('hidden');
+    
+    // Stop topic rotations
+    stopTopicRotations();
+    
+    // Set up lesson
+    if (lessonPlan.illustration_url) {
+      restoreIllustration(lessonPlan.illustration_url);
+    } else if (lessonPlan.illustration_prompt) {
+      fetchAndDisplayIllustration(lessonPlan.illustration_prompt);
+    }
+    
+    startConversation();
+    
+    // Add review indicator
+    const reviewIndicator = document.createElement('div');
+    reviewIndicator.className = 'absolute top-16 left-4 bg-purple-600 text-white px-3 py-1 rounded-lg text-sm z-10';
+    reviewIndicator.innerHTML = '<i class="fas fa-history mr-2"></i>Review Mode';
+    lessonScreen.appendChild(reviewIndicator);
+    
+    // Save state for review session
+    saveState();
+  }
+
   // --- Toggle Functions ---
   
   function toggleLessonsVisibility() {
@@ -348,6 +481,21 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Save state when lessons visibility changes
     saveState();
+  }
+  
+  function toggleHistoryVisibility() {
+    const historyContainer = document.getElementById('history-container');
+    const isHidden = historyContainer.classList.contains('hidden');
+    const chevronIcon = document.getElementById('toggle-history-btn').querySelector('i');
+    
+    if (isHidden) {
+      historyContainer.classList.remove('hidden');
+      chevronIcon.style.transform = 'rotate(180deg)';
+      displayLessonHistory();
+    } else {
+      historyContainer.classList.add('hidden');
+      chevronIcon.style.transform = 'rotate(0deg)';
+    }
   }
 
   // --- Topic Rotation Functions ---
@@ -599,6 +747,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (currentTurnIndex >= lessonPlan.dialogue.length) {
           micStatus.textContent = translateText('lessonComplete');
           micBtn.disabled = true;
+          
+          // Save completed lesson to history
+          const selectedLanguage = languageSelect.value;
+          const originalTopic = topicInput.value;
+          saveLessonToHistory(lessonPlan, selectedLanguage, originalTopic);
+          
           // Clear state when lesson is complete
           clearState();
           return;

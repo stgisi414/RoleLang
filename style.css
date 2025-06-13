@@ -338,3 +338,45 @@ body {
 #lessons-container {
     transition: all 0.3s ease;
 }
+
+#history-container {
+    transition: all 0.3s ease;
+}
+
+/* History toggle button styling */
+#toggle-history-btn {
+    transition: all 0.2s ease;
+}
+
+#toggle-history-btn:hover {
+    transform: scale(1.05);
+}
+
+/* History lesson cards */
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Fixed heights for history container */
+#history-lessons-container {
+    min-height: 120px;
+    max-height: 240px;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+/* History lesson card animations */
+.history-card {
+    transition: all 0.2s ease-out;
+    will-change: transform;
+}
+
+.history-card:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+    box-shadow: 0 4px 12px rgba(139, 69, 19, 0.2);
+}
