@@ -1323,27 +1323,24 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 3000);
   }
 
-  function toggleSpeechRecognition() {
-      if (isRecognizing) {
-          recognition.stop();
-      } else {
-          const currentLanguage = languageSelect.value;
+    function toggleSpeechRecognition() {
+        if (isRecognizing) {
+            recognition.stop();
+        } else {
+            // Always set the correct language right before starting recognition.
+            try {
+                const currentLanguage = languageSelect.value;
+                const langCode = getLangCode(currentLanguage); // Get the (now corrected) language code.
+                recognition.lang = langCode; // Set it.
+                console.log(`Setting speech recognition language to: ${langCode}`);
+                recognition.start(); // Start listening.
+            } catch (error) {
+                console.error('Speech recognition failed to start:', error);
+                micStatus.textContent = 'Speech recognition is not supported for this language in your browser.';
+            }
+        }
+    }
 
-          // Test if the language is supported before starting
-          if (currentLanguage === 'Japanese') {
-              try {
-                  recognition.lang = 'ja';
-                  recognition.start();
-              } catch (error) {
-                  console.error('Japanese speech recognition failed to start:', error);
-                  micStatus.textContent = 'Japanese speech recognition not supported in this browser. Use visual comparison.';
-                  return;
-              }
-          } else {
-              recognition.start();
-          }
-      }
-  }
 
   async function fetchPartnerAudio(text) {
       const currentLanguage = languageSelect.value;
@@ -1453,19 +1450,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Helper Functions ---
 
-  function getLangCode(language) {
-      const langCodes = {
-          'English': 'en-US',
-          'Spanish': 'es-ES', 
-          'French': 'fr-FR', 
-          'German': 'de-DE',
-          'Italian': 'it-IT', 
-          'Japanese': 'ja', // Fixed: Use 'ja' instead of 'ja-JP' for better compatibility
-          'Chinese': 'zh-CN', 
-          'Korean': 'ko-KR'
-      };
-      return langCodes[language] || 'en-US';
-  }
+    function getLangCode(language) {
+        const langCodes = {
+            'English': 'en-US',
+            'Spanish': 'es-ES',
+            'French': 'fr-FR',
+            'German': 'de-DE',
+            'Italian': 'it-IT',
+            'Japanese': 'ja-JP', // CHANGED: Now using the specific 'ja-JP' code.
+            'Chinese': 'zh-CN',
+            'Korean': 'ko-KR'
+        };
+        return langCodes[language] || 'en-US';
+    }
 
   // Function to test voice IDs
   async function testVoiceId(voiceId, languageCode) {
