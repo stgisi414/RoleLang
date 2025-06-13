@@ -679,6 +679,28 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
 
+          // Convert all Japanese dialogue to hiragana for consistent matching
+          if (language === 'Japanese') {
+            console.log('Converting all Japanese dialogue to hiragana...');
+            for (let i = 0; i < lessonPlan.dialogue.length; i++) {
+              try {
+                const originalLine = lessonPlan.dialogue[i].line;
+                const cleanLine = originalLine.split('(')[0].trim(); // Remove translation part
+                const hiraganaLine = await convertJapaneseToHiraganaWithGemini(cleanLine);
+                
+                // Store both original and hiragana versions
+                lessonPlan.dialogue[i].original_line = originalLine;
+                lessonPlan.dialogue[i].hiragana_line = hiraganaLine;
+                
+                console.log(`Converted: "${cleanLine}" -> "${hiraganaLine}"`);
+              } catch (error) {
+                console.error(`Failed to convert dialogue line ${i}:`, error);
+                // Keep original if conversion fails
+                lessonPlan.dialogue[i].hiragana_line = lessonPlan.dialogue[i].line.split('(')[0].trim();
+              }
+            }
+          }
+
           // Stop topic rotations when lesson starts
           stopTopicRotations();
 
@@ -825,7 +847,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (currentTurnData.party === 'A') { // User's turn
           // Split the line into sentences for sentence-by-sentence recording
-          const cleanText = removeParentheses(currentTurnData.line);
+          const currentLanguage = languageSelect.value;
+          let cleanText;
+          
+          if (currentLanguage === 'Japanese' && currentTurnData.hiragana_line) {
+              // Use pre-converted hiragana text for Japanese
+              cleanText = currentTurnData.hiragana_line;
+          } else {
+              // Use original text for other languages
+              cleanText = removeParentheses(currentTurnData.line);
+          }
+          
           currentSentences = splitIntoSentences(cleanText);
           currentSentenceIndex = 0;
 
@@ -936,17 +968,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function verifyUserSpeech(spokenText) {
+      const currentLanguage = languageSelect.value;
+      
       // Determine what text to compare against
       let requiredText;
       if (currentSentences.length > 1) {
           // Multi-sentence mode: compare against current sentence
           requiredText = currentSentences[currentSentenceIndex];
       } else {
-          // Single sentence mode: compare against full line
-          requiredText = lessonPlan.dialogue[currentTurnIndex].line.split('(')[0]; // Ignore translation
+          // Single sentence mode: use pre-converted hiragana for Japanese, original for others
+          if (currentLanguage === 'Japanese' && lessonPlan.dialogue[currentTurnIndex].hiragana_line) {
+              requiredText = lessonPlan.dialogue[currentTurnIndex].hiragana_line;
+          } else {
+              requiredText = lessonPlan.dialogue[currentTurnIndex].line.split('(')[0].trim(); // Ignore translation
+          }
       }
-
-      const currentLanguage = languageSelect.value;
 
       // Enhanced normalization function with Gemini conversion for Japanese
       const normalize = async (text) => {
@@ -961,11 +997,11 @@ document.addEventListener('DOMContentLoaded', () => {
               .replace(/[ñ]/g, 'n')
               .replace(/[ç]/g, 'c');
 
-          // Use Gemini for comprehensive Japanese hiragana conversion
+          // Use Gemini for comprehensive Japanese hiragana conversion (only for user speech now)
           if (currentLanguage === 'Japanese') {
               try {
                   normalized = await convertJapaneseToHiraganaWithGemini(normalized);
-                  console.log('Gemini converted text:', normalized);
+                  console.log('Gemini converted user speech:', normalized);
               } catch (error) {
                   console.error('Gemini conversion failed, using fallback:', error);
                   // Fallback to basic katakana to hiragana conversion
@@ -980,14 +1016,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
       try {
           console.log('Original spoken text:', spokenText);
-          console.log('Original required text:', requiredText);
+          console.log('Required text for comparison:', requiredText);
           
-          // Convert BOTH texts to hiragana if Japanese
+          // For Japanese: convert user speech to hiragana, required text is already hiragana
+          // For other languages: normalize both texts
           const normalizedSpoken = await normalize(spokenText);
-          const normalizedRequired = await normalize(requiredText);
+          const normalizedRequired = currentLanguage === 'Japanese' ? 
+              requiredText.trim().toLowerCase().replace(/[.,!?;:"'`´''""。！？]/g, '').replace(/\s+/g, ' ') :
+              await normalize(requiredText);
           
-          console.log('Normalized spoken text:', normalizedSpoken);
-          console.log('Normalized required text:', normalizedRequired);
+          console.log('Final spoken text for comparison:', normalizedSpoken);
+          console.log('Final required text for comparison:', normalizedRequired);
 
           // Calculate similarity using Levenshtein distance
           function levenshteinDistance(str1, str2) {
