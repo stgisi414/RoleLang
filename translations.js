@@ -1,4 +1,3 @@
-
 // Translations for RoleLang UI
 const translations = {
   en: {
@@ -35,6 +34,14 @@ const translations = {
     enterTopic: "Please enter a roleplay topic.",
     apiKeyError: 'Please replace "YOUR_GEMINI_API_KEY_HERE" in script.js with your actual Gemini API key.',
     errorLoading: "Error loading lesson. Please check the console for details. Error:",
+    langEnglish: "English",
+    langSpanish: "Spanish", 
+    langFrench: "French",
+    langGerman: "German",
+    langItalian: "Italian",
+    langJapanese: "Japanese",
+    langChinese: "Chinese",
+    langKorean: "Korean",
     topics: {
       beginner: [
         "Introducing yourself", "Ordering food at a restaurant", "Asking for directions", "Shopping for clothes",
@@ -123,6 +130,14 @@ const translations = {
     enterTopic: "Por favor ingresa un tema de juego de roles.",
     apiKeyError: 'Por favor reemplaza "YOUR_GEMINI_API_KEY_HERE" en script.js con tu clave API de Gemini real.',
     errorLoading: "Error al cargar la lección. Por favor revisa la consola para más detalles. Error:",
+    langEnglish: "Inglés",
+    langSpanish: "Español",
+    langFrench: "Francés",
+    langGerman: "Alemán",
+    langItalian: "Italiano",
+    langJapanese: "Japonés",
+    langChinese: "Chino",
+    langKorean: "Coreano",
     topics: {
       beginner: [
         "Presentándote", "Pidiendo comida en un restaurante", "Pidiendo direcciones", "Comprando ropa",
@@ -170,7 +185,7 @@ const translations = {
         "Debatiendo ética de inteligencia artificial", "Explicando ciencia del clima", "Discutiendo comercio global", "Analizando derecho constitucional",
         "Debatiendo justicia social", "Explicando neurociencia", "Discutiendo geopolítica", "Analizando desigualdad económica",
         "Debatiendo manipulación mediática", "Explicando ingeniería genética", "Discutiendo exploración espacial", "Analizando imperialismo cultural",
-        "Debatiendo derechos de privacidad", "Explicando energía renovable", "Discutiendo teoría poscolonial", "Analizando derivados financieros",
+        "Debatiendo derechos de privacidad", "Explicando energía renovable", "Discutiendo teoría postcolonial", "Analizando derivados financieros",
         "Debatiendo impacto de automatización", "Explicando aprendizaje automático", "Discutiendo existencialismo", "Analizando gobernanza global",
         "Analizando desarrollo económico chino", "Discutiendo filosofía confuciana", "Debatiendo iniciativa de la Franja y la Ruta", "Explicando principios de Medicina Tradicional China",
         "Discutiendo reunificación coreana", "Analizando la Ola Coreana (Hallyu)", "Debatiendo chaebols coreanos", "Explicando avances tecnológicos coreanos"
@@ -211,6 +226,14 @@ const translations = {
     enterTopic: "Veuillez entrer un sujet de jeu de rôle.",
     apiKeyError: 'Veuillez remplacer "YOUR_GEMINI_API_KEY_HERE" dans script.js par votre vraie clé API Gemini.',
     errorLoading: "Erreur lors du chargement de la leçon. Veuillez vérifier la console pour plus de détails. Erreur:",
+    langEnglish: "Anglais",
+    langSpanish: "Espagnol",
+    langFrench: "Français",
+    langGerman: "Allemand",
+    langItalian: "Italien",
+    langJapanese: "Japonais",
+    langChinese: "Chinois",
+    langKorean: "Coréen",
     topics: {
       beginner: [
         "Se présenter", "Commander de la nourriture au restaurant", "Demander son chemin", "Acheter des vêtements",
@@ -299,7 +322,15 @@ const translations = {
     enterTopic: "Bitte geben Sie ein Rollenspiel-Thema ein.",
     apiKeyError: 'Bitte ersetzen Sie "YOUR_GEMINI_API_KEY_HERE" in script.js durch Ihren echten Gemini API-Schlüssel.',
     errorLoading: "Fehler beim Laden der Lektion. Bitte überprüfen Sie die Konsole für Details. Fehler:",
-    topics: {
+     langEnglish: "Englisch",
+    langSpanish: "Spanisch",
+    langFrench: "Französisch",
+    langGerman: "Deutsch",
+    langItalian: "Italienisch",
+    langJapanese: "Japanisch",
+    langChinese: "Chinesisch",
+    langKorean: "Koreanisch",
+   topics: {
       beginner: [
         "Sich vorstellen", "Essen im Restaurant bestellen", "Nach dem Weg fragen", "Kleidung einkaufen",
         "Lebensmittel einkaufen", "Small Talk führen", "Jemanden begrüßen", "Sich verabschieden",
@@ -375,7 +406,7 @@ const translations = {
     tryAgain: "Non proprio. Prova a leggere di nuovo la riga.",
     tryAgainStatus: "Premi il microfono e riprova.",
     lessonComplete: "Lezione completata! 🎉",
-    partnerSpeaking: "Il partner sta parlando...",
+    Adding language names in Italian for all supported languages in the translations object in translations.js.Adding language names in Italian for all supported languages in the translations object in translations.js.partnerSpeaking: "Il partner sta parlando...",
     audioFinished: "Audio terminato.",
     audioError: "Errore audio, continuando...",
     audioUnavailable: "Audio non disponibile, continuando...",
@@ -387,6 +418,14 @@ const translations = {
     enterTopic: "Per favore inserisci un argomento di gioco di ruolo.",
     apiKeyError: 'Per favore sostituisci "YOUR_GEMINI_API_KEY_HERE" in script.js con la tua vera chiave API Gemini.',
     errorLoading: "Errore nel caricamento della lezione. Controlla la console per i dettagli. Errore:",
+    langEnglish: "Inglese",
+    langSpanish: "Spagnolo",
+    langFrench: "Francese",
+    langGerman: "Tedesco",
+    langItalian: "Italiano",
+    langJapanese: "Giapponese",
+    langChinese: "Cinese",
+    langKorean: "Coreano",
     topics: {
       beginner: [
         "Presentarsi", "Ordinare cibo al ristorante", "Chiedere indicazioni", "Comprare vestiti",
@@ -475,6 +514,14 @@ const translations = {
     enterTopic: "请输入角色扮演主题。",
     apiKeyError: '请在script.js中将"YOUR_GEMINI_API_KEY_HERE"替换为您的真实Gemini API密钥。',
     errorLoading: "加载课程时出错。请查看控制台了解详情。错误：",
+    langEnglish: "英语",
+    langSpanish: "西班牙语",
+    langFrench: "法语",
+    langGerman: "德语",
+    langItalian: "意大利语",
+    langJapanese: "日语",
+    langChinese: "中文",
+    langKorean: "韩语",
     topics: {
       beginner: [
         "自我介绍", "在餐厅点餐", "问路", "买衣服",
@@ -563,6 +610,14 @@ const translations = {
     enterTopic: "ロールプレイトピックを入力してください。",
     apiKeyError: 'script.jsの"YOUR_GEMINI_API_KEY_HERE"を実際のGemini APIキーに置き換えてください。',
     errorLoading: "レッスンの読み込みエラー。詳細についてはコンソールを確認してください。エラー：",
+    langEnglish: "英語",
+    langSpanish: "スペイン語",
+    langFrench: "フランス語",
+    langGerman: "ドイツ語",
+    langItalian: "イタリア語",
+    langJapanese: "日本語",
+    langChinese: "中国語",
+    langKorean: "韓国語",
     topics: {
       beginner: [
         "自己紹介", "レストランで食事を注文", "道を尋ねる", "服を買う",
@@ -636,11 +691,11 @@ const translations = {
     listening: "듣고 있습니다...",
     generating: "레슨을 생성 중입니다...",
     correct: "정답! 잘했습니다.",
-    tryAgain: "아깝습니다. 그 줄을 다시 읽어보세요.",
+    tryAgain: "아깝습니다. 그 줄을 다시 읽어보세요。",
     tryAgainStatus: "마이크를 누르고 다시 시도하세요.",
     lessonComplete: "레슨 완료! 🎉",
     partnerSpeaking: "파트너가 말하고 있습니다...",
-    audioFinished: "오디오 종료.",
+    audioFinished: "오디오 종료。",
     audioError: "오디오 오류, 계속 진행...",
     audioUnavailable: "오디오 사용 불가, 계속 진행...",
     yourTurn: "당신 차례입니다. 마이크를 누르고 줄을 읽으세요.",
@@ -651,7 +706,15 @@ const translations = {
     enterTopic: "역할놀이 주제를 입력해주세요.",
     apiKeyError: 'script.js에서 "YOUR_GEMINI_API_KEY_HERE"를 실제 Gemini API 키로 교체해주세요.',
     errorLoading: "레슨 로딩 오류. 자세한 내용은 콘솔을 확인하세요. 오류:",
-    topics: {
+     langEnglish: "영어",
+    langSpanish: "스페인어",
+    langFrench: "프랑스어",
+    langGerman: "독일어",
+    langItalian: "이탈리아어",
+    langJapanese: "일본어",
+    langChinese: "중국어",
+    langKorean: "한국어",
+   topics: {
       beginner: [
         "자기소개하기", "식당에서 음식 주문하기", "길 묻기", "옷 쇼핑하기",
         "식료품 사기", "잡담하기", "인사하기", "작별 인사하기",
