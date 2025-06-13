@@ -117,6 +117,10 @@ document.addEventListener('DOMContentLoaded', () => {
     'topic-animate-in-5', 'topic-animate-in-6', 'topic-animate-in-7', 'topic-animate-in-8'
   ];
 
+  const exitAnimationClasses = [
+    'topic-animate-out', 'topic-animate-out-1', 'topic-animate-out-2', 'topic-animate-out-3'
+  ];
+
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recognition;
   if (SpeechRecognition) {
@@ -226,27 +230,47 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   function animateTopicsIn(container, topics, level) {
+    // Add smooth transition class to container
+    container.classList.add('topic-container-transition');
+    
     topics.forEach((topic, index) => {
       setTimeout(() => {
         const button = createTopicButton(topic, level);
         const randomAnimation = animationClasses[Math.floor(Math.random() * animationClasses.length)];
         button.classList.add(randomAnimation);
         container.appendChild(button);
-      }, index * 200);
+        
+        // Add smooth hover transitions
+        button.addEventListener('mouseenter', () => {
+          if (!button.classList.contains('animating')) {
+            button.style.transform = 'translateY(-2px) scale(1.02)';
+          }
+        });
+        
+        button.addEventListener('mouseleave', () => {
+          if (!button.classList.contains('animating')) {
+            button.style.transform = '';
+          }
+        });
+      }, index * 150); // Slightly faster but still smooth
     });
   }
   
   function animateTopicsOut(container) {
     const buttons = container.querySelectorAll('.lesson-btn');
+    
     buttons.forEach((button, index) => {
       setTimeout(() => {
-        button.classList.add('topic-animate-out');
+        button.classList.add('animating');
+        const randomExitAnimation = exitAnimationClasses[Math.floor(Math.random() * exitAnimationClasses.length)];
+        button.classList.add(randomExitAnimation);
+        
         setTimeout(() => {
           if (button.parentNode) {
             button.parentNode.removeChild(button);
           }
-        }, 400);
-      }, index * 100);
+        }, 600); // Match the CSS animation duration
+      }, index * 80); // Staggered exit timing
     });
   }
   
@@ -257,22 +281,27 @@ document.addEventListener('DOMContentLoaded', () => {
       advanced: document.getElementById('advanced-container')
     };
     
-    Object.entries(containers).forEach(([level, container]) => {
-      animateTopicsOut(container);
-      
+    Object.entries(containers).forEach(([level, container], containerIndex) => {
+      // Stagger the start of each container's animation for smoother overall effect
       setTimeout(() => {
-        const newTopics = getRandomTopics(level, 4);
-        animateTopicsIn(container, newTopics, level);
-      }, 800);
+        animateTopicsOut(container);
+        
+        setTimeout(() => {
+          const newTopics = getRandomTopics(level, 4);
+          animateTopicsIn(container, newTopics, level);
+        }, 700); // Slightly reduced overlap time
+      }, containerIndex * 200); // Stagger each container by 200ms
     });
   }
   
   function startTopicRotations() {
-    // Initial population
-    rotateTopics();
+    // Initial population with staggered start
+    setTimeout(() => {
+      rotateTopics();
+    }, 500); // Small delay for initial load
     
-    // Set up intervals for each level (7.5 seconds)
-    topicRotationIntervals.push(setInterval(rotateTopics, 7500));
+    // Set up intervals for each level (8 seconds for smoother experience)
+    topicRotationIntervals.push(setInterval(rotateTopics, 8000));
   }
   
   function stopTopicRotations() {
