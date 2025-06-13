@@ -41,6 +41,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const TTS_API_URL = 'https://langcamp.us/elevenlbs-exchange-audio/exchange-audio';
     const IMAGE_API_URL = 'https://ainovel.site/api/generate-image';
 
+    // ADD THIS NEW OBJECT
+    const langKeyToCode = {
+        'langEnglish': 'en-US',
+        'langSpanish': 'es-ES',
+        'langFrench': 'fr-FR',
+        'langGerman': 'de-DE',
+        'langItalian': 'it-IT',
+        'langJapanese': 'ja-JP',
+        'langChinese': 'zh-CN',
+        'langKorean': 'ko-KR'
+    };
+
     let lessonPlan = null;
     let currentTurnIndex = 0;
     let isRecognizing = false;
@@ -320,18 +332,29 @@ document.addEventListener('DOMContentLoaded', () => {
             isRecognizing = false;
             micBtn.classList.remove('bg-green-600');
             micBtn.classList.add('bg-red-600');
-            micStatus.textContent = translateText('micStatus');
+            // The status text is now correctly handled by the speech verification functions,
+            // so we no longer reset it here. This fixes the "flashing" message bug.
         };
 
         recognition.onerror = (event) => {
-            console.error("Speech recognition error:", event.error);
-
-            // Special handling for Japanese and other languages that may not be supported
+            console.error("Speech recognition error:", event.error, "for language:", recognition.lang);
             const currentLanguage = languageSelect.value;
-            if (currentLanguage === 'Japanese' && (event.error === 'language-not-supported' || event.error === 'no-speech')) {
-                micStatus.textContent = `Japanese speech recognition unavailable. Compare your speech visually with the text.`;
+
+            if (event.error === 'language-not-supported') {
+                micStatus.innerHTML = `Speech recognition for <strong>${currentLanguage}</strong> is not supported by your browser. You can continue the lesson without microphone practice.`;
+                // Disable the mic button permanently for this session if the language is unsupported.
+                micBtn.disabled = true;
+                micBtn.style.cursor = 'not-allowed';
+                // Visually show it's disabled
+                micBtn.classList.add('disabled:bg-gray-600', 'disabled:cursor-not-allowed', 'disabled:transform-none');
+
+            } else if (event.error === 'no-speech') {
+                micStatus.textContent = "Sorry, I didn't hear that. Please try again.";
+            } else if (event.error === 'audio-capture') {
+                micStatus.textContent = "Microphone error. Please check your browser and system permissions.";
+                micBtn.disabled = true;
             } else {
-                micStatus.textContent = `Error: ${event.error}. Try again.`;
+                micStatus.textContent = `An error occurred: ${event.error}.`;
             }
         };
 
@@ -700,6 +723,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function initializeLesson() {
         const language = languageSelect.value;
         const topic = topicInput.value;
+        const langKey = languageSelect.options[languageSelect.selectedIndex].getAttribute('data-translate');
 
         if (!topic) {
             alert(translateText('enterTopic'));
@@ -762,7 +786,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Set speech recognition language
             if (recognition) {
-                const langCode = getLangCode(language);
+                const langCode = getLangCode(langKey); // USE THE NEW langKey
                 recognition.lang = langCode;
 
                 // Special handling for Japanese - add warning if speech recognition may not work well
@@ -1241,42 +1265,48 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentLanguage = languageSelect.value;
             const currentTurnData = lessonPlan.dialogue[currentTurnIndex];
 
-            // --- Japanese-Specific Verification using AI ---
-                if (currentLanguage === 'Japanese' || currentLanguage === 'Korean' || currentLanguage === 'Chinese') {
-                micStatus.textContent = 'Verifying with AI...';
+            if (currentLanguage === 'Japanese' || currentLanguage === 'Korean' || currentLanguage === 'Chinese') {
+                micStatus.textContent = translateText('verifyingWithAI');
 
-                // *** THIS IS THE FIX: Determine the correct single sentence to verify. ***
+                // Get the user's native language to localize the feedback
+                const nativeLangCode = nativeLang || 'en';
+                const langCodeToName = {
+                    'en': 'English',
+                    'es': 'Spanish',
+                    'fr': 'French',
+                    'de': 'German',
+                    'it': 'Italian',
+                    'zh': 'Chinese',
+                    'ja': 'Japanese',
+                    'ko': 'Korean'
+                };
+                const nativeLangName = langCodeToName[nativeLangCode] || 'English';
+
                 let expectedLine;
                 if (currentSentences.length > 1) {
-                    // If we are in a multi-sentence turn, use the specific sentence at the current index.
                     expectedLine = currentSentences[currentSentenceIndex];
                 } else {
-                    // Otherwise, it's a single-sentence turn, so use the whole line's clean_text.
                     expectedLine = currentTurnData.line.clean_text;
                 }
-                // *** END OF FIX ***
 
-                console.log(`Verifying Japanese speech with AI method...`);
-                console.log(`Expected sentence: ${expectedLine}`); // Now logs the single sentence
+                console.log(`Verifying ${currentLanguage} speech with AI method...`);
+                console.log(`Expected sentence: ${expectedLine}`);
                 console.log(`Spoken text: ${spokenText}`);
 
                 const verificationPrompt = `
-    You are a Japanese language evaluation tool. Your task is to determine if a student's spoken text is a correct phonetic match for a given sentence.
+    You are a language evaluation tool. The user's native language is ${nativeLangName}.
 
-    ***IMPORTANT RULE: Your evaluation MUST ignore all punctuation and spacing.*** Focus ONLY on the words spoken. A missing or extra comma (、), period (。), or any other symbol does not count as an error.
+    Your task is to determine if a student's spoken text is a correct phonetic match for a given sentence, ignoring punctuation and spacing.
 
+    Your response MUST be a simple JSON object with two fields:
+    1. "is_match": a boolean (true or false).
+    2. "feedback": A brief, one-sentence explanation for your decision. IMPORTANT: This "feedback" field MUST be written in the user's native language, which is ${nativeLangName}.
+
+    Here is the information for your evaluation:
     - The student was expected to say: "${expectedLine}"
     - The student's speech recognition produced: "${spokenText}"
 
-    Analyze the spoken words. Is it a correct phonetic pronunciation of the expected sentence, ignoring all punctuation?
-
-    Respond with a simple JSON object with two fields:
-    1. "is_match": a boolean (true or false).
-    2. "feedback": a brief, one-sentence explanation for your decision.
-
-    Example: If the expected text is "こんにちは、元気ですか。" and the spoken text is "こんにちは 元気ですか", the response should be a match because the only difference is punctuation.
-
-    Now, provide the JSON response for the student's attempt.`;
+    Now, provide the JSON response.`;
 
                 const response = await fetch(GEMINI_API_URL, {
                     method: 'POST',
@@ -1305,7 +1335,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (result.is_match) {
                     handleCorrectSpeech();
                 } else {
-                    const feedback = result.feedback || "Not quite. Try reading the line again.";
+                    // Use the localized feedback from Gemini, with a localized fallback.
+                    const feedback = result.feedback || translateText('tryAgain');
                     micStatus.textContent = feedback;
                     const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
                     currentLineEl.classList.remove('active');
@@ -1323,13 +1354,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     }, 4000);
                 }
             } else {
-                // --- Logic for all other languages (NOW UPDATED) ---
+                // This is the existing logic for Western languages, which remains unchanged.
                 let requiredText;
                 if (currentSentences.length > 1) {
-                    // For multi-sentence lines, we still rely on the split sentences array
                     requiredText = currentSentences[currentSentenceIndex] || '';
                 } else {
-                    // For single sentences, use the new 'clean_text' field
                     requiredText = currentTurnData.line.clean_text;
                 }
 
@@ -1382,13 +1411,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 saveState();
                 setTimeout(() => {
                     advanceTurn();
-                }, 1500);
+                }, 3000); // CHANGED FROM 1500
             } else {
                 // Move to next sentence
                 micStatus.textContent = translateText('sentenceCorrect');
                 setTimeout(() => {
                     enableUserMicForSentence();
-                }, 1000);
+                }, 2500); // CHANGED FROM 1000
             }
         } else {
             // Single sentence mode
@@ -1400,7 +1429,7 @@ document.addEventListener('DOMContentLoaded', () => {
             saveState();
             setTimeout(() => {
                 advanceTurn();
-            }, 1500);
+            }, 3000); // CHANGED FROM 1500
         }
     }
 
@@ -1428,7 +1457,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 micStatus.textContent = translateText('tryAgainStatus');
             }
             currentLineEl.style.borderColor = '';
-        }, 3000);
+        }, 4000); // CHANGED FROM 3000
     }
 
     function toggleSpeechRecognition() {
@@ -1437,11 +1466,14 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // Always set the correct language right before starting recognition.
             try {
-                const currentLanguage = languageSelect.value;
-                const langCode = getLangCode(currentLanguage); // Get the (now corrected) language code.
-                recognition.lang = langCode; // Set it.
+                // REPLACE these two lines
+                const selectedOption = languageSelect.options[languageSelect.selectedIndex];
+                const langKey = selectedOption.getAttribute('data-translate');
+
+                const langCode = getLangCode(langKey); // This now works correctly
+                recognition.lang = langCode; 
                 console.log(`Setting speech recognition language to: ${langCode}`);
-                recognition.start(); // Start listening.
+                recognition.start(); 
             } catch (error) {
                 console.error('Speech recognition failed to start:', error);
                 micStatus.textContent = 'Speech recognition is not supported for this language in your browser.';
@@ -1558,18 +1590,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Helper Functions ---
 
-    function getLangCode(language) {
-        const langCodes = {
-            'English': 'en-US',
-            'Spanish': 'es-ES',
-            'French': 'fr-FR',
-            'German': 'de-DE',
-            'Italian': 'it-IT',
-            'Japanese': 'ja-JP', // CHANGED: Now using the specific 'ja-JP' code.
-            'Chinese': 'zh-CN',
-            'Korean': 'ko-KR'
-        };
-        return langCodes[language] || 'en-US';
+    function getLangCode(langKey) {
+        return langKeyToCode[langKey] || 'en-US';
     }
 
     // Function to test voice IDs
