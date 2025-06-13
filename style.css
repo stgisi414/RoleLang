@@ -364,9 +364,28 @@ body {
     animation: scaleOutRotate 0.6s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards;
 }
 
-/* Container transition smoothing */
+/* Container transition smoothing and fixed heights */
 .topic-container-transition {
     transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Fixed heights for topic containers to prevent layout shifts */
+#beginner-container,
+#intermediate-container,
+#advanced-container {
+    min-height: 100px;
+    max-height: 100px;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+/* Ensure grid layout stays consistent */
+.grid.grid-cols-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    align-content: start;
 }
 
 /* Smooth hover effects for topic buttons */
