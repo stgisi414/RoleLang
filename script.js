@@ -1144,32 +1144,40 @@ document.addEventListener('DOMContentLoaded', () => {
       return text.replace(/\s*\([^)]*\)/g, '').trim();
   }
 
-  async function verifyUserSpeech(spokenText) {
+    async function verifyUserSpeech(spokenText) {
         try {
             // This 'try...catch' block now wraps ALL logic to prevent any silent crashes.
             const currentLanguage = languageSelect.value;
             const currentTurnData = lessonPlan.dialogue[currentTurnIndex];
-    
+
             // --- Japanese-Specific Verification using AI ---
             if (currentLanguage === 'Japanese') {
                 micStatus.textContent = 'Verifying with AI...';
                 const expectedLine = removeParentheses(currentTurnData.line.display);
-    
+
                 console.log(`Verifying Japanese speech with AI method...`);
                 console.log(`Expected line: ${expectedLine}`);
                 console.log(`Spoken text: ${spokenText}`);
-    
+
+                // This is the updated prompt with the new rule to ignore punctuation.
                 const verificationPrompt = `
     You are a Japanese language evaluation tool. Your task is to determine if a student's spoken text is a correct phonetic match for a given sentence.
+
+    ***IMPORTANT RULE: Your evaluation MUST ignore all punctuation and spacing.*** Focus ONLY on the words spoken. A missing or extra comma (、), period (。), or any other symbol does not count as an error.
+
     - The student was expected to say: "${expectedLine}"
     - The student's speech recognition produced: "${spokenText}"
-    Analyze the spoken text. Is it a correct pronunciation of the expected sentence? The match should be strict, but allow for very minor variations that don't change the meaning.
+
+    Analyze the spoken words. Is it a correct phonetic pronunciation of the expected sentence, ignoring all punctuation?
+
     Respond with a simple JSON object with two fields:
     1. "is_match": a boolean (true or false).
     2. "feedback": a brief, one-sentence explanation for your decision.
-    Example Response: { "is_match": true, "feedback": "Excellent pronunciation." }
+
+    Example: If the expected text is "こんにちは、元気ですか。" and the spoken text is "こんにちは 元気ですか", the response should be a match because the only difference is punctuation.
+
     Now, provide the JSON response for the student's attempt.`;
-    
+
                 const response = await fetch(GEMINI_API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1183,17 +1191,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         ]
                     }),
                 });
-    
+
                 if (!response.ok) {
                     throw new Error(`Gemini verification API error: ${response.statusText}`);
                 }
-    
+
                 const data = await response.json();
                 const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
                 const result = JSON.parse(jsonString);
-    
+
                 console.log('Gemini verification result:', result);
-    
+
                 if (result.is_match) {
                     handleCorrectSpeech();
                 } else {
@@ -1204,7 +1212,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     void currentLineEl.offsetWidth;
                     currentLineEl.classList.add('active');
                     currentLineEl.style.borderColor = '#f87171';
-    
+
                     setTimeout(() => {
                         if (currentSentences.length > 1) {
                             enableUserMicForSentence();
@@ -1223,11 +1231,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     requiredText = removeParentheses(currentTurnData.line.display);
                 }
-    
+
                 const normalize = (text) => text.trim().toLowerCase().replace(/[.,!?;:"'`´''""。！？]/g, '').replace(/\s+/g, ' ');
                 const normalizedSpoken = normalize(spokenText);
                 const normalizedRequired = normalize(requiredText);
-    
+
                 // Helper function for calculating similarity
                 function levenshteinDistance(str1, str2) {
                     const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null));
@@ -1241,11 +1249,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     return matrix[str2.length][str1.length];
                 }
-    
+
                 const distance = levenshteinDistance(normalizedSpoken, normalizedRequired);
                 const maxLength = Math.max(normalizedSpoken.length, normalizedRequired.length);
                 const similarity = maxLength === 0 ? 1 : 1 - (distance / maxLength);
-    
+
                 if (similarity >= 0.75) {
                     handleCorrectSpeech();
                 } else {
