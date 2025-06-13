@@ -679,24 +679,28 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
 
-          // Convert all Japanese dialogue to hiragana for consistent matching
+          // Convert all Japanese dialogue to hiragana for speech recognition matching only
           if (language === 'Japanese') {
-            console.log('Converting all Japanese dialogue to hiragana...');
+            console.log('Converting Japanese dialogue to hiragana for speech matching...');
             for (let i = 0; i < lessonPlan.dialogue.length; i++) {
               try {
-                const originalLine = lessonPlan.dialogue[i].line;
-                const cleanLine = originalLine.split('(')[0].trim(); // Remove translation part
-                const hiraganaLine = await convertJapaneseToHiraganaWithGemini(cleanLine);
-                
-                // Store both original and hiragana versions
-                lessonPlan.dialogue[i].original_line = originalLine;
-                lessonPlan.dialogue[i].hiragana_line = hiraganaLine;
-                
-                console.log(`Converted: "${cleanLine}" -> "${hiraganaLine}"`);
+                // Only convert user lines (party A) since they need speech recognition
+                if (lessonPlan.dialogue[i].party === 'A') {
+                  const originalLine = lessonPlan.dialogue[i].line;
+                  const cleanLine = originalLine.split('(')[0].trim(); // Remove translation part
+                  const hiraganaLine = await convertJapaneseToHiraganaWithGemini(cleanLine);
+
+                  // Store hiragana version for speech matching only
+                  lessonPlan.dialogue[i].hiragana_line = hiraganaLine;
+
+                  console.log(`Converted for matching: "${cleanLine}" -> "${hiraganaLine}"`);
+                }
               } catch (error) {
                 console.error(`Failed to convert dialogue line ${i}:`, error);
                 // Keep original if conversion fails
-                lessonPlan.dialogue[i].hiragana_line = lessonPlan.dialogue[i].line.split('(')[0].trim();
+                if (lessonPlan.dialogue[i].party === 'A') {
+                  lessonPlan.dialogue[i].hiragana_line = lessonPlan.dialogue[i].line.split('(')[0].trim();
+                }
               }
             }
           }
@@ -732,20 +736,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
           // Create the base content with speaker name
           let lineContent = `<strong>${turn.party}:</strong> `;
-          
+
           // For user lines (A), split into sentences and wrap each in a span
           if (turn.party === 'A') {
               const currentLanguage = languageSelect.value;
               let textToSplit;
-              
+
               if (currentLanguage === 'Japanese' && turn.hiragana_line) {
                   textToSplit = turn.hiragana_line;
               } else {
                   textToSplit = removeParentheses(turn.line);
               }
-              
+
               const sentences = splitIntoSentences(textToSplit);
-              
+
               if (sentences.length > 1) {
                   // Multiple sentences - wrap each in a span with ID
                   sentences.forEach((sentence, sentenceIndex) => {
@@ -754,7 +758,7 @@ document.addEventListener('DOMContentLoaded', () => {
                           lineContent += ' ';
                       }
                   });
-                  
+
                   // Add the original line with translation in parentheses if it exists
                   const originalLine = turn.line;
                   if (originalLine.includes('(')) {
@@ -769,7 +773,7 @@ document.addEventListener('DOMContentLoaded', () => {
               // Partner lines (B) - no sentence splitting needed
               lineContent += turn.line;
           }
-          
+
           lineContent += ` <i class="fas fa-volume-up text-gray-400 ml-2 hover:text-sky-300"></i>`;
           lineDiv.innerHTML = lineContent;
 
@@ -826,26 +830,26 @@ document.addEventListener('DOMContentLoaded', () => {
           const audioUrl = URL.createObjectURL(audioBlob);
           const audio = new Audio(audioUrl);
           audio.playbackRate = parseFloat(audioSpeedSelect.value);
-          
+
           // Set up audio event listeners
           audio.addEventListener('play', () => {
               isAudioPlaying = true;
               currentAudio = audio;
           });
-          
+
           audio.addEventListener('ended', () => {
               isAudioPlaying = false;
               currentAudio = null;
               URL.revokeObjectURL(audioUrl);
           });
-          
+
           audio.addEventListener('error', (error) => {
               console.error("Audio playback failed:", error);
               isAudioPlaying = false;
               currentAudio = null;
               URL.revokeObjectURL(audioUrl);
           });
-          
+
           audio.play().catch(error => {
               console.error("Audio playback failed:", error);
               isAudioPlaying = false;
@@ -886,13 +890,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Helper function to split text into sentences
   function splitIntoSentences(text) {
       const currentLanguage = languageSelect.value;
-      
+
       // For Japanese, use a simpler approach that works better with hiragana
       if (currentLanguage === 'Japanese') {
           // Japanese sentence endings: 。！？です ます た だ
           // Split on major punctuation and common sentence endings
           const japaneseEndings = /[。！？]/;
-          
+
           if (!japaneseEndings.test(text)) {
               // No clear sentence endings, try splitting on common patterns
               // Look for です、ます、た、だ followed by space or end
@@ -900,7 +904,7 @@ document.addEventListener('DOMContentLoaded', () => {
               const sentences = [];
               let lastIndex = 0;
               let match;
-              
+
               while ((match = patterns.exec(text)) !== null) {
                   const endIndex = match.index + match[0].length;
                   const sentence = text.substring(lastIndex, endIndex).trim();
@@ -908,26 +912,26 @@ document.addEventListener('DOMContentLoaded', () => {
                       sentences.push(sentence);
                   }
                   lastIndex = endIndex;
-                  
+
                   // Skip any whitespace after the match
                   while (lastIndex < text.length && /\s/.test(text[lastIndex])) {
                       lastIndex++;
                   }
               }
-              
+
               // Add remaining text
               const remaining = text.substring(lastIndex).trim();
               if (remaining) {
                   sentences.push(remaining);
               }
-              
+
               return sentences.length > 0 ? sentences : [text.trim()];
           }
-          
+
           // Split on punctuation for Japanese
           const parts = text.split(/([。！？])/);
           const result = [];
-          
+
           for (let i = 0; i < parts.length; i += 2) {
               const sentence = parts[i];
               const punctuation = parts[i + 1] || '';
@@ -936,31 +940,31 @@ document.addEventListener('DOMContentLoaded', () => {
                   result.push(fullSentence.trim());
               }
           }
-          
+
           return result.length > 0 ? result : [text.trim()];
       }
-      
+
       // For other languages, use the original logic
       const sentenceEndings = /[.!?。！？]/;
-      
+
       if (!sentenceEndings.test(text)) {
           return [text.trim()];
       }
 
       const sentences = [];
       let currentSentence = '';
-      
+
       for (let i = 0; i < text.length; i++) {
           const char = text[i];
           currentSentence += char;
-          
+
           if (/[.!?。！？]/.test(char)) {
               let j = i + 1;
               while (j < text.length && /\s/.test(text[j])) {
                   currentSentence += text[j];
                   j++;
               }
-              
+
               if (currentSentence.trim()) {
                   sentences.push(currentSentence.trim());
               }
@@ -968,7 +972,7 @@ document.addEventListener('DOMContentLoaded', () => {
               i = j - 1;
           }
       }
-      
+
       if (currentSentence.trim()) {
           sentences.push(currentSentence.trim());
       }
@@ -996,7 +1000,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Clear all previous highlighting
       document.querySelectorAll('.dialogue-line.active').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
-      
+
       const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
       currentLineEl.classList.add('active');
       currentLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1008,7 +1012,7 @@ document.addEventListener('DOMContentLoaded', () => {
           // Split the line into sentences for sentence-by-sentence recording
           const currentLanguage = languageSelect.value;
           let cleanText;
-          
+
           if (currentLanguage === 'Japanese' && currentTurnData.hiragana_line) {
               // Use pre-converted hiragana text for Japanese
               cleanText = currentTurnData.hiragana_line;
@@ -1016,7 +1020,7 @@ document.addEventListener('DOMContentLoaded', () => {
               // Use original text for other languages
               cleanText = removeParentheses(currentTurnData.line);
           }
-          
+
           currentSentences = splitIntoSentences(cleanText);
           currentSentenceIndex = 0;
 
@@ -1144,17 +1148,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function enableUserMicForSentence() {
       micBtn.disabled = false;
-      
+
       // Clear previous sentence highlighting
       document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
-      
+
       if (currentSentences.length > 1) {
           // Highlight the current sentence
           const currentSentenceEl = document.getElementById(`turn-${currentTurnIndex}-sentence-${currentSentenceIndex}`);
           if (currentSentenceEl) {
               currentSentenceEl.classList.add('active-sentence');
           }
-          
+
           micStatus.innerHTML = `<strong>${translateText('recordSentence')} ${currentSentenceIndex + 1}/${currentSentences.length}:</strong><br><span style="color: #38bdf8; font-weight: bold; text-decoration: underline;">"${currentSentences[currentSentenceIndex]}"</span>`;
       } else {
           // Single sentence - highlight the entire sentence
@@ -1162,7 +1166,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (singleSentenceEl) {
               singleSentenceEl.classList.add('active-sentence');
           }
-          
+
           micStatus.innerHTML = `<strong>${translateText('yourTurn')}</strong><br><span style="color: #38bdf8; font-style: italic;">Look for the highlighted sentence above</span>`;
       }
   }
@@ -1182,7 +1186,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function verifyUserSpeech(spokenText) {
       const currentLanguage = languageSelect.value;
-      
+
       // Determine what text to compare against
       let requiredText;
       if (currentSentences.length > 1) {
@@ -1230,14 +1234,14 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
           console.log('Original spoken text:', spokenText);
           console.log('Required text for comparison:', requiredText);
-          
+
           // For Japanese: convert user speech to hiragana, required text is already hiragana
           // For other languages: normalize both texts
           const normalizedSpoken = await normalize(spokenText);
           const normalizedRequired = currentLanguage === 'Japanese' ? 
               requiredText.trim().toLowerCase().replace(/[.,!?;:"'`´''""。！？]/g, '').replace(/\s+/g, ' ') :
               await normalize(requiredText);
-          
+
           console.log('Final spoken text for comparison:', normalizedSpoken);
           console.log('Final required text for comparison:', normalizedRequired);
 
@@ -1339,10 +1343,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
           const data = await response.json();
           let hiraganaText = data.candidates[0].content.parts[0].text.trim();
-          
+
           // Clean up the response - remove any extra explanations
           hiraganaText = hiraganaText.replace(/^[^ひ-ゟ]*/, '').replace(/[^ひ-ゟ\s]*$/, '').trim();
-          
+
           console.log(`Gemini conversion: "${text}" -> "${hiraganaText}"`);
           return hiraganaText || text; // Fallback to original if conversion is empty
       } catch (error) {
@@ -1732,7 +1736,7 @@ DO NOT use placeholders like [YOUR NAME], OO, or any generic terms. Always use s
 Please generate a JSON object with the following structure:
 1.  "scenario": A brief, one-sentence description of the lesson's context.
 2.  "language": The language being taught (e.g., "${language}").
-3.  "illustration_prompt": A simple, descriptive prompt (5-10 words) for an AI image generator that captures the essence of the lesson. Example: "Two people ordering coffee at a cafe counter".
+3.  "illustration_prompt": A simple, descriptive prompt (5-10 words) for an AI image generator that captures the essence ofthe lesson. Example: "Two people ordering coffee at a cafe counter".
 4.  "dialogue": An array of turn-based dialogue objects.
   - The conversation must involve at least two parties, 'A' (the user) and 'B' (the partner).
   - Each object in the array must have two properties:
