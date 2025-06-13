@@ -896,17 +896,23 @@ document.addEventListener('DOMContentLoaded', () => {
           if (!japaneseEndings.test(text)) {
               // No clear sentence endings, try splitting on common patterns
               // Look for です、ます、た、だ followed by space or end
-              const patterns = /(です|ます|した|だった|たい|ない)[。\s]?/g;
+              const patterns = /(です|ます|した|だった|たい|ない)(?=[。\s]|$)/g;
               const sentences = [];
               let lastIndex = 0;
               let match;
               
               while ((match = patterns.exec(text)) !== null) {
-                  const sentence = text.substring(lastIndex, match.index + match[0].length).trim();
+                  const endIndex = match.index + match[0].length;
+                  const sentence = text.substring(lastIndex, endIndex).trim();
                   if (sentence) {
                       sentences.push(sentence);
                   }
-                  lastIndex = match.index + match[0].length;
+                  lastIndex = endIndex;
+                  
+                  // Skip any whitespace after the match
+                  while (lastIndex < text.length && /\s/.test(text[lastIndex])) {
+                      lastIndex++;
+                  }
               }
               
               // Add remaining text
@@ -919,14 +925,15 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           
           // Split on punctuation for Japanese
-          const sentences = text.split(/([。！？])/).filter(s => s.trim());
+          const parts = text.split(/([。！？])/);
           const result = [];
           
-          for (let i = 0; i < sentences.length; i += 2) {
-              const sentence = sentences[i];
-              const punctuation = sentences[i + 1] || '';
-              if (sentence.trim()) {
-                  result.push((sentence + punctuation).trim());
+          for (let i = 0; i < parts.length; i += 2) {
+              const sentence = parts[i];
+              const punctuation = parts[i + 1] || '';
+              const fullSentence = sentence + punctuation;
+              if (fullSentence.trim()) {
+                  result.push(fullSentence.trim());
               }
           }
           
