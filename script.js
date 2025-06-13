@@ -1706,9 +1706,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       The user wants to learn ${language}.
       The roleplaying scenario is: "${topic}".
-      ${language === 'Japanese' ? japaneseScriptInstruction : ''}
 
-      IMPORTANT: Use realistic fake names for characters in the dialogue. Choose culturally appropriate names for the language being taught.
+      IMPORTANT: The "roleplaying scenario" topic above may be in the user's native language (e.g., Chinese, Spanish). Your first step is to understand this topic, then generate the entire lesson's dialogue and content in the requested target language (${language}), while following all other JSON formatting rules.
+
+      Use realistic fake names for characters in the dialogue. Choose culturally appropriate names for the language being taught.
       DO NOT use placeholders like [YOUR NAME]. Always use specific, realistic names.
 
       Please generate a JSON object with the following structure:
