@@ -1319,7 +1319,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     Your response MUST be a simple JSON object with two fields:
     1. "is_match": a boolean (true or false). For Chinese, be VERY generous with this assessment.
-    2. "feedback": A brief, encouraging explanation. IMPORTANT: This "feedback" field MUST be written in the user's native language, which is ${nativeLangName}.
+    2. "feedback": A brief, encouraging explanation; citing, if applicable, what exactly the user got wrong. IMPORTANT: This "feedback" field MUST be written in the user's native language, which is ${nativeLangName}.
 
     Here is the information for your evaluation:
     - The student was expected to say: "${expectedLine}"
