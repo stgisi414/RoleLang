@@ -1298,6 +1298,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     Your task is to determine if a student's spoken text is a correct phonetic match for a given sentence, ignoring punctuation and spacing.
 
+    IMPORTANT CONSIDERATIONS:
+    - Be flexible with mixed-language content (e.g., English words/acronyms within other languages)
+    - Speech recognition may not capture English letters/acronyms correctly when embedded in other languages
+    - Focus on the overall meaning and pronunciation rather than exact character matching
+    - Consider that "AI" might be transcribed as Chinese characters or omitted entirely
+    - If the spoken text captures the main meaning despite missing English acronyms, consider it a match
+
     Your response MUST be a simple JSON object with two fields:
     1. "is_match": a boolean (true or false).
     2. "feedback": A brief, one-sentence explanation for your decision. IMPORTANT: This "feedback" field MUST be written in the user's native language, which is ${nativeLangName}.
