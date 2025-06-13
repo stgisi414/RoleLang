@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const micStatus = document.getElementById('mic-status');
   const loadingSpinner = document.getElementById('loading-spinner');
   const audioSpeedSelect = document.getElementById('audio-speed');
+  const resetLessonBtn = document.getElementById('reset-lesson-btn');
 
   const modal = document.getElementById('explanation-modal');
   const modalBody = document.getElementById('modal-body');
@@ -243,6 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
   startLessonBtn.addEventListener('click', initializeLesson);
   micBtn.addEventListener('click', toggleSpeechRecognition);
   toggleLessonsBtn.addEventListener('click', toggleLessonsVisibility);
+  resetLessonBtn.addEventListener('click', resetLesson);
 
   // Add event listeners for lesson buttons
   document.addEventListener('click', (event) => {
@@ -1003,6 +1005,37 @@ Now, please generate the JSON for the ${language} lesson about "${topic}".`;
       clearTimeout(timeout);
       timeout = setTimeout(later, wait);
     };
+  }
+
+  // Reset lesson to beginning
+  function resetLesson() {
+    if (!lessonPlan) return;
+    
+    // Reset turn index to beginning
+    currentTurnIndex = 0;
+    
+    // Clear any active states and reset dialogue lines
+    document.querySelectorAll('.dialogue-line.active').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.dialogue-line').forEach(el => {
+      el.style.borderColor = '';
+    });
+    
+    // Reset mic button state
+    micBtn.disabled = false;
+    micBtn.classList.remove('bg-green-600');
+    micBtn.classList.add('bg-red-600');
+    
+    // Reset status message
+    micStatus.textContent = translateText('micStatus');
+    
+    // Stop any ongoing speech recognition
+    if (isRecognizing && recognition) {
+      recognition.stop();
+    }
+    
+    // Save state and restart conversation
+    saveState();
+    advanceTurn();
   }
 
   // Add back to landing button functionality
