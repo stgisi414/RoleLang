@@ -963,15 +963,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
           // Use Gemini for comprehensive Japanese hiragana conversion
           if (currentLanguage === 'Japanese') {
-              normalized = await convertJapaneseToHiraganaWithGemini(normalized);
+              try {
+                  normalized = await convertJapaneseToHiraganaWithGemini(normalized);
+                  console.log('Gemini converted text:', normalized);
+              } catch (error) {
+                  console.error('Gemini conversion failed, using fallback:', error);
+                  // Fallback to basic katakana to hiragana conversion
+                  normalized = normalized.replace(/[\u30A1-\u30FA]/g, (char) => {
+                      return String.fromCharCode(char.charCodeAt(0) - 0x60);
+                  });
+              }
           }
 
           return normalized;
       };
 
       try {
+          console.log('Original spoken text:', spokenText);
+          console.log('Original required text:', requiredText);
+          
+          // Convert BOTH texts to hiragana if Japanese
           const normalizedSpoken = await normalize(spokenText);
           const normalizedRequired = await normalize(requiredText);
+          
+          console.log('Normalized spoken text:', normalizedSpoken);
+          console.log('Normalized required text:', normalizedRequired);
 
           // Calculate similarity using Levenshtein distance
           function levenshteinDistance(str1, str2) {
@@ -1029,7 +1045,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function convertJapaneseToHiraganaWithGemini(text) {
       try {
-          const prompt = `Convert the following Japanese text to hiragana: "${text}". If it's already in hiragana, just return it.`;
+          // Enhanced prompt for better conversion
+          const prompt = `Convert ALL Japanese text to hiragana only. Convert:
+- All kanji to hiragana readings
+- All katakana to hiragana
+- Keep only hiragana characters, spaces, and basic punctuation
+- Input: "${text}"
+- Output only the hiragana conversion, nothing else.`;
+
           const response = await fetch(GEMINI_API_URL, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -1058,15 +1081,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
           if (!response.ok) {
               const errorData = await response.json();
-              throw new Error(`Gemini API error: ${response.statusText} - ${JSON.stringify(errorData)}`);
+              console.error('Gemini API error:', errorData);
+              throw new Error(`Gemini API error: ${response.statusText}`);
           }
 
           const data = await response.json();
-          const hiraganaText = data.candidates[0].content.parts[0].text.trim();
-          return hiraganaText;
+          let hiraganaText = data.candidates[0].content.parts[0].text.trim();
+          
+          // Clean up the response - remove any extra explanations
+          hiraganaText = hiraganaText.replace(/^[^ひ-ゟ]*/, '').replace(/[^ひ-ゟ\s]*$/, '').trim();
+          
+          console.log(`Gemini conversion: "${text}" -> "${hiraganaText}"`);
+          return hiraganaText || text; // Fallback to original if conversion is empty
       } catch (error) {
-          console.error("Failed to convert to hiragana:", error);
-          return text; // Return original text on failure
+          console.error("Failed to convert to hiragana with Gemini:", error);
+          throw error; // Re-throw to allow fallback handling in normalize function
       }
   }
 
