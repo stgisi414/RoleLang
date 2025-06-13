@@ -1060,7 +1060,14 @@ document.addEventListener('DOMContentLoaded', () => {
             currentSentence += char;
 
             if (/[.!?。！？]/.test(char)) {
+                // Check for combined punctuation (like !?, ?!, !!, ??)
                 let j = i + 1;
+                while (j < textWithProtectedEllipses.length && /[.!?。！？]/.test(textWithProtectedEllipses[j])) {
+                    currentSentence += textWithProtectedEllipses[j];
+                    j++;
+                }
+                
+                // Skip whitespace after punctuation
                 while (j < textWithProtectedEllipses.length && /\s/.test(textWithProtectedEllipses[j])) {
                     currentSentence += textWithProtectedEllipses[j];
                     j++;
