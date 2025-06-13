@@ -99,64 +99,18 @@ document.addEventListener('DOMContentLoaded', () => {
     currentTranslations = translations[langCode] || translations.en;
     updateTranslations();
     
+    // Refresh topics with new language
+    stopTopicRotations();
+    startTopicRotations();
+    
     // Store in localStorage for persistence
     localStorage.setItem('rolelang_native_lang', JSON.stringify({ code: langCode, flag, name }));
   };
 
-  // Topic pools for each difficulty level
-  const topicPools = {
-    beginner: [
-      "Introducing yourself", "Ordering food at a restaurant", "Asking for directions", "Shopping for clothes",
-      "Buying groceries", "Making small talk", "Greeting someone", "Saying goodbye",
-      "Asking for the time", "Counting numbers", "Describing the weather", "Talking about family",
-      "Ordering coffee", "Buying a bus ticket", "Checking into a hotel", "Asking for help",
-      "Exchanging money", "Finding a bathroom", "Ordering at a fast food restaurant", "Buying souvenirs",
-      "Asking about prices", "Getting a taxi", "Booking a table", "Asking for WiFi password",
-      "Buying medicine", "Getting directions to airport", "Ordering ice cream", "Asking about opening hours",
-      "Paying the bill", "Asking for recommendations", "Buying a phone card", "Getting a haircut",
-      "Asking about local customs", "Buying flowers", "Getting a newspaper", "Asking for a map",
-      "Ordering pizza delivery", "Buying train tickets", "Getting tourist information", "Asking about the menu",
-      "Buying postcards", "Getting directions to hospital", "Asking about wi-fi", "Buying shoes",
-      "Getting a receipt", "Asking for water", "Buying candy", "Getting help with luggage",
-      "Asking about the weather", "Buying a gift", "Getting a room key", "Asking for salt and pepper",
-      "Learning basic Chinese greetings", "Ordering dim sum", "Taking a taxi in Beijing", "Buying tea",
-      "Asking for Korean BBQ menu", "Learning Korean honorifics", "Using Seoul subway", "Buying kimchi"
-    ],
-    intermediate: [
-      "Job interview conversation", "Making a doctor appointment", "Discussing weekend plans", "Renting an apartment",
-      "Complaining about service", "Negotiating prices", "Planning a vacation", "Discussing hobbies",
-      "Talking about work", "Making new friends", "Discussing movies", "Planning a party",
-      "Talking about health issues", "Discussing education", "Making restaurant reservations", "Talking about sports",
-      "Discussing technology", "Planning a business trip", "Talking about relationships", "Discussing current events",
-      "Making travel arrangements", "Talking about food preferences", "Discussing cultural differences", "Planning a date",
-      "Talking about career goals", "Discussing environmental issues", "Making bank transactions", "Talking about music",
-      "Discussing fashion trends", "Planning a move", "Talking about stress", "Discussing exercise routines",
-      "Making insurance claims", "Talking about social media", "Discussing home repairs", "Planning a wedding",
-      "Talking about investments", "Discussing parenting", "Making hotel complaints", "Talking about photography",
-      "Discussing cooking recipes", "Planning retirement", "Talking about mental health", "Discussing online shopping",
-      "Making school applications", "Talking about volunteer work", "Discussing transportation", "Planning a reunion",
-      "Talking about gardening", "Discussing language learning", "Making warranty claims", "Talking about pets",
-      "Discussing Chinese business culture", "Planning Lunar New Year celebration", "Talking about Traditional Chinese Medicine", "Discussing Chinese calligraphy",
-      "Learning about Korean work culture", "Discussing K-pop and Korean entertainment", "Talking about Korean festivals", "Planning a trip to Jeju Island"
-    ],
-    advanced: [
-      "Negotiating a business deal", "Discussing politics and current events", "Explaining a complex technical problem", "Debating philosophical concepts",
-      "Mediating a workplace conflict", "Presenting a research proposal", "Discussing economic policies", "Analyzing literature",
-      "Debating ethical dilemmas", "Explaining scientific theories", "Discussing legal matters", "Analyzing market trends",
-      "Debating social issues", "Explaining medical procedures", "Discussing international relations", "Analyzing historical events",
-      "Debating environmental policies", "Explaining psychological concepts", "Discussing technological ethics", "Analyzing artistic movements",
-      "Debating educational reforms", "Explaining financial strategies", "Discussing cultural anthropology", "Analyzing political systems",
-      "Debating healthcare policies", "Explaining quantum physics", "Discussing urban planning", "Analyzing diplomatic negotiations",
-      "Debating immigration policies", "Explaining biotechnology", "Discussing sustainable development", "Analyzing corporate governance",
-      "Debating artificial intelligence ethics", "Explaining climate science", "Discussing global trade", "Analyzing constitutional law",
-      "Debating social justice", "Explaining neuroscience", "Discussing geopolitics", "Analyzing economic inequality",
-      "Debating media manipulation", "Explaining genetic engineering", "Discussing space exploration", "Analyzing cultural imperialism",
-      "Debating privacy rights", "Explaining renewable energy", "Discussing post-colonial theory", "Analyzing financial derivatives",
-      "Debating automation impact", "Explaining machine learning", "Discussing existentialism", "Analyzing global governance",
-      "Analyzing Chinese economic development", "Discussing Confucian philosophy", "Debating One Belt One Road initiative", "Explaining Traditional Chinese Medicine principles",
-      "Discussing Korean reunification", "Analyzing the Korean Wave (Hallyu)", "Debating Korean chaebols", "Explaining Korean technological advancement"
-    ]
-  };
+  // Function to get translated topic pools
+  function getTopicPools() {
+    return currentTranslations.topics || translations.en.topics;
+  }
 
   const animationClasses = [
     'topic-animate-in-1', 'topic-animate-in-2', 'topic-animate-in-3', 'topic-animate-in-4',
@@ -255,7 +209,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Topic Rotation Functions ---
   
-  function getRandomTopics(pool, count = 4) {
+  function getRandomTopics(level, count = 4) {
+    const topicPools = getTopicPools();
+    const pool = topicPools[level] || [];
     const shuffled = [...pool].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, count);
   }
@@ -305,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
       animateTopicsOut(container);
       
       setTimeout(() => {
-        const newTopics = getRandomTopics(topicPools[level], 4);
+        const newTopics = getRandomTopics(level, 4);
         animateTopicsIn(container, newTopics, level);
       }, 800);
     });
