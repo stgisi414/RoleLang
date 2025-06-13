@@ -1057,9 +1057,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function enableUserMicForSentence() {
       micBtn.disabled = false;
       if (currentSentences.length > 1) {
-          micStatus.textContent = `${translateText('recordSentence')} ${currentSentenceIndex + 1}/${currentSentences.length}: "${currentSentences[currentSentenceIndex]}"`;
+          micStatus.innerHTML = `<strong>${translateText('recordSentence')} ${currentSentenceIndex + 1}/${currentSentences.length}:</strong><br><span style="color: #38bdf8; font-weight: bold; text-decoration: underline;">"${currentSentences[currentSentenceIndex]}"</span>`;
       } else {
-          micStatus.textContent = translateText('yourTurn');
+          micStatus.innerHTML = `<strong>${translateText('yourTurn')}</strong><br><span style="color: #38bdf8; font-style: italic;">Look for the underlined sentence above</span>`;
       }
   }
 

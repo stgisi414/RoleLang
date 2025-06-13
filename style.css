@@ -110,6 +110,12 @@ body {
     opacity: 1;
     transform: scale(1.02);
     box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); /* shadow-sky-400/30 */
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(59, 130, 246, 0.15)) !important;
+    border: 2px solid #38bdf8 !important;
+    text-decoration: underline;
+    text-decoration-color: #38bdf8;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
 }
 
 /* Specific styling for user vs partner lines */
