@@ -51,8 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
       'fr': { code: 'fr', flag: '🇫🇷', name: 'Français' },
       'de': { code: 'de', flag: '🇩🇪', name: 'Deutsch' },
       'it': { code: 'it', flag: '🇮🇹', name: 'Italiano' },
-      'pt': { code: 'pt', flag: '🇵🇹', name: 'Português' },
-      'ru': { code: 'ru', flag: '🇷🇺', name: 'Русский' },
       'zh': { code: 'zh', flag: '🇨🇳', name: '中文' },
       'ja': { code: 'ja', flag: '🇯🇵', name: '日本語' },
       'ko': { code: 'ko', flag: '🇰🇷', name: '한국어' }
@@ -661,8 +659,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getLangCode(language) {
       const langCodes = {
-          'English': 'en-US', 'Spanish': 'es-ES', 'French': 'fr-FR', 'German': 'de-DE',
-          'Italian': 'it-IT', 'Japanese': 'ja-JP', 'Chinese': 'zh-CN', 'Korean': 'ko-KR',
+          'English': 'en-US',
+          'Spanish': 'es-ES', 
+          'French': 'fr-FR', 
+          'German': 'de-DE',
+          'Italian': 'it-IT', 
+          'Japanese': 'ja-JP', 
+          'Chinese': 'zh-CN', 
+          'Korean': 'ko-KR'
       };
       return langCodes[language] || 'en-US';
   }
