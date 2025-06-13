@@ -1026,29 +1026,50 @@ document.addEventListener('DOMContentLoaded', () => {
             return result.length > 0 ? result : [text.trim()];
         }
 
-        // For other languages, use the original logic
+        // For other languages, handle ellipses and sentence endings properly
+        // First, protect ellipses by temporarily replacing them
+        const ellipsisPlaceholder = '___ELLIPSIS___';
+        const textWithProtectedEllipses = text.replace(/\.{2,}/g, ellipsisPlaceholder);
+        
         const sentenceEndings = /[.!?。！？]/;
 
-        if (!sentenceEndings.test(text)) {
+        if (!sentenceEndings.test(textWithProtectedEllipses)) {
+            // Restore ellipses and return as single sentence
             return [text.trim()];
         }
 
         const sentences = [];
         let currentSentence = '';
 
-        for (let i = 0; i < text.length; i++) {
-            const char = text[i];
+        for (let i = 0; i < textWithProtectedEllipses.length; i++) {
+            const char = textWithProtectedEllipses[i];
+            
+            // Check if we're at the start of an ellipsis placeholder
+            if (textWithProtectedEllipses.substring(i, i + ellipsisPlaceholder.length) === ellipsisPlaceholder) {
+                // Add the original ellipsis back
+                const originalEllipsis = text.substring(
+                    text.indexOf('...', currentSentence.replace(new RegExp(ellipsisPlaceholder, 'g'), '...').length),
+                    text.indexOf('...', currentSentence.replace(new RegExp(ellipsisPlaceholder, 'g'), '...').length) + 
+                    (text.match(/\.{2,}/g) || ['...'])[0].length
+                );
+                currentSentence += originalEllipsis || '...';
+                i += ellipsisPlaceholder.length - 1;
+                continue;
+            }
+            
             currentSentence += char;
 
             if (/[.!?。！？]/.test(char)) {
                 let j = i + 1;
-                while (j < text.length && /\s/.test(text[j])) {
-                    currentSentence += text[j];
+                while (j < textWithProtectedEllipses.length && /\s/.test(textWithProtectedEllipses[j])) {
+                    currentSentence += textWithProtectedEllipses[j];
                     j++;
                 }
 
                 if (currentSentence.trim()) {
-                    sentences.push(currentSentence.trim());
+                    // Restore any ellipses in the sentence
+                    const restoredSentence = currentSentence.replace(new RegExp(ellipsisPlaceholder, 'g'), '...');
+                    sentences.push(restoredSentence.trim());
                 }
                 currentSentence = '';
                 i = j - 1;
@@ -1056,7 +1077,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (currentSentence.trim()) {
-            sentences.push(currentSentence.trim());
+            // Restore any ellipses in the remaining sentence
+            const restoredSentence = currentSentence.replace(new RegExp(ellipsisPlaceholder, 'g'), '...');
+            sentences.push(restoredSentence.trim());
         }
 
         return sentences.length > 0 ? sentences : [text.trim()];
