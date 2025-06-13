@@ -1055,7 +1055,7 @@ document.addEventListener('DOMContentLoaded', () => {
           'English': { voice_id: "pNInz6obpgDQGcFmaJgB", language_code: "en" },
           'Spanish': { voice_id: "XrExE9yKIg1WjnnlVkGX", language_code: "es" },
           'French': { voice_id: "ThT5KcBeYPX3keUQqHPh", language_code: "fr" },
-          'German': { voice_id: "1VxqO5bMEfZrTtfKpKwa", language_code: "de" },
+          'German': { voice_id: "pNInz6obpgDQGcFmaJgB", language_code: "de" },
           'Italian': { voice_id: "XB0fDUnXU5powFXDhCwa", language_code: "it" },
           'Japanese': { voice_id: "jBpfuIE2acCO8z3wKNLl", language_code: "ja" },
           'Chinese': { voice_id: "2EiwWnXFnvU5JabPnv8n", language_code: "zh" },
@@ -1088,7 +1088,7 @@ document.addEventListener('DOMContentLoaded', () => {
               language_code: "fr"
           },
           'German': {
-              voice_id: "1VxqO5bMEfZrTtfKpKwa", // Male German voice
+              voice_id: "pNInz6obpgDQGcFmaJgB", // Using reliable English voice for German (multilingual)
               language_code: "de"
           },
           'Italian': {
