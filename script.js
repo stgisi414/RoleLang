@@ -25,7 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const nativeFlagEl = document.getElementById('native-flag');
   const nativeLangTextEl = document.getElementById('native-lang-text');
   const toggleLessonsBtn = document.getElementById('toggle-lessons-btn');
-  const toggleLessonsIcon = document.getElementById('toggle-lessons-icon');
   const lessonsContainer = document.getElementById('lessons-container');
 
   // --- API & State ---
@@ -219,17 +218,18 @@ document.addEventListener('DOMContentLoaded', () => {
   
   function toggleLessonsVisibility() {
     const isHidden = lessonsContainer.classList.contains('hidden');
+    const chevronIcon = toggleLessonsBtn.querySelector('i');
     
     if (isHidden) {
       lessonsContainer.classList.remove('hidden');
-      toggleLessonsIcon.style.transform = 'rotate(180deg)';
+      chevronIcon.style.transform = 'rotate(180deg)';
       // Restart topic rotations when showing lessons
       if (topicRotationIntervals.length === 0) {
         startTopicRotations();
       }
     } else {
       lessonsContainer.classList.add('hidden');
-      toggleLessonsIcon.style.transform = 'rotate(0deg)';
+      chevronIcon.style.transform = 'rotate(0deg)';
       // Stop topic rotations when hiding lessons
       stopTopicRotations();
     }
