@@ -24,6 +24,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const nativeLangDropdown = document.getElementById('native-lang-dropdown');
   const nativeFlagEl = document.getElementById('native-flag');
   const nativeLangTextEl = document.getElementById('native-lang-text');
+  const toggleLessonsBtn = document.getElementById('toggle-lessons-btn');
+  const toggleLessonsIcon = document.getElementById('toggle-lessons-icon');
+  const lessonsContainer = document.getElementById('lessons-container');
 
   // --- API & State ---
   // IMPORTANT: Replace with your actual Gemini API Key.
@@ -137,6 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Event Listeners ---
   startLessonBtn.addEventListener('click', initializeLesson);
   micBtn.addEventListener('click', toggleSpeechRecognition);
+  toggleLessonsBtn.addEventListener('click', toggleLessonsVisibility);
 
   // Add event listeners for lesson buttons
   document.addEventListener('click', (event) => {
@@ -209,6 +213,26 @@ document.addEventListener('DOMContentLoaded', () => {
           micStatus.textContent = `${translateText('youSaid')} "${spokenText}"`;
           verifyUserSpeech(spokenText);
       };
+  }
+
+  // --- Toggle Functions ---
+  
+  function toggleLessonsVisibility() {
+    const isHidden = lessonsContainer.classList.contains('hidden');
+    
+    if (isHidden) {
+      lessonsContainer.classList.remove('hidden');
+      toggleLessonsIcon.style.transform = 'rotate(180deg)';
+      // Restart topic rotations when showing lessons
+      if (topicRotationIntervals.length === 0) {
+        startTopicRotations();
+      }
+    } else {
+      lessonsContainer.classList.add('hidden');
+      toggleLessonsIcon.style.transform = 'rotate(0deg)';
+      // Stop topic rotations when hiding lessons
+      stopTopicRotations();
+    }
   }
 
   // --- Topic Rotation Functions ---

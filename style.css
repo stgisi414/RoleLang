@@ -325,3 +325,16 @@ body {
     filter: brightness(1.05);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
+
+/* Toggle lessons button styling */
+#toggle-lessons-btn {
+    transition: all 0.2s ease;
+}
+
+#toggle-lessons-btn:hover {
+    transform: scale(1.05);
+}
+
+#lessons-container {
+    transition: all 0.3s ease;
+}

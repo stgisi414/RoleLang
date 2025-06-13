@@ -24,7 +24,7 @@
                 <img src="https://placehold.co/40x40/1f2937/a5f3fc?text=RL" alt="RoleLang Logo" class="h-10 w-10 rounded-full border-2 border-cyan-400/50">
                 <span class="text-2xl font-bold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-sky-300 to-cyan-500">RoleLang</span>
             </div>
-            
+
             <!-- Native Language Flag Dropdown -->
             <div class="relative">
                 <button id="native-lang-btn" class="flex items-center space-x-2 px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg hover:bg-gray-700/50 transition-colors" style="color: white !important;">
@@ -32,7 +32,7 @@
                     <span id="native-lang-text" class="text-sm text-gray-300 hidden sm:block">English</span>
                     <i class="fas fa-chevron-down text-xs text-gray-400"></i>
                 </button>
-                
+
                 <div id="native-lang-dropdown" class="absolute right-0 top-full mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl hidden z-50">
                     <div class="py-2">
                         <button class="native-lang-option w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors flex items-center space-x-3" data-lang="en" data-flag="🇺🇸">
@@ -112,29 +112,36 @@
 
                     <!-- Choose a Lesson Section -->
                     <div class="mb-6 fade-in-element delay-3">
-                        <h3 class="text-lg font-medium text-gray-300 mb-4 text-center" data-translate="orChooseLesson">Or Choose a Lesson:</h3>
-                        
-                        <!-- Beginner Level -->
-                        <div class="mb-4">
-                            <h4 class="text-sm font-medium text-green-400 mb-2" data-translate="beginner">Beginner</h4>
-                            <div id="beginner-container" class="grid grid-cols-2 gap-2">
-                                <!-- Topics will be dynamically populated -->
-                            </div>
+                        <div class="flex items-center justify-center">
+                            <h3 class="text-lg font-medium text-gray-300 mb-4 text-center mr-2" data-translate="orChooseLesson">Or Choose a Lesson:</h3>
+                            <button id="toggle-lessons-btn" class="text-gray-500 hover:text-white transition">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
                         </div>
 
-                        <!-- Intermediate Level -->
-                        <div class="mb-4">
-                            <h4 class="text-sm font-medium text-yellow-400 mb-2" data-translate="intermediate">Intermediate</h4>
-                            <div id="intermediate-container" class="grid grid-cols-2 gap-2">
-                                <!-- Topics will be dynamically populated -->
+                        <div id="lessons-container">
+                            <!-- Beginner Level -->
+                            <div class="mb-4">
+                                <h4 class="text-sm font-medium text-green-400 mb-2" data-translate="beginner">Beginner</h4>
+                                <div id="beginner-container" class="grid grid-cols-2 gap-2">
+                                    <!-- Topics will be dynamically populated -->
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Advanced Level -->
-                        <div class="mb-4">
-                            <h4 class="text-sm font-medium text-red-400 mb-2" data-translate="advanced">Advanced</h4>
-                            <div id="advanced-container" class="grid grid-cols-2 gap-2">
-                                <!-- Topics will be dynamically populated -->
+                            <!-- Intermediate Level -->
+                            <div class="mb-4">
+                                <h4 class="text-sm font-medium text-yellow-400 mb-2" data-translate="intermediate">Intermediate</h4>
+                                <div id="intermediate-container" class="grid grid-cols-2 gap-2">
+                                    <!-- Topics will be dynamically populated -->
+                                </div>
+                            </div>
+
+                            <!-- Advanced Level -->
+                            <div class="mb-4">
+                                <h4 class="text-sm font-medium text-red-400 mb-2" data-translate="advanced">Advanced</h4>
+                                <div id="advanced-container" class="grid grid-cols-2 gap-2">
+                                    <!-- Topics will be dynamically populated -->
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -174,7 +181,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Full screen loading spinner for lesson generation -->
             <div id="loading-spinner" class="absolute inset-0 bg-gray-900/80 backdrop-blur-sm flex items-center justify-center z-20 rounded-xl hidden">
                 <div class="text-center">
