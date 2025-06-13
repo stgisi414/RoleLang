@@ -543,7 +543,7 @@ document.addEventListener('DOMContentLoaded', () => {
           // Add click listener for explanations
           if (turn.explanation) {
             const explanationSpan = document.createElement('span');
-            explanationSpan.innerHTML = ` <i class="fas fa-info-circle text-sky-300"></i>`;
+            explanationSpan.innerHTML = ` <i class="fas fa-info-circle text-sky-300 ml-3"></i>`;
             explanationSpan.classList.add('explanation-link');
             explanationSpan.onclick = (e) => {
                 e.stopPropagation(); // Prevent audio playback
