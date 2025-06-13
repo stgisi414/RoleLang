@@ -1433,6 +1433,18 @@ The user wants to ${isEnglish ? 'practice' : 'learn'} ${language}.
 The roleplaying scenario is: "${topic}".
 ${japaneseScriptInstruction}
 
+IMPORTANT: Use realistic fake names for characters in the dialogue. Choose culturally appropriate names for the language being taught. For example:
+- English: Emma, James, Sarah, Michael
+- Spanish: María, Carlos, Ana, Miguel  
+- French: Sophie, Pierre, Marie, Jean
+- German: Anna, Hans, Lisa, Klaus
+- Italian: Giulia, Marco, Elena, Francesco
+- Japanese: Yuki, Takeshi, Akiko, Hiroshi
+- Chinese: Li Wei, Wang Ming, Zhang Mei, Chen Jun
+- Korean: Min-jun, So-young, Ji-hoon, Hye-jin
+
+DO NOT use placeholders like [YOUR NAME], OO, or any generic terms. Always use specific, realistic names.
+
 Please generate a JSON object with the following structure:
 1.  "scenario": A brief, one-sentence description of the lesson's context.
 2.  "language": The language being taught (e.g., "${language}").
@@ -1447,7 +1459,7 @@ Please generate a JSON object with the following structure:
 Example of required JSON output format:
 
 {
-"scenario": "A customer orders a coffee and a croissant at a French café.",
+"scenario": "Emma orders a coffee and a croissant at a French café while speaking with barista Pierre.",
 "language": "French",
 "illustration_prompt": "Customer at a Parisian cafe counter ordering coffee",
 "dialogue": [
