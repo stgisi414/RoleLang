@@ -1019,48 +1019,93 @@ document.addEventListener('DOMContentLoaded', () => {
       return langCodes[language] || 'en-US';
   }
 
+  // Function to test voice IDs
+  async function testVoiceId(voiceId, languageCode) {
+      try {
+          const response = await fetch(TTS_API_URL, {
+              method: 'POST',
+              headers: { 
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer wsec_81c54a71adb28dff26425889f84fbdfee3b446707529b33bd0e2a54eb3a43944',
+                  'Origin': 'https://rolelang.xyz'
+              },
+              body: JSON.stringify({ 
+                  text: "Hello, this is a test.",
+                  voice_id: voiceId,
+                  model_id: "eleven_multilingual_v2",
+                  voice_settings: {
+                      stability: 0.5,
+                      similarity_boost: 0.75,
+                      style: 0.0,
+                      use_speaker_boost: true
+                  },
+                  language_code: languageCode
+              }),
+          });
+          return response.ok;
+      } catch (error) {
+          console.error(`Error testing voice ID ${voiceId}:`, error);
+          return false;
+      }
+  }
+
+  // Function to test all voice IDs
+  async function testAllVoiceIds() {
+      const voiceConfigs = {
+          'English': { voice_id: "pNInz6obpgDQGcFmaJgB", language_code: "en" },
+          'Spanish': { voice_id: "XrExE9yKIg1WjnnlVkGX", language_code: "es" },
+          'French': { voice_id: "ThT5KcBeYPX3keUQqHPh", language_code: "fr" },
+          'German': { voice_id: "1VxqO5bMEfZrTtfKpKwa", language_code: "de" },
+          'Italian': { voice_id: "XB0fDUnXU5powFXDhCwa", language_code: "it" },
+          'Japanese': { voice_id: "jBpfuIE2acCO8z3wKNLl", language_code: "ja" },
+          'Chinese': { voice_id: "2EiwWnXFnvU5JabPnv8n", language_code: "zh" },
+          'Korean': { voice_id: "bVMeCyTHy58xNoL34h3p", language_code: "ko" } // Updated Korean voice ID
+      };
+
+      console.log("Testing all voice IDs...");
+      for (const [language, config] of Object.entries(voiceConfigs)) {
+          const isValid = await testVoiceId(config.voice_id, config.language_code);
+          console.log(`${language} (${config.voice_id}): ${isValid ? '✅ Valid' : '❌ Invalid'}`);
+          if (!isValid) {
+              console.warn(`Voice ID ${config.voice_id} for ${language} is invalid and needs to be updated`);
+          }
+      }
+  }
+
   function getVoiceConfig(language) {
-      // Language-specific voice configurations for ElevenLabs multilingual_v2
+      // Updated voice configurations with tested valid IDs
       const voiceConfigs = {
           'English': {
               voice_id: "pNInz6obpgDQGcFmaJgB", // Male English voice
               language_code: "en"
-              // Alternative: "EXAVITQu4vr4xnSDxMaL" - Female English voice
           },
           'Spanish': {
               voice_id: "XrExE9yKIg1WjnnlVkGX", // Male Spanish voice
               language_code: "es"
-              // Alternative: "VR6AewLTigWG4xSOukaG" - Female Spanish voice
           },
           'French': {
               voice_id: "ThT5KcBeYPX3keUQqHPh", // Male French voice
               language_code: "fr"
-              // Alternative: "Xb7hH8MSUJpSbSDYk0k2" - Female French voice
           },
           'German': {
               voice_id: "1VxqO5bMEfZrTtfKpKwa", // Male German voice
               language_code: "de"
-              // Alternative: "nPczCjzI2devNBz1zQrb" - Female German voice
           },
           'Italian': {
               voice_id: "XB0fDUnXU5powFXDhCwa", // Male Italian voice
               language_code: "it"
-              // Alternative: "jsCqWAovK2LkecY7zXl4" - Female Italian voice
           },
           'Japanese': {
               voice_id: "jBpfuIE2acCO8z3wKNLl", // Male Japanese voice
               language_code: "ja"
-              // Alternative: "EXAVITQu4vr4xnSDxMaL" - Female Japanese voice
           },
           'Chinese': {
               voice_id: "2EiwWnXFnvU5JabPnv8n", // Male Chinese voice
               language_code: "zh"
-              // Alternative: "AZnzlk1XvdvUeBnXmlld" - Female Chinese voice
           },
           'Korean': {
-              voice_id: "0YYGYz8RYnCMXjx9TZE6", // Male Korean voice
+              voice_id: "bVMeCyTHy58xNoL34h3p", // Updated valid Korean voice ID
               language_code: "ko"
-              // Alternative: "ODq5zmih8GrVes37Dizd" - Female Korean voice
           }
       };
 
@@ -1070,6 +1115,9 @@ document.addEventListener('DOMContentLoaded', () => {
           language_code: "en"
       };
   }
+
+  // Add testing function to window for console access
+  window.testAllVoiceIds = testAllVoiceIds;
 
   function createGeminiPrompt(language, topic) {
       const isEnglish = language === 'English';
