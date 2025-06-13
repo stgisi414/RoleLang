@@ -1837,6 +1837,10 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         const nativeLangName = langCodeToName[nativeLangCode] || 'English';
 
+        // Get random culturally appropriate names for the target language
+        const randomNames = getRandomNames(language, 5);
+        const nameExamples = randomNames.map(name => `"${name[0]} ${name[1]}"`).join(', ');
+
         return `
     You are a language tutor creating a lesson for a web application. Your task is to generate a single, complete, structured lesson plan in JSON format. Do not output any text or explanation outside of the single JSON object.
 
@@ -1864,9 +1868,9 @@ document.addEventListener('DOMContentLoaded', () => {
     3.  **Line Object:** The "line" object must contain these exact fields:
         ${lineObjectStructure}
 
-    4.  **Character Names:** You MUST invent realistic, culturally-appropriate fake names for the characters in the dialogue (e.g., "Maria", "Kenji", "Klaus").
+    4.  **Character Names:** You MUST use realistic, culturally-appropriate names for the characters. Here are some good examples for ${language}: ${nameExamples}. Choose from these or similar culturally appropriate names for ${language}. Use both first and last names.
 
-    5.  **NO PLACEHOLDERS:** This is a critical rule. Under no circumstances should you use placeholders like "[USER NAME]", "(YOUR NAME)", "<NAME>", or any similar variants. You must use the fake names you chose in RULE 4 instead.
+    5.  **NO PLACEHOLDERS:** This is a critical rule. Under no circumstances should you use placeholders like "[USER NAME]", "(YOUR NAME)", "<NAME>", or any similar variants. You must use the culturally appropriate names as specified in RULE 4.
 
     6.  **EXPLANATION LANGUAGE:** All explanations (title and body) must be written in ${nativeLangName}, not English.
 
