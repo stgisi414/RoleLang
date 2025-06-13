@@ -861,31 +861,111 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function verifyUserSpeech(spokenText) {
       const requiredText = lessonPlan.dialogue[currentTurnIndex].line.split('(')[0]; // Ignore translation
-      const normalize = (text) => text.trim().toLowerCase().replace(/[.,!?;]/g, '');
+      
+      // Enhanced normalization function
+      const normalize = (text) => {
+          return text.trim().toLowerCase()
+              .replace(/[.,!?;:"'`´''""]/g, '') // Remove punctuation
+              .replace(/\s+/g, ' ') // Normalize whitespace
+              .replace(/[àáâãäå]/g, 'a')
+              .replace(/[èéêë]/g, 'e')
+              .replace(/[ìíîï]/g, 'i')
+              .replace(/[òóôõö]/g, 'o')
+              .replace(/[ùúûü]/g, 'u')
+              .replace(/[ñ]/g, 'n')
+              .replace(/[ç]/g, 'c');
+      };
 
-      if (normalize(spokenText).includes(normalize(requiredText))) {
+      const normalizedSpoken = normalize(spokenText);
+      const normalizedRequired = normalize(requiredText);
+      
+      // Calculate similarity using Levenshtein distance
+      function levenshteinDistance(str1, str2) {
+          const matrix = [];
+          for (let i = 0; i <= str2.length; i++) {
+              matrix[i] = [i];
+          }
+          for (let j = 0; j <= str1.length; j++) {
+              matrix[0][j] = j;
+          }
+          for (let i = 1; i <= str2.length; i++) {
+              for (let j = 1; j <= str1.length; j++) {
+                  if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+                      matrix[i][j] = matrix[i - 1][j - 1];
+                  } else {
+                      matrix[i][j] = Math.min(
+                          matrix[i - 1][j - 1] + 1,
+                          matrix[i][j - 1] + 1,
+                          matrix[i - 1][j] + 1
+                      );
+                  }
+              }
+          }
+          return matrix[str2.length][str1.length];
+      }
+
+      // Check for exact match first
+      if (normalizedSpoken === normalizedRequired) {
           micStatus.textContent = translateText('correct');
           const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
           currentLineEl.style.borderColor = '#4ade80'; // green-400
-          micBtn.disabled = true; // Disable mic while transitioning
+          micBtn.disabled = true;
           currentTurnIndex++;
-          // Save state after user successfully completes a turn
+          saveState();
+          setTimeout(() => {
+              advanceTurn();
+          }, 1500);
+          return;
+      }
+
+      // Check for substring match (original logic)
+      if (normalizedSpoken.includes(normalizedRequired) || normalizedRequired.includes(normalizedSpoken)) {
+          micStatus.textContent = translateText('correct');
+          const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
+          currentLineEl.style.borderColor = '#4ade80'; // green-400
+          micBtn.disabled = true;
+          currentTurnIndex++;
+          saveState();
+          setTimeout(() => {
+              advanceTurn();
+          }, 1500);
+          return;
+      }
+
+      // Check similarity using Levenshtein distance
+      const distance = levenshteinDistance(normalizedSpoken, normalizedRequired);
+      const maxLength = Math.max(normalizedSpoken.length, normalizedRequired.length);
+      const similarity = 1 - (distance / maxLength);
+      
+      // Accept if similarity is 75% or higher
+      if (similarity >= 0.75) {
+          micStatus.textContent = translateText('correct');
+          const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
+          currentLineEl.style.borderColor = '#4ade80'; // green-400
+          micBtn.disabled = true;
+          currentTurnIndex++;
           saveState();
           setTimeout(() => {
               advanceTurn();
           }, 1500);
       } else {
-          micStatus.textContent = translateText('tryAgain');
+          // Show debug info to help troubleshoot
+          console.log('Speech recognition debug:');
+          console.log('Required:', normalizedRequired);
+          console.log('Spoken:', normalizedSpoken);
+          console.log('Similarity:', (similarity * 100).toFixed(1) + '%');
+          
+          micStatus.textContent = translateText('tryAgain') + ` (${(similarity * 100).toFixed(0)}% match)`;
           const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
           currentLineEl.classList.remove('active');
-          void currentLineEl.offsetWidth; // Trigger reflow
+          void currentLineEl.offsetWidth;
           currentLineEl.classList.add('active');
           currentLineEl.style.borderColor = '#f87171'; // red-400
-          // Allow user to try again immediately
+          
           setTimeout(() => {
               micStatus.textContent = translateText('tryAgainStatus');
-              currentLineEl.style.borderColor = ''; // Reset border color
-          }, 2000);
+              currentLineEl.style.borderColor = '';
+          }, 3000);
       }
   }
 
