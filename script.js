@@ -679,32 +679,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
 
-          // Convert all Japanese dialogue to hiragana for speech recognition matching only
-          if (language === 'Japanese') {
-            console.log('Converting Japanese dialogue to hiragana for speech matching...');
-            for (let i = 0; i < lessonPlan.dialogue.length; i++) {
-              try {
-                // Only convert user lines (party A) since they need speech recognition
-                if (lessonPlan.dialogue[i].party === 'A') {
-                  const originalLine = lessonPlan.dialogue[i].line;
-                  const cleanLine = originalLine.split('(')[0].trim(); // Remove translation part
-                  const hiraganaLine = await convertJapaneseToHiraganaWithGemini(cleanLine);
-
-                  // Store hiragana version for speech matching only
-                  lessonPlan.dialogue[i].hiragana_line = hiraganaLine;
-
-                  console.log(`Converted for matching: "${cleanLine}" -> "${hiraganaLine}"`);
-                }
-              } catch (error) {
-                console.error(`Failed to convert dialogue line ${i}:`, error);
-                // Keep original if conversion fails
-                if (lessonPlan.dialogue[i].party === 'A') {
-                  lessonPlan.dialogue[i].hiragana_line = lessonPlan.dialogue[i].line.split('(')[0].trim();
-                }
-              }
-            }
-          }
-
           // Stop topic rotations when lesson starts
           stopTopicRotations();
 
@@ -737,12 +711,8 @@ document.addEventListener('DOMContentLoaded', () => {
           // Create the base content with speaker name
           let lineContent = `<strong>${turn.party}:</strong> `;
 
-          // For user lines (A), split into sentences and wrap each in a span
           if (turn.party === 'A') {
-              const currentLanguage = languageSelect.value;
-              
-              // Always use the original line for display, regardless of language
-              const displayText = removeParentheses(turn.line);
+              const displayText = removeParentheses(turn.line.display); // Use line.display
               const sentences = splitIntoSentences(displayText);
 
               if (sentences.length > 1) {
@@ -755,7 +725,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   });
 
                   // Add the original line with translation in parentheses if it exists
-                  const originalLine = turn.line;
+                  const originalLine = turn.line.display;
                   if (originalLine.includes('(')) {
                       const translationPart = originalLine.substring(originalLine.indexOf('('));
                       lineContent += ` <span class="translation-part text-gray-400">${translationPart}</span>`;
@@ -766,7 +736,7 @@ document.addEventListener('DOMContentLoaded', () => {
               }
           } else {
               // Partner lines (B) - no sentence splitting needed
-              lineContent += turn.line;
+              lineContent += turn.line.display;
           }
 
           lineContent += ` <i class="fas fa-volume-up text-gray-400 ml-2 hover:text-sky-300"></i>`;
@@ -780,7 +750,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           // Add debounced click listener for audio playback
           lineDiv.addEventListener('click', (e) => {
-              playLineAudioDebounced(turn.line);
+              playLineAudioDebounced(turn.line.display);
           });
 
           // Add click listener for explanations
@@ -1008,7 +978,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const currentLanguage = languageSelect.value;
           
           // Always use original text for display and sentence splitting
-          const cleanText = removeParentheses(currentTurnData.line);
+          const cleanText = removeParentheses(currentTurnData.line.display);
           currentSentences = splitIntoSentences(cleanText);
           currentSentenceIndex = 0;
 
@@ -1069,7 +1039,7 @@ document.addEventListener('DOMContentLoaded', () => {
           micBtn.disabled = true;
           micStatus.textContent = translateText('partnerSpeaking');
           try {
-              const cleanText = removeParentheses(currentTurnData.line);
+              const cleanText = removeParentheses(currentTurnData.line.display);
               // Stop any currently playing audio before starting new one
               if (currentAudio && isAudioPlaying) {
                   currentAudio.pause();
@@ -1176,6 +1146,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function verifyUserSpeech(spokenText) {
       const currentLanguage = languageSelect.value;
+      const currentTurnData = lessonPlan.dialogue[currentTurnIndex];
+
+      // Determine what text to compare against
+      let requiredText;
+      if (currentSentences.length > 1) {
+          // Multi-sentence mode: split the hiragana line from the lesson plan
+          const hiraganaLineSentences = splitIntoSentences(currentTurnData.line.hiragana);
+          requiredText = hiraganaLineSentences[currentSentenceIndex] || '';
+      } else {
+          // Single sentence mode: use the entire hiragana line
+          requiredText = currentTurnData.line.hiragana;
+      }
 
       // Determine what text to compare against
       let requiredText;
@@ -1663,123 +1645,86 @@ document.addEventListener('DOMContentLoaded', () => {
   // Add testing function to window for console access
   window.testAllVoiceIds = testAllVoiceIds;
 
-  function createGeminiPrompt(language, topic) {
-      const isEnglish = language === 'English';
-      const translationInstruction = isEnglish 
-          ? "For the user's lines (party A), do not include translations since this is English practice."
-          : `For the user's lines (party A), also include the English translation in parentheses. Example: "Bonjour (Hello)".`;
+    function createGeminiPrompt(language, topic) {
+        const isEnglish = language === 'English';
+        const translationInstruction = isEnglish
+            ? "For the user's lines (party A), do not include translations."
+            : `For the user's lines (party A), also include the English translation in parentheses within the "display" text only. Example: "Bonjour (Hello)".`;
 
-      // Special Japanese script instructions based on difficulty level
-      let japaneseScriptInstruction = '';
-      if (language === 'Japanese') {
-          // Determine difficulty level based on topic
-          const topicPools = getTopicPools();
-          const beginnerTopics = topicPools.beginner || [];
-          const intermediateTopics = topicPools.intermediate || [];
-
-          const isBeginnerTopic = beginnerTopics.some(t => t.toLowerCase().includes(topic.toLowerCase()) || topic.toLowerCase().includes(t.toLowerCase()));
-          const isIntermediateTopic = intermediateTopics.some(t => t.toLowerCase().includes(topic.toLowerCase()));
-
-          if (isBeginnerTopic) {
-              japaneseScriptInstruction = `
-IMPORTANT JAPANESE SCRIPT REQUIREMENTS:
-- Write ALL Japanese dialogue using HIRAGANA and KATAKANA only (no kanji, no romaji)
-- Use hiragana for native Japanese words
-- Use katakana for foreign loanwords
-- Example: "こんにちは。コーヒーをください。" NOT "Konnichiwa. Koohii wo kudasai."
-- This is a beginner lesson, so keep it simple with kana only.
-- DO NOT include any furigana (small hiragana above kanji) - use plain kana only.`;
-          } else if (isIntermediateTopic) {
-              japaneseScriptInstruction = `
-IMPORTANT JAPANESE SCRIPT REQUIREMENTS:
-- Write Japanese dialogue using appropriate mix of HIRAGANA, KATAKANA, and BASIC KANJI
-- Use common kanji for intermediate level (numbers, days, basic verbs/nouns)
-- Use hiragana for grammatical particles and verb endings
-- Use katakana for foreign loanwords
-- Example: "今日はコーヒーを飲みます。" NOT "Kyou wa koohii wo nomimasu."
-- NO ROMAJI - only use Japanese scripts.
-- DO NOT include any furigana (small hiragana readings above kanji).`;
-          } else {
-              // Advanced
-              japaneseScriptInstruction = `
-IMPORTANT JAPANESE SCRIPT REQUIREMENTS:
-- Write Japanese dialogue using full HIRAGANA, KATAKANA, and KANJI as appropriate for advanced level
-- Use complex kanji, compound words, and formal expressions
-- Use hiragana for grammatical particles and okurigana
-- Use katakana for foreign loanwords and emphasis
-- Example: "申し訳ございませんが、今日は営業時間外です。" NOT romaji
-- NO ROMAJI - only use Japanese scripts with proper kanji usage.
-- DO NOT include any furigana (small hiragana readings above kanji).`;
-          }
+        let japaneseScriptInstruction = '';
+        if (language === 'Japanese') {
+            japaneseScriptInstruction = `
+    IMPORTANT JAPANESE REQUIREMENTS:
+    - For each dialogue line, you MUST provide two versions in the "line" object:
+      1. "display": The normal Japanese sentence with Kanji, Hiragana, and Katakana.
+      2. "hiragana": A pure hiragana version of the same sentence. This is for speech recognition matching.
+    - The sentence structure and punctuation (like '。' or '、') MUST be identical between the "display" and "hiragana" versions.
+    - DO NOT use Romaji in either version.
+    - For user lines (party 'A'), the English translation should ONLY be in the "display" field, not in the "hiragana" field.
+    - Example for a user line:
+      "line": {
+        "display": "今日はコーヒーを飲みます。(Today I will drink coffee.)",
+        "hiragana": "きょうはこーひーをのみます。"
       }
+    - Example for a partner line:
+      "line": {
+        "display": "承知いたしました。",
+        "hiragana": "しょうちいたしました。"
+      }
+    `;
+        }
 
-      return `
-You are a language tutor creating a lesson for a web application named "RoleLang".
-Your task is to generate a complete, structured lesson plan in JSON format. Do not include any explanatory text outside of the JSON structure itself.
+        return `
+    You are a language tutor creating a lesson for a web application named "RoleLang".
+    Your task is to generate a complete, structured lesson plan in JSON format. Do not include any explanatory text outside of the JSON structure itself.
 
-The user wants to ${isEnglish ? 'practice' : 'learn'} ${language}.
-The roleplaying scenario is: "${topic}".
-${japaneseScriptInstruction}
+    The user wants to learn ${language}.
+    The roleplaying scenario is: "${topic}".
+    ${language === 'Japanese' ? japaneseScriptInstruction : ''}
 
-IMPORTANT: Use realistic fake names for characters in the dialogue. Choose culturally appropriate names for the language being taught. For example:
-- English: Emma, James, Sarah, Michael
-- Spanish: María, Carlos, Ana, Miguel  
-- French: Sophie, Pierre, Marie, Jean
-- German: Anna, Hans, Lisa, Klaus
-- Italian: Giulia, Marco, Elena, Francesco
-- Japanese: Yuki, Takeshi, Akiko, Hiroshi
-- Chinese: Li Wei, Wang Ming, Zhang Mei, Chen Jun
-- Korean: Min-jun, So-young, Ji-hoon, Hye-jin
+    IMPORTANT: Use realistic fake names for characters in the dialogue. Choose culturally appropriate names for the language being taught.
+    DO NOT use placeholders like [YOUR NAME]. Always use specific, realistic names.
 
-DO NOT use placeholders like [YOUR NAME], OO, or any generic terms. Always use specific, realistic names.
+    Please generate a JSON object with the following structure:
+    1.  "scenario": A brief, one-sentence description of the lesson's context.
+    2.  "language": The language being taught (e.g., "${language}").
+    3.  "illustration_prompt": A simple, descriptive prompt (5-10 words) for an AI image generator.
+    4.  "dialogue": An array of turn-based dialogue objects.
+      - Each object in the array must have these properties:
+          - "party": "A" (the user) or "B" (the partner).
+          - "line": This MUST be an object for all languages.
+              - For non-Japanese languages, just repeat the text in both fields.
+              - For Japanese, follow the specific instructions above.
+              - "display": The line of dialogue to be displayed to the user. ${translationInstruction}
+              - "hiragana": The line of dialogue for machine processing (for Japanese, this is pure hiragana; for others, it's the same as display).
+          - "explanation" (optional): An object with "title" and "body" properties for important grammar or vocabulary notes.
 
-Please generate a JSON object with the following structure:
-1.  "scenario": A brief, one-sentence description of the lesson's context.
-2.  "language": The language being taught (e.g., "${language}").
-3.  "illustration_prompt": A simple, descriptive prompt (5-10 words) for an AI image generator that captures the essence ofthe lesson. Example: "Two people ordering coffee at a cafe counter".
-4.  "dialogue": An array of turn-based dialogue objects.
-  - The conversation must involve at least two parties, 'A' (the user) and 'B' (the partner).
-  - Each object in the array must have two properties:
-      - "party": "A" or "B"
-      - "line": The line of dialogue in the target language (${language}). ${language === 'Japanese' ? 'MUST use proper Japanese scripts (hiragana/katakana/kanji) - NO ROMAJI.' : ''} ${translationInstruction}
-      - "explanation" (optional): An object with "title" and "body" properties. Include this ONLY when a specific grammar rule, vocabulary word, or cultural note in that line is important to explain. The title should be the concept (e.g., "Gender of Nouns"), and the body should be a concise, simple explanation (1-2 sentences).
+    Example of required JSON output format for a JAPANESE lesson:
 
-Example of required JSON output format:
-
-{
-"scenario": "Emma orders a coffee and a croissant at a French café while speaking with barista Pierre.",
-"language": "French",
-"illustration_prompt": "Customer at a Parisian cafe counter ordering coffee",
-"dialogue": [
-  {
-    "party": "B",
-    "line": "Bonjour! Qu'est-ce que je vous sers?",
-    "explanation": {
-      "title": "Formal vs. Informal 'You'",
-      "body": "In French, 'vous' is the formal way to say 'you', used with strangers or in professional settings. 'Tu' is the informal version for friends and family."
+    {
+      "scenario": "Takeshi asks for directions to the train station.",
+      "language": "Japanese",
+      "illustration_prompt": "Tourist asking for directions in a Japanese city",
+      "dialogue": [
+        {
+          "party": "A",
+          "line": {
+            "display": "すみません、駅はどこですか。(Excuse me, where is the station?)",
+            "hiragana": "すみません、えきはどこですか。"
+          }
+        },
+        {
+          "party": "B",
+          "line": {
+            "display": "この道をまっすぐ行ってください。",
+            "hiragana": "このみちをまっすぐいってください。"
+          }
+        }
+      ]
     }
-  },
-  {
-    "party": "A",
-    "line": "Bonjour. Je voudrais un café, s'il vous plaît. (Hello. I would like a coffee, please.)"
-  },
-  {
-    "party": "B",
-    "line": "Un café. Et avec ceci?"
-  },
-  {
-    "party": "A",
-    "line": "Je vais prendre aussi un croissant. (I will also have a croissant.)"
-  },
-  {
-    "party": "B",
-    "line": "Très bien. Ça fera 4 euros 50."
-  }
-]
-}
 
-Now, please generate the JSON for the ${language} lesson about "${topic}".`;
-  }
+    Now, please generate the JSON for the ${language} lesson about "${topic}".`;
+    }
 
   // Initialize native language detection
   const initializeNativeLanguage = () => {
