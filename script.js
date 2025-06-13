@@ -1180,15 +1180,11 @@ document.addEventListener('DOMContentLoaded', () => {
       // Determine what text to compare against
       let requiredText;
       if (currentSentences.length > 1) {
-          // Multi-sentence mode: we need hiragana for Japanese sentence matching
-          if (currentLanguage === 'Japanese') {
-              // For multi-sentence Japanese, convert the current sentence to hiragana
-              try {
-                  requiredText = await convertJapaneseToHiraganaWithGemini(currentSentences[currentSentenceIndex]);
-              } catch (error) {
-                  console.error('Failed to convert sentence to hiragana:', error);
-                  requiredText = currentSentences[currentSentenceIndex];
-              }
+          // Multi-sentence mode: for Japanese, we need to split the pre-converted hiragana
+          if (currentLanguage === 'Japanese' && lessonPlan.dialogue[currentTurnIndex].hiragana_line) {
+              // Split the pre-converted hiragana line into sentences
+              const hiraganaLineSentences = splitIntoSentences(lessonPlan.dialogue[currentTurnIndex].hiragana_line);
+              requiredText = hiraganaLineSentences[currentSentenceIndex] || currentSentences[currentSentenceIndex];
           } else {
               requiredText = currentSentences[currentSentenceIndex];
           }
