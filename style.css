@@ -337,12 +337,20 @@ body {
 #advanced-container,
 #realistic-container,
 #futuristic-container,
-#historical-container {
+#historical-container,
+#drama-container,
+#comedy-container,
+#horror-container {
     min-height: 200px;
     max-height: 200px;
     overflow: hidden;
     position: relative;
     transition: all 0.3s ease;
+}
+
+/* Situation category styling */
+.situation-category {
+    transition: all 0.3s ease-in-out;
 }
 
 /* Tab content styling */

@@ -90,9 +90,20 @@ const translations = {
         "Teleportation device repair", "Underwater city tour", "Flying car traffic control", "Memory backup service"
       ],
       historical: [
-        "Victorian era tea party", "Medieval castle siege", "Ancient Roman gladiator training", "Wild West saloon encounter",
-        "1920s speakeasy party", "Civil War battlefield medicine", "Renaissance art commission", "Ancient Egyptian tomb exploration",
-        "Viking ship voyage", "Colonial American market", "Industrial revolution factory", "Ancient Greek philosophy debate"
+        "Tea party in Victorian era", "Medieval castle siege", "Gladiator training in Ancient Rome", "Wild West saloon encounter",
+        "1920s speakeasy party", "Civil War battlefield medicine", "Renaissance art commission", "Ancient Egyptian tomb exploration"
+      ],
+      drama: [
+        "Family confrontation over inheritance", "Workplace betrayal by best friend", "Discovering partner's secret affair", "Terminal illness diagnosis conversation",
+        "Parent-child estrangement reconciliation", "Courtroom testimony in murder trial", "Breaking up long-term relationship", "Confronting childhood bully as adult"
+      ],
+      comedy: [
+        "Disastrous cooking show contestant", "Awkward elevator stuck with ex", "Mistaken identity at costume party", "Terrible blind date at fancy restaurant",
+        "Stand-up comedian bombing on stage", "Wedding crasher gets caught", "Trying to return obviously used item", "Job interview going hilariously wrong"
+      ],
+      horror: [
+        "Exploring abandoned haunted mansion", "Trapped in elevator during power outage", "Camping trip with strange sounds", "Home alone during mysterious blackout",
+        "Lost in fog-covered forest at night", "Strange neighbor with dark secrets", "Old antique shop with cursed objects", "Night shift at creepy hospital"
       ]
     }
   },
@@ -176,6 +187,18 @@ const translations = {
       historical: [
         "Fiesta de té de la época victoriana", "Asedio a un castillo medieval", "Entrenamiento de gladiadores en la Antigua Roma", "Encuentro en un salón del Salvaje Oeste",
         "Fiesta en un bar clandestino de los años 20", "Medicina en el campo de batalla de la Guerra Civil", "Encargo de arte del Renacimiento", "Exploración de una tumba del Antiguo Egipto"
+      ],
+      drama: [
+        "Family confrontation over inheritance", "Workplace betrayal by best friend", "Discovering partner's secret affair", "Terminal illness diagnosis conversation",
+        "Parent-child estrangement reconciliation", "Courtroom testimony in murder trial", "Breaking up long-term relationship", "Confronting childhood bully as adult"
+      ],
+      comedy: [
+        "Disastrous cooking show contestant", "Awkward elevator stuck with ex", "Mistaken identity at costume party", "Terrible blind date at fancy restaurant",
+        "Stand-up comedian bombing on stage", "Wedding crasher gets caught", "Trying to return obviously used item", "Job interview going hilariously wrong"
+      ],
+      horror: [
+        "Exploring abandoned haunted mansion", "Trapped in elevator during power outage", "Camping trip with strange sounds", "Home alone during mysterious blackout",
+        "Lost in fog-covered forest at night", "Strange neighbor with dark secrets", "Old antique shop with cursed objects", "Night shift at creepy hospital"
       ]
     }
   },
@@ -257,7 +280,19 @@ const translations = {
       ],
       historical: [
         "Thé à l'époque victorienne", "Siège d'un château médiéval", "Entraînement de gladiateurs dans la Rome antique", "Rencontre dans un saloon du Far West",
-        "Fête dans un bar clandestin des années 1920", "Médecine sur le champ de bataille de la guerre de Sécession", "Commande d'art de la Renaissance", "Exploration d'une tombe de l'Égypte ancienne"
+        "Fête dans un bar clandestin des années 1920", "Médecine sur le champ de bataille de la guerre de Sécession", "Commande d'art de la Renaissance", "Exploration de tombeau de l'Égypte ancienne"
+      ],
+      drama: [
+        "Confrontation familiale pour héritage", "Trahison au travail par meilleur ami", "Découvrir l'aventure secrète du partenaire", "Conversation sur diagnostic terminal",
+        "Réconciliation entre parent et enfant", "Témoignage au procès pour meurtre", "Rompre relation à long terme", "Confronter intimidateur d'enfance"
+      ],
+      comedy: [
+        "Candidat désastreux à émission culinaire", "Ascenseur coincé avec ex", "Erreur d'identité à fête costumée", "Rendez-vous aveugle terrible au restaurant chic",
+        "Comédien qui échoue sur scène", "Intrus à mariage qui se fait prendre", "Essayer de retourner article utilisé", "Entrevue d'emploi qui tourne mal"
+      ],
+      horror: [
+        "Explorer manoir abandonné hanté", "Coincé dans ascenseur pendant panne", "Voyage camping avec bruits étranges", "Seul à la maison pendant panne mystérieuse",
+        "Perdu dans forêt couverte de brouillard", "Voisin étrange avec secrets sombres", "Magasin d'antiquités avec objets maudits", "Quart de nuit à hôpital effrayant"
       ]
     }
   },
@@ -340,6 +375,18 @@ const translations = {
       historical: [
         "Teeparty im viktorianischen Zeitalter", "Belagerung einer mittelalterlichen Burg", "Gladiatorentraining im alten Rom", "Begegnung in einem Saloon im Wilden Westen",
         "Party in einer Flüsterkneipe der 1920er Jahre", "Medizin auf dem Schlachtfeld des Bürgerkriegs", "Kunstauftrag in der Renaissance", "Erkundung eines altägyptischen Grabes"
+      ],
+      drama: [
+        "Family confrontation over inheritance", "Workplace betrayal by best friend", "Discovering partner's secret affair", "Terminal illness diagnosis conversation",
+        "Parent-child estrangement reconciliation", "Courtroom testimony in murder trial", "Breaking up long-term relationship", "Confronting childhood bully as adult"
+      ],
+      comedy: [
+        "Disastrous cooking show contestant", "Awkward elevator stuck with ex", "Mistaken identity at costume party", "Terrible blind date at fancy restaurant",
+        "Stand-up comedian bombing on stage", "Wedding crasher gets caught", "Trying to return obviously used item", "Job interview going hilariously wrong"
+      ],
+      horror: [
+        "Exploring abandoned haunted mansion", "Trapped in elevator during power outage", "Camping trip with strange sounds", "Home alone during mysterious blackout",
+        "Lost in fog-covered forest at night", "Strange neighbor with dark secrets", "Old antique shop with cursed objects", "Night shift at creepy hospital"
       ]
     }
   },
@@ -421,7 +468,19 @@ const translations = {
       ],
       historical: [
         "Tea party dell'era vittoriana", "Assedio di un castello medievale", "Addestramento di gladiatori nell'antica Roma", "Incontro in un saloon del selvaggio west",
-        "Festa in uno speakeasy degli anni '20", "Medicina sul campo di battaglia della guerra civile", "Commissione d'arte rinascimentale", "Esplorazione di una tomba dell'antico Egitto"
+        "Festa in uno speakeasy degli anni '20", "Medicina sul campo di battaglia della guerra civile", "Commissione d'arte rinascimentale", "Esplorazione di una tomba dell'Antico Egitto"
+      ],
+      drama: [
+        "Confronto familiare per eredità", "Tradimento lavorativo da migliore amico", "Scoprire relazione segreta del partner", "Conversazione su diagnosi terminale",
+        "Riconciliazione genitore-figlio", "Testimonianza in processo per omicidio", "Rompere relazione a lungo termine", "Confrontare bullo dell'infanzia da adulto"
+      ],
+      comedy: [
+        "Concorrente disastroso in programma culinario", "Ascensore imbarazzante bloccato con ex", "Scambio di identità a festa in costume", "Appuntamento al buio terribile in ristorante elegante",
+        "Comico che fallisce sul palco", "Intruso a matrimonio che viene scoperto", "Tentare di restituire articolo ovviamente usato", "Colloquio di lavoro che va esilarante male"
+      ],
+      horror: [
+        "Esplorare villa abbandonata infestata", "Intrappolato in ascensore durante blackout", "Viaggio in campeggio con rumori strani", "Solo in casa durante blackout misterioso",
+        "Perso in foresta coperta di nebbia di notte", "Vicino strano con segreti oscuri", "Negozio di antiquariato con oggetti maledetti", "Turno notturno in ospedale inquietante"
       ]
     }
   },
@@ -503,7 +562,19 @@ const translations = {
       ],
       historical: [
         "维多利亚时代的茶会", "中世纪城堡围攻", "古罗马角斗士训练", "西部世界酒吧偶遇",
-        "1920年代的地下酒吧派对", "内战战场医疗", "文艺复兴时期的艺术委托", "古埃及古墓探险"
+        "1920年代的地下酒吧派对", "内战战场医疗", "文艺复兴时期的艺术委托", "探索古埃及陵墓"
+      ],
+      drama: [
+        "家庭遗产纠纷对质", "最好朋友的职场背叛", "发现伴侣的秘密外遇", "绝症诊断对话",
+        "父子疏远后的和解", "谋杀案法庭证词", "结束长期恋爱关系", "成年后面对童年霸凌者"
+      ],
+      comedy: [
+        "灾难性烹饪节目参赛者", "与前任被困电梯的尴尬", "化装舞会上的身份误认", "高级餐厅糟糕的相亲",
+        "脱口秀演员台上失败", "婚礼蹭饭者被发现", "试图退还明显用过的物品", "面试进行得搞笑糟糕"
+      ],
+      horror: [
+        "探索废弃闹鬼豪宅", "停电时被困电梯", "露营旅行听到奇怪声音", "神秘停电时独自在家",
+        "夜晚在雾蒙蒙的森林中迷路", "有黑暗秘密的奇怪邻居", "有诅咒物品的古董店", "在令人毛骨悚然的医院值夜班"
       ]
     }
   },
@@ -585,7 +656,19 @@ const translations = {
       ],
       historical: [
         "ビクトリア朝のティーパーティー", "中世の城の包囲", "古代ローマの剣闘士の訓練", "西部開拓時代の酒場での出会い",
-        "1920年代の禁酒法時代のパーティー", "南北戦争の戦場での医療", "ルネサンス期の芸術依頼", "古代エジプトの墓の探検"
+        "1920年代の禁酒法時代のパーティー", "南北戦争の戦場での医療", "ルネサンス期の芸術依頼", "古代エジプトの墓の探索"
+      ],
+      drama: [
+        "遺産をめぐる家族の対立", "親友による職場での裏切り", "パートナーの秘密の不倫を発見", "末期診断の会話",
+        "親子の疎遠からの和解", "殺人裁判での証言", "長期関係の破局", "大人になってからの幼少期のいじめっ子との対峙"
+      ],
+      comedy: [
+        "災難続きの料理番組出場者", "元恋人とエレベーターに閉じ込められる気まずさ", "仮装パーティーでの人違い", "高級レストランでのひどいお見合い",
+        "ステージで失敗するスタンダップコメディアン", "結婚式に潜り込んだのがバレる", "明らかに使用済みの商品を返品しようとする", "面接がひどく面白おかしく失敗"
+      ],
+      horror: [
+        "廃墟となった幽霊屋敷の探索", "停電中にエレベーターに閉じ込められる", "奇妙な音がするキャンプ旅行", "謎の停電で一人きりの家",
+        "夜の霧に覆われた森で道に迷う", "暗い秘密を持つ奇妙な隣人", "呪われた物がある古い骨董品店", "不気味な病院での夜勤"
       ]
     }
   },
@@ -668,6 +751,18 @@ const translations = {
       historical: [
         "빅토리아 시대의 티 파티", "중세 성의 공성전", "고대 로마 검투사 훈련", "서부 개척 시대 술집에서의 만남",
         "1920년대 밀주점 파티", "남북전쟁 당시의 야전 의료", "르네상스 미술 작품 의뢰", "고대 이집트 무덤 탐험"
+      ],
+      drama: [
+        "Family confrontation over inheritance", "Workplace betrayal by best friend", "Discovering partner's secret affair", "Terminal illness diagnosis conversation",
+        "Parent-child estrangement reconciliation", "Courtroom testimony in murder trial", "Breaking up long-term relationship", "Confronting childhood bully as adult"
+      ],
+      comedy: [
+        "Disastrous cooking show contestant", "Awkward elevator stuck with ex", "Mistaken identity at costume party", "Terrible blind date at fancy restaurant",
+        "Stand-up comedian bombing on stage", "Wedding crasher gets caught", "Trying to return obviously used item", "Job interview going hilariously wrong"
+      ],
+      horror: [
+        "Exploring abandoned haunted mansion", "Trapped in elevator during power outage", "Camping trip with strange sounds", "Home alone during mysterious blackout",
+        "Lost in fog-covered forest at night", "Strange neighbor with dark secrets", "Old antique shop with cursed objects", "Night shift at creepy hospital"
       ]
     }
   }

@@ -590,6 +590,12 @@ document.addEventListener('DOMContentLoaded', () => {
             colorClass = 'purple';
         } else if (level === 'historical') {
             colorClass = 'amber';
+        } else if (level === 'drama') {
+            colorClass = 'red';
+        } else if (level === 'comedy') {
+            colorClass = 'yellow';
+        } else if (level === 'horror') {
+            colorClass = 'purple';
         } else {
             colorClass = 'gray'; // fallback
         }
@@ -677,22 +683,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function rotateSituations() {
-        const containers = {
-            realistic: document.getElementById('realistic-container'),
-            futuristic: document.getElementById('futuristic-container'),
-            historical: document.getElementById('historical-container')
-        };
-
-        Object.entries(containers).forEach(([situation, container], containerIndex) => {
-            // Stagger the start of each container's animation for smoother overall effect
-            setTimeout(() => {
-                animateTopicsOut(container);
-
+        // All available situation categories
+        const allSituations = ['realistic', 'futuristic', 'historical', 'drama', 'comedy', 'horror'];
+        
+        // Hide all situation categories first
+        document.querySelectorAll('.situation-category').forEach(category => {
+            category.style.display = 'none';
+        });
+        
+        // Randomly select 3 categories to display
+        const shuffledSituations = [...allSituations].sort(() => 0.5 - Math.random());
+        const selectedSituations = shuffledSituations.slice(0, 3);
+        
+        // Show selected categories and populate them
+        selectedSituations.forEach((situation, index) => {
+            const categoryElement = document.querySelector(`[data-category="${situation}"]`);
+            const container = document.getElementById(`${situation}-container`);
+            
+            if (categoryElement && container) {
+                categoryElement.style.display = 'block';
+                
+                // Stagger the start of each container's animation
                 setTimeout(() => {
-                    const newTopics = getRandomSituationTopics(situation, 4);
-                    animateTopicsIn(container, newTopics, situation);
-                }, 500); // Faster transition overlap
-            }, containerIndex * 150); // Reduced stagger timing
+                    animateTopicsOut(container);
+
+                    setTimeout(() => {
+                        const newTopics = getRandomSituationTopics(situation, 4);
+                        animateTopicsIn(container, newTopics, situation);
+                    }, 500);
+                }, index * 150);
+            }
         });
     }
 
