@@ -333,7 +333,9 @@ const translations = {
     roleplayScenario: "Rollenspiel-Szenario",
     enterTopic: "Bitte geben Sie ein Rollenspiel-Thema ein.",
     apiKeyError: 'Bitte ersetzen Sie "YOUR_GEMINI_API_KEY_HERE" in script.js durch Ihren echten Gemini API-Schlüssel.',
-     langEnglish: "Englisch",
+    errorLoading: "Fehler beim Laden der Lektion. Bitte überprüfen Sie die Konsole für Details. Fehler:",
+    resetLesson: "Zurücksetzen",
+    langEnglish: "Englisch",
     langSpanish: "Spanisch",
     langFrench: "Französisch",
     langGerman: "Deutsch",
@@ -409,7 +411,7 @@ const translations = {
     beginner: "Principiante",
     intermediate: "Intermedio",
     advanced: "Avanzato",
-Adding lesson history translations to Italian, Chinese, Japanese, and Korean.    startLesson: "Inizia Lezione",
+startLesson: "Inizia Lezione",
     illustrationPlaceholder: "L'illustrazione apparirà qui",
     micStatus: "Premi il microfono e leggi la riga evidenziata.",
     audioSpeed: "Velocità Audio:",
@@ -796,7 +798,7 @@ Adding lesson history translations to Italian, Chinese, Japanese, and Korean.   
       ]
     }
   },
-   ja: {
+  ja: {
     title: "RoleLang | ポストモダン言語学習",
     headerTitle: "RoleLang",
     mainHeading: "AIロールプレイシナリオ",
@@ -916,11 +918,11 @@ Adding lesson history translations to Italian, Chinese, Japanese, and Korean.   
     listening: "듣고 있습니다...",
     generating: "레슨을 생성 중입니다...",
     correct: "정답! 잘했습니다.",
-    tryAgain: "아깝습니다. 그 줄을 다시 읽어보세요。",
+    tryAgain: "아깝습니다. 그 줄을 다시 읽어보세요.",
     tryAgainStatus: "마이크를 누르고 다시 시도하세요.",
     lessonComplete: "레슨 완료! 🎉",
     partnerSpeaking: "파트너가 말하고 있습니다...",
-    audioFinished: "오디오 종료。",
+    audioFinished: "오디오 종료.",
     audioError: "오디오 오류, 계속 진행...",
     audioUnavailable: "오디오 사용 불가, 계속 진행...",
     yourTurn: "당신 차례입니다. 마이크를 누르고 줄을 읽으세요.",
@@ -931,8 +933,8 @@ Adding lesson history translations to Italian, Chinese, Japanese, and Korean.   
     resetLesson: "재설정",
     enterTopic: "역할놀이 주제를 입력해주세요.",
     apiKeyError: 'script.js에서 "YOUR_GEMINI_API_KEY_HERE"를 실제 Gemini API 키로 교체해주세요.',
-     errorLoading: "레슨 로딩 오류. 자세한 내용은 콘솔을 확인하세요. 오류:",
-     langEnglish: "영어",
+    errorLoading: "레슨 로딩 오류. 자세한 내용은 콘솔을 확인하세요. 오류:",
+    langEnglish: "영어",
     langSpanish: "스페인어",
     langFrench: "프랑스어",
     langGerman: "독일어",
@@ -942,7 +944,7 @@ Adding lesson history translations to Italian, Chinese, Japanese, and Korean.   
     langKorean: "한국어",
     reviewLessons: "이전 레슨 복습:",
     noCompletedLessons: "아직 완료된 레슨이 없습니다",
-   topics: {
+    topics: {
       beginner: [
         "자기소개하기", "식당에서 음식 주문하기", "길 묻기", "옷 쇼핑하기",
         "식료품 사기", "잡담하기", "인사하기", "작별 인사하기",
