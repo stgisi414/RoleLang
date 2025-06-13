@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const micBtn = document.getElementById('mic-btn');
   const micStatus = document.getElementById('mic-status');
   const loadingSpinner = document.getElementById('loading-spinner');
+  const audioSpeedSelect = document.getElementById('audio-speed');
 
   const modal = document.getElementById('explanation-modal');
   const modalBody = document.getElementById('modal-body');
@@ -54,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
       topicInput: topicInput.value,
       nativeLang: nativeLang,
       lessonsVisible: !lessonsContainer.classList.contains('hidden'),
+      audioSpeed: audioSpeedSelect ? audioSpeedSelect.value : '1',
       lastSaved: Date.now()
     };
     
@@ -104,6 +106,11 @@ document.addEventListener('DOMContentLoaded', () => {
       lessonsContainer.classList.remove('hidden');
       const chevronIcon = toggleLessonsBtn.querySelector('i');
       chevronIcon.style.transform = 'rotate(180deg)';
+    }
+    
+    // Restore audio speed
+    if (state.audioSpeed && audioSpeedSelect) {
+      audioSpeedSelect.value = state.audioSpeed;
     }
     
     // Restore lesson if it exists
@@ -255,6 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Save state when form inputs change
   languageSelect.addEventListener('change', saveState);
   topicInput.addEventListener('input', debounce(saveState, 500));
+  audioSpeedSelect.addEventListener('change', saveState);
   closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
   modal.addEventListener('click', (event) => {
       // Close modal if clicking on the backdrop
@@ -576,6 +584,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const audioBlob = await fetchPartnerAudio(cleanText);
           const audioUrl = URL.createObjectURL(audioBlob);
           const audio = new Audio(audioUrl);
+          audio.playbackRate = parseFloat(audioSpeedSelect.value);
           audio.play().catch(error => {
               console.error("Audio playback failed:", error);
           });
@@ -615,6 +624,7 @@ document.addEventListener('DOMContentLoaded', () => {
               const audio = new Audio(audioUrl);
 
               audio.addEventListener('loadeddata', () => {
+                  audio.playbackRate = parseFloat(audioSpeedSelect.value);
                   audio.play().catch(error => {
                       console.error("Audio play failed:", error);
                       enableUserMic();
@@ -645,6 +655,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
               // Ensure audio loads before playing
               audio.addEventListener('loadeddata', () => {
+                  audio.playbackRate = parseFloat(audioSpeedSelect.value);
                   audio.play().catch(error => {
                       console.error("Audio play failed:", error);
                       // Continue to next turn even if audio fails

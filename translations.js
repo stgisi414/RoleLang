@@ -110,7 +110,8 @@ const translations = {
     advanced: "Avanzado",
     startLesson: "Comenzar Lección",
     illustrationPlaceholder: "La ilustración aparecerá aquí",
-    micStatus: "Presiona el micrófono y lee la línea resaltada.",
+    micStatus: "Presiona el micrófono y lee la línea.",
+    audioSpeed: "Velocidad de Audio:",
     speechNotSupported: "Reconocimiento de voz no compatible con este navegador.",
     listening: "Escuchando...",
     generating: "Generando tu lección...",
@@ -302,7 +303,8 @@ const translations = {
     advanced: "Fortgeschritten",
     startLesson: "Lektion Starten",
     illustrationPlaceholder: "Die Illustration wird hier erscheinen",
-    micStatus: "Drücken Sie das Mikrofon und lesen Sie die markierte Zeile.",
+    micStatus: "Drücken Sie das Mikrofon und lesen Sie die Zeile.",
+    audioSpeed: "Audio-Geschwindigkeit:",
     speechNotSupported: "Spracherkennung wird in diesem Browser nicht unterstützt.",
     listening: "Höre zu...",
     generating: "Ihre Lektion wird generiert...",
@@ -555,7 +557,7 @@ const translations = {
         "申请学校", "谈论志愿工作", "讨论交通", "计划聚会",
         "谈论园艺", "讨论语言学习", "申请保修", "谈论宠物",
         "讨论中国商业文化", "计划农历新年庆祝", "谈论中医", "讨论中国书法",
-        "了解韩国工作文化", "讨论韩流和韩国娱乐", "谈论韩国节日", "计划济州岛之旅"
+        "了解韩国工作文化", "讨论韩流和韩国娱乐", "讨论韩国节日", "计划济州岛之旅"
       ],
       advanced: [
         "商业交易谈判", "讨论政治和时事", "解释复杂技术问题", "辩论哲学概念",

@@ -173,6 +173,16 @@
                            <!-- Dialogue lines will be injected here -->
                         </div>
                         <div id="controls" class="text-center shrink-0">
+                            <!-- Audio Speed Control -->
+                            <div class="mb-4 flex items-center justify-center space-x-3">
+                                <label for="audio-speed" class="text-sm text-gray-300" data-translate="audioSpeed">Audio Speed:</label>
+                                <select id="audio-speed" class="bg-gray-800/50 border border-gray-700 rounded px-2 py-1 text-white text-sm focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none">
+                                    <option value="0.75">0.75x</option>
+                                    <option value="1" selected>1x</option>
+                                    <option value="1.25">1.25x</option>
+                                </select>
+                            </div>
+                            
                             <button id="mic-btn" disabled class="bg-red-600 text-white w-16 h-16 rounded-full text-2xl cursor-pointer transition-all duration-300 transform hover:scale-110 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:transform-none">
                                 <i class="fas fa-microphone"></i>
                             </button>
