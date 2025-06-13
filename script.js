@@ -319,7 +319,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       recognition.onerror = (event) => {
           console.error("Speech recognition error:", event.error);
-          micStatus.textContent = `Error: ${event.error}. Try again.`;
+          
+          // Special handling for Japanese and other languages that may not be supported
+          const currentLanguage = languageSelect.value;
+          if (currentLanguage === 'Japanese' && (event.error === 'language-not-supported' || event.error === 'no-speech')) {
+              micStatus.textContent = `Japanese speech recognition unavailable. Compare your speech visually with the text.`;
+          } else {
+              micStatus.textContent = `Error: ${event.error}. Try again.`;
+          }
       };
 
       recognition.onresult = (event) => {
@@ -663,7 +670,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
           // Set speech recognition language
           if (recognition) {
-            recognition.lang = getLangCode(language);
+            const langCode = getLangCode(language);
+            recognition.lang = langCode;
+            
+            // Special handling for Japanese - add warning if speech recognition may not work well
+            if (language === 'Japanese') {
+              console.warn('Japanese speech recognition may have limited accuracy. Consider using the visual verification.');
+            }
           }
 
           // Stop topic rotations when lesson starts
@@ -1068,7 +1081,21 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isRecognizing) {
           recognition.stop();
       } else {
-          recognition.start();
+          const currentLanguage = languageSelect.value;
+          
+          // Test if the language is supported before starting
+          if (currentLanguage === 'Japanese') {
+              try {
+                  recognition.lang = 'ja';
+                  recognition.start();
+              } catch (error) {
+                  console.error('Japanese speech recognition failed to start:', error);
+                  micStatus.textContent = 'Japanese speech recognition not supported in this browser. Use visual comparison.';
+                  return;
+              }
+          } else {
+              recognition.start();
+          }
       }
   }
 
@@ -1187,7 +1214,7 @@ document.addEventListener('DOMContentLoaded', () => {
           'French': 'fr-FR', 
           'German': 'de-DE',
           'Italian': 'it-IT', 
-          'Japanese': 'ja-JP', 
+          'Japanese': 'ja', // Fixed: Use 'ja' instead of 'ja-JP' for better compatibility
           'Chinese': 'zh-CN', 
           'Korean': 'ko-KR'
       };
