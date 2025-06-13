@@ -1144,61 +1144,120 @@ document.addEventListener('DOMContentLoaded', () => {
       return text.replace(/\s*\([^)]*\)/g, '').trim();
   }
 
-  async function convertJapaneseToHiraganaWithGemini(text) {
-      try {
-          // Enhanced prompt for better conversion
-          const prompt = `Convert ALL Japanese text to hiragana only. Convert:
-- All kanji to hiragana readings
-- All katakana to hiragana
-- Keep only hiragana characters, spaces, and basic punctuation
-- Input: "${text}"
-- Output only the hiragana conversion, nothing else.`;
-
-          const response = await fetch(GEMINI_API_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                  contents: [{ parts: [{ text: prompt }] }],
-                  safetySettings: [
-                      {
-                          category: "HARM_CATEGORY_HARASSMENT",
-                          threshold: "BLOCK_NONE"
-                      },
-                      {
-                          category: "HARM_CATEGORY_HATE_SPEECH",
-                          threshold: "BLOCK_NONE"
-                      },
-                      {
-                          category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                          threshold: "BLOCK_NONE"
-                      },
-                      {
-                          category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-                          threshold: "BLOCK_NONE"
-                      }
-                  ]
-              }),
-          });
-
-          if (!response.ok) {
-              const errorData = await response.json();
-              console.error('Gemini API error:', errorData);
-              throw new Error(`Gemini API error: ${response.statusText}`);
-          }
-
-          const data = await response.json();
-          let hiraganaText = data.candidates[0].content.parts[0].text.trim();
-
-          // Clean up the response - remove any extra explanations
-          hiraganaText = hiraganaText.replace(/^[^ひ-ゟ]*/, '').replace(/[^ひ-ゟ\s]*$/, '').trim();
-
-          console.log(`Gemini conversion: "${text}" -> "${hiraganaText}"`);
-          return hiraganaText || text; // Fallback to original if conversion is empty
-      } catch (error) {
-          console.error("Failed to convert to hiragana with Gemini:", error);
-          throw error; // Re-throw to allow fallback handling in normalize function
-      }
-  }
+  async function verifyUserSpeech(spokenText) {
+        try {
+            // This 'try...catch' block now wraps ALL logic to prevent any silent crashes.
+            const currentLanguage = languageSelect.value;
+            const currentTurnData = lessonPlan.dialogue[currentTurnIndex];
+    
+            // --- Japanese-Specific Verification using AI ---
+            if (currentLanguage === 'Japanese') {
+                micStatus.textContent = 'Verifying with AI...';
+                const expectedLine = removeParentheses(currentTurnData.line.display);
+    
+                console.log(`Verifying Japanese speech with AI method...`);
+                console.log(`Expected line: ${expectedLine}`);
+                console.log(`Spoken text: ${spokenText}`);
+    
+                const verificationPrompt = `
+    You are a Japanese language evaluation tool. Your task is to determine if a student's spoken text is a correct phonetic match for a given sentence.
+    - The student was expected to say: "${expectedLine}"
+    - The student's speech recognition produced: "${spokenText}"
+    Analyze the spoken text. Is it a correct pronunciation of the expected sentence? The match should be strict, but allow for very minor variations that don't change the meaning.
+    Respond with a simple JSON object with two fields:
+    1. "is_match": a boolean (true or false).
+    2. "feedback": a brief, one-sentence explanation for your decision.
+    Example Response: { "is_match": true, "feedback": "Excellent pronunciation." }
+    Now, provide the JSON response for the student's attempt.`;
+    
+                const response = await fetch(GEMINI_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: verificationPrompt }] }],
+                        safetySettings: [
+                            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                        ]
+                    }),
+                });
+    
+                if (!response.ok) {
+                    throw new Error(`Gemini verification API error: ${response.statusText}`);
+                }
+    
+                const data = await response.json();
+                const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+                const result = JSON.parse(jsonString);
+    
+                console.log('Gemini verification result:', result);
+    
+                if (result.is_match) {
+                    handleCorrectSpeech();
+                } else {
+                    const feedback = result.feedback || "Not quite. Try reading the line again.";
+                    micStatus.textContent = feedback;
+                    const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
+                    currentLineEl.classList.remove('active');
+                    void currentLineEl.offsetWidth;
+                    currentLineEl.classList.add('active');
+                    currentLineEl.style.borderColor = '#f87171';
+    
+                    setTimeout(() => {
+                        if (currentSentences.length > 1) {
+                            enableUserMicForSentence();
+                        } else {
+                            micStatus.textContent = translateText('tryAgainStatus');
+                        }
+                        currentLineEl.style.borderColor = '';
+                    }, 4000);
+                }
+            } else {
+                // --- Logic for all other languages ---
+                let requiredText;
+                if (currentSentences.length > 1) {
+                    const lineSentences = splitIntoSentences(removeParentheses(currentTurnData.line.display));
+                    requiredText = lineSentences[currentSentenceIndex] || '';
+                } else {
+                    requiredText = removeParentheses(currentTurnData.line.display);
+                }
+    
+                const normalize = (text) => text.trim().toLowerCase().replace(/[.,!?;:"'`´''""。！？]/g, '').replace(/\s+/g, ' ');
+                const normalizedSpoken = normalize(spokenText);
+                const normalizedRequired = normalize(requiredText);
+    
+                // Helper function for calculating similarity
+                function levenshteinDistance(str1, str2) {
+                    const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null));
+                    for (let i = 0; i <= str1.length; i++) { matrix[0][i] = i; }
+                    for (let j = 0; j <= str2.length; j++) { matrix[j][0] = j; }
+                    for (let j = 1; j <= str2.length; j++) {
+                        for (let i = 1; i <= str1.length; i++) {
+                            const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+                            matrix[j][i] = Math.min(matrix[j - 1][i] + 1, matrix[j][i - 1] + 1, matrix[j - 1][i - 1] + cost);
+                        }
+                    }
+                    return matrix[str2.length][str1.length];
+                }
+    
+                const distance = levenshteinDistance(normalizedSpoken, normalizedRequired);
+                const maxLength = Math.max(normalizedSpoken.length, normalizedRequired.length);
+                const similarity = maxLength === 0 ? 1 : 1 - (distance / maxLength);
+    
+                if (similarity >= 0.75) {
+                    handleCorrectSpeech();
+                } else {
+                    handleIncorrectSpeech(similarity, normalizedRequired, normalizedSpoken);
+                }
+            }
+        } catch (error) {
+            console.error("Critical error in verifyUserSpeech:", error);
+            micStatus.textContent = 'A critical error occurred. Please reset the lesson.';
+            micBtn.disabled = true; // Disable mic to prevent further errors
+        }
+    }
 
   function handleCorrectSpeech() {
       if (currentSentences.length > 1) {
