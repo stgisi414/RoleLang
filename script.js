@@ -846,20 +846,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Helper function to split text into sentences
   function splitIntoSentences(text) {
-      // Split by common sentence endings including CJK punctuation, but keep the punctuation
+      // For Japanese and other CJK languages, split more carefully
       // Western: .!? | Chinese/Japanese: 。！？ | Korean: .!?
-      const sentences = text.split(/([.!?。！？]+\s*)/).filter(s => s.trim().length > 0);
-      const result = [];
-
-      for (let i = 0; i < sentences.length; i += 2) {
-          const sentence = sentences[i];
-          const punctuation = sentences[i + 1] || '';
-          if (sentence.trim()) {
-              result.push((sentence + punctuation).trim());
-          }
+      
+      // First, try to split by sentence endings while preserving the full sentence
+      const sentenceEndings = /[.!?。！？]/;
+      
+      if (!sentenceEndings.test(text)) {
+          // No sentence endings found, return as single sentence
+          return [text.trim()];
       }
 
-      return result.length > 0 ? result : [text];
+      // Split while keeping the punctuation with the sentence
+      const sentences = [];
+      let currentSentence = '';
+      
+      for (let i = 0; i < text.length; i++) {
+          const char = text[i];
+          currentSentence += char;
+          
+          // Check if this character is a sentence ending
+          if (/[.!?。！？]/.test(char)) {
+              // Look ahead for any trailing whitespace
+              let j = i + 1;
+              while (j < text.length && /\s/.test(text[j])) {
+                  currentSentence += text[j];
+                  j++;
+              }
+              
+              // Add the complete sentence
+              if (currentSentence.trim()) {
+                  sentences.push(currentSentence.trim());
+              }
+              currentSentence = '';
+              i = j - 1; // Continue from after the whitespace
+          }
+      }
+      
+      // Add any remaining text as the last sentence
+      if (currentSentence.trim()) {
+          sentences.push(currentSentence.trim());
+      }
+
+      return sentences.length > 0 ? sentences : [text.trim()];
   }
 
   async function advanceTurn() {
