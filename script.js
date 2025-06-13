@@ -1714,10 +1714,25 @@ document.addEventListener('DOMContentLoaded', () => {
               - "hiragana": A pure hiragana version of "clean_text".`;
         }
 
+        // Get user's native language for explanations
+        const nativeLangCode = nativeLang || 'en';
+        const langCodeToName = {
+            'en': 'English',
+            'es': 'Spanish', 
+            'fr': 'French',
+            'de': 'German',
+            'it': 'Italian',
+            'zh': 'Chinese',
+            'ja': 'Japanese',
+            'ko': 'Korean'
+        };
+        const nativeLangName = langCodeToName[nativeLangCode] || 'English';
+
         return `
     You are a language tutor creating a lesson for a web application. Your task is to generate a single, complete, structured lesson plan in JSON format. Do not output any text or explanation outside of the single JSON object.
 
     The user wants to learn: **${language}**
+    The user's native language is: **${nativeLangName}**
     The user-provided topic for the roleplay is: **"${topic}"**
 
     Follow these steps precisely:
@@ -1735,7 +1750,7 @@ document.addEventListener('DOMContentLoaded', () => {
     2.  **Dialogue Object:** Each object in the "dialogue" array must contain:
         - "party": "A" (the user) or "B" (the partner).
         - "line": An object containing the text for the dialogue.
-        - "explanation" (optional): An object with a "title" and "body" for grammar tips.
+        - "explanation" (optional): An object with a "title" and "body" for grammar tips. IMPORTANT: Both "title" and "body" must be written in the user's native language (${nativeLangName}).
 
     3.  **Line Object:** The "line" object must contain these exact fields:
         ${lineObjectStructure}
@@ -1743,6 +1758,8 @@ document.addEventListener('DOMContentLoaded', () => {
     4.  **Character Names:** You MUST invent realistic, culturally-appropriate fake names for the characters in the dialogue (e.g., "Maria", "Kenji", "Klaus").
 
     5.  **NO PLACEHOLDERS:** This is a critical rule. Under no circumstances should you use placeholders like "[USER NAME]", "(YOUR NAME)", "<NAME>", or any similar variants. You must use the fake names you chose in RULE 4 instead.
+
+    6.  **EXPLANATION LANGUAGE:** All explanations (title and body) must be written in ${nativeLangName}, not English.
 
     Now, generate the complete JSON lesson plan.`;
     }
