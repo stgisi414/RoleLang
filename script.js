@@ -1485,6 +1485,9 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchPartnerAudio(text) {
         const currentLanguage = languageSelect.value;
         const voiceConfig = getVoiceConfig(currentLanguage);
+        
+        // Strip parentheses and content before sending to TTS
+        const cleanText = removeParentheses(text);
 
         const response = await fetch(TTS_API_URL, {
             method: 'POST',
@@ -1494,7 +1497,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'Origin': 'https://rolelang.xyz'
             },
             body: JSON.stringify({
-                text: text,
+                text: cleanText,
                 voice_id: voiceConfig.voice_id,
                 model_id: "eleven_multilingual_v2",
                 voice_settings: {
