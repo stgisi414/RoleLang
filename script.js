@@ -741,16 +741,8 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
           // Add debounced click listener for audio playback
-          let audioTimeout;
           lineDiv.addEventListener('click', (e) => {
-              // Prevent multiple rapid clicks
-              if (audioTimeout) return;
-
-              audioTimeout = setTimeout(() => {
-                  audioTimeout = null;
-              }, 1000);
-
-              playLineAudio(turn.line);
+              playLineAudioDebounced(turn.line);
           });
 
           // Add click listener for explanations
@@ -783,6 +775,11 @@ document.addEventListener('DOMContentLoaded', () => {
       advanceTurn();
   }
 
+  // Global audio state management
+  let currentAudio = null;
+  let audioDebounceTimer = null;
+  let isAudioPlaying = false;
+
   async function playLineAudio(text) {
       try {
           const cleanText = removeParentheses(text);
@@ -790,12 +787,57 @@ document.addEventListener('DOMContentLoaded', () => {
           const audioUrl = URL.createObjectURL(audioBlob);
           const audio = new Audio(audioUrl);
           audio.playbackRate = parseFloat(audioSpeedSelect.value);
+          
+          // Set up audio event listeners
+          audio.addEventListener('play', () => {
+              isAudioPlaying = true;
+              currentAudio = audio;
+          });
+          
+          audio.addEventListener('ended', () => {
+              isAudioPlaying = false;
+              currentAudio = null;
+              URL.revokeObjectURL(audioUrl);
+          });
+          
+          audio.addEventListener('error', (error) => {
+              console.error("Audio playback failed:", error);
+              isAudioPlaying = false;
+              currentAudio = null;
+              URL.revokeObjectURL(audioUrl);
+          });
+          
           audio.play().catch(error => {
               console.error("Audio playback failed:", error);
+              isAudioPlaying = false;
+              currentAudio = null;
+              URL.revokeObjectURL(audioUrl);
           });
       } catch (error) {
           console.error("Failed to fetch audio for playback:", error);
       }
+  }
+
+  // Debounced version of playLineAudio
+  function playLineAudioDebounced(text) {
+      // Clear any existing debounce timer
+      if (audioDebounceTimer) {
+          clearTimeout(audioDebounceTimer);
+      }
+
+      // Stop current audio if playing
+      if (currentAudio && isAudioPlaying) {
+          currentAudio.pause();
+          currentAudio.currentTime = 0;
+          isAudioPlaying = false;
+          currentAudio = null;
+      }
+
+      // Set new debounce timer
+      audioDebounceTimer = setTimeout(() => {
+          playLineAudio(text);
+          audioDebounceTimer = null;
+      }, 300); // 300ms debounce delay
   }
 
   // Add variables to track sentence-by-sentence recording
@@ -865,6 +907,14 @@ document.addEventListener('DOMContentLoaded', () => {
           micStatus.textContent = translateText('listenFirst');
 
           try {
+              // Stop any currently playing audio before starting new one
+              if (currentAudio && isAudioPlaying) {
+                  currentAudio.pause();
+                  currentAudio.currentTime = 0;
+                  isAudioPlaying = false;
+                  currentAudio = null;
+              }
+
               // Play user's line first for them to hear
               const audioBlob = await fetchPartnerAudio(cleanText);
               const audioUrl = URL.createObjectURL(audioBlob);
@@ -878,12 +928,23 @@ document.addEventListener('DOMContentLoaded', () => {
                   });
               });
 
+              audio.addEventListener('play', () => {
+                  isAudioPlaying = true;
+                  currentAudio = audio;
+              });
+
               audio.addEventListener('ended', () => {
+                  isAudioPlaying = false;
+                  currentAudio = null;
+                  URL.revokeObjectURL(audioUrl);
                   enableUserMicForSentence();
               });
 
               audio.addEventListener('error', (e) => {
                   console.error("Audio error:", e);
+                  isAudioPlaying = false;
+                  currentAudio = null;
+                  URL.revokeObjectURL(audioUrl);
                   enableUserMicForSentence();
               });
 
@@ -900,6 +961,14 @@ document.addEventListener('DOMContentLoaded', () => {
           micStatus.textContent = translateText('partnerSpeaking');
           try {
               const cleanText = removeParentheses(currentTurnData.line);
+              // Stop any currently playing audio before starting new one
+              if (currentAudio && isAudioPlaying) {
+                  currentAudio.pause();
+                  currentAudio.currentTime = 0;
+                  isAudioPlaying = false;
+                  currentAudio = null;
+              }
+
               const audioBlob = await fetchPartnerAudio(cleanText);
               const audioUrl = URL.createObjectURL(audioBlob);
               const audio = new Audio(audioUrl);
@@ -917,7 +986,15 @@ document.addEventListener('DOMContentLoaded', () => {
                   });
               });
 
+              audio.addEventListener('play', () => {
+                  isAudioPlaying = true;
+                  currentAudio = audio;
+              });
+
               audio.addEventListener('ended', () => {
+                  isAudioPlaying = false;
+                  currentAudio = null;
+                  URL.revokeObjectURL(audioUrl);
                   micStatus.textContent = translateText('audioFinished');
                   setTimeout(() => {
                       currentTurnIndex++;
@@ -927,6 +1004,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
               audio.addEventListener('error', (e) => {
                   console.error("Audio error:", e);
+                  isAudioPlaying = false;
+                  currentAudio = null;
+                  URL.revokeObjectURL(audioUrl);
                   micStatus.textContent = translateText('audioError');
                   setTimeout(async () => {
                       currentTurnIndex++;
