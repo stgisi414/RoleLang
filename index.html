@@ -120,27 +120,65 @@
                         </div>
 
                         <div id="lessons-container" class="hidden">
-                            <!-- Beginner Level -->
+                            <!-- Lesson Tabs -->
                             <div class="mb-4">
-                                <h4 class="text-sm font-medium text-green-400 mb-2" data-translate="beginner">Beginner</h4>
-                                <div id="beginner-container" class="grid grid-cols-2 gap-2">
-                                    <!-- Topics will be dynamically populated -->
+                                <div class="flex bg-gray-800/50 rounded-lg p-1">
+                                    <button id="difficulty-tab" class="flex-1 py-2 px-4 text-sm font-medium rounded-md transition-all bg-blue-600 text-white" data-translate="difficultyTab">Difficulty</button>
+                                    <button id="situations-tab" class="flex-1 py-2 px-4 text-sm font-medium rounded-md transition-all text-gray-400 hover:text-white" data-translate="situationsTab">Situations</button>
                                 </div>
                             </div>
 
-                            <!-- Intermediate Level -->
-                            <div class="mb-4">
-                                <h4 class="text-sm font-medium text-yellow-400 mb-2" data-translate="intermediate">Intermediate</h4>
-                                <div id="intermediate-container" class="grid grid-cols-2 gap-2">
-                                    <!-- Topics will be dynamically populated -->
+                            <!-- Difficulty Tab Content -->
+                            <div id="difficulty-content" class="tab-content">
+                                <!-- Beginner Level -->
+                                <div class="mb-4">
+                                    <h4 class="text-sm font-medium text-green-400 mb-2" data-translate="beginner">Beginner</h4>
+                                    <div id="beginner-container" class="grid grid-cols-2 gap-2">
+                                        <!-- Topics will be dynamically populated -->
+                                    </div>
+                                </div>
+
+                                <!-- Intermediate Level -->
+                                <div class="mb-4">
+                                    <h4 class="text-sm font-medium text-yellow-400 mb-2" data-translate="intermediate">Intermediate</h4>
+                                    <div id="intermediate-container" class="grid grid-cols-2 gap-2">
+                                        <!-- Topics will be dynamically populated -->
+                                    </div>
+                                </div>
+
+                                <!-- Advanced Level -->
+                                <div class="mb-4">
+                                    <h4 class="text-sm font-medium text-red-400 mb-2" data-translate="advanced">Advanced</h4>
+                                    <div id="advanced-container" class="grid grid-cols-2 gap-2">
+                                        <!-- Topics will be dynamically populated -->
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Advanced Level -->
-                            <div class="mb-4">
-                                <h4 class="text-sm font-medium text-red-400 mb-2" data-translate="advanced">Advanced</h4>
-                                <div id="advanced-container" class="grid grid-cols-2 gap-2">
-                                    <!-- Topics will be dynamically populated -->
+                            <!-- Situations Tab Content -->
+                            <div id="situations-content" class="tab-content hidden">
+                                <!-- Realistic Situations -->
+                                <div class="mb-4">
+                                    <h4 class="text-sm font-medium text-blue-400 mb-2" data-translate="realistic">Realistic</h4>
+                                    <div id="realistic-container" class="grid grid-cols-2 gap-2">
+                                        <!-- Topics will be dynamically populated -->
+                                    </div>
+                                </div>
+
+                                <!-- Futuristic Situations -->
+                                <div class="mb-4">
+                                    <h4 class="text-sm font-medium text-purple-400 mb-2" data-translate="futuristic">Futuristic</h4>
+                                    <div id="futuristic-container" class="grid grid-cols-2 gap-2">
+                                        <!-- Topics will be dynamically populated -->
+                                    </div>
+                                </div>
+
+                                <!-- Historical Situations -->
+                                <div class="mb-4">
+                                    <h4 class="text-sm font-medium text-amber-400 mb-2" data-translate="historical">Historical</h4>
+                                    <div id="historical-container" class="grid grid-cols-2 gap-2">
+                                        <!-- Topics will be dynamically populated -->
+                                    </div>
                                 </div>
                             </div>
                         </div>

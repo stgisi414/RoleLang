@@ -28,6 +28,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const nativeLangTextEl = document.getElementById('native-lang-text');
   const toggleLessonsBtn = document.getElementById('toggle-lessons-btn');
   const lessonsContainer = document.getElementById('lessons-container');
+  const difficultyTab = document.getElementById('difficulty-tab');
+  const situationsTab = document.getElementById('situations-tab');
+  const difficultyContent = document.getElementById('difficulty-content');
+  const situationsContent = document.getElementById('situations-content');
 
   // --- API & State ---
   // IMPORTANT: Replace with your actual Gemini API Key.
@@ -247,6 +251,8 @@ document.addEventListener('DOMContentLoaded', () => {
   micBtn.addEventListener('click', toggleSpeechRecognition);
   toggleLessonsBtn.addEventListener('click', toggleLessonsVisibility);
   document.getElementById('toggle-history-btn').addEventListener('click', toggleHistoryVisibility);
+  difficultyTab.addEventListener('click', () => switchTab('difficulty'));
+  situationsTab.addEventListener('click', () => switchTab('situations'));
   resetLessonBtn.addEventListener('click', resetLesson);
 
   // Add event listeners for lesson buttons
@@ -466,6 +472,34 @@ document.addEventListener('DOMContentLoaded', () => {
     saveState();
   }
 
+  // --- Tab Switching Functions ---
+
+  function switchTab(tabName) {
+    if (tabName === 'difficulty') {
+      difficultyTab.classList.add('bg-blue-600', 'text-white');
+      difficultyTab.classList.remove('text-gray-400');
+      situationsTab.classList.remove('bg-blue-600', 'text-white');
+      situationsTab.classList.add('text-gray-400');
+      difficultyContent.classList.remove('hidden');
+      situationsContent.classList.add('hidden');
+      
+      // Stop situations rotations and start difficulty rotations
+      stopTopicRotations();
+      startTopicRotations();
+    } else if (tabName === 'situations') {
+      situationsTab.classList.add('bg-blue-600', 'text-white');
+      situationsTab.classList.remove('text-gray-400');
+      difficultyTab.classList.remove('bg-blue-600', 'text-white');
+      difficultyTab.classList.add('text-gray-400');
+      situationsContent.classList.remove('hidden');
+      difficultyContent.classList.add('hidden');
+      
+      // Stop difficulty rotations and start situations rotations
+      stopTopicRotations();
+      startSituationsRotations();
+    }
+  }
+
   // --- Toggle Functions ---
 
   function toggleLessonsVisibility() {
@@ -516,7 +550,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function createTopicButton(topic, level) {
     const button = document.createElement('button');
-    button.className = `lesson-btn bg-${level === 'beginner' ? 'green' : level === 'intermediate' ? 'yellow' : 'red'}-600/20 hover:bg-${level === 'beginner' ? 'green' : level === 'intermediate' ? 'yellow' : 'red'}-600/30 text-${level === 'beginner' ? 'green' : level === 'intermediate' ? 'yellow' : 'red'}-300 text-xs py-2 px-3 rounded-md transition-all border border-${level === 'beginner' ? 'green' : level === 'intermediate' ? 'yellow' : 'red'}-600/30`;
+    let colorClass;
+    
+    // Handle difficulty levels
+    if (level === 'beginner') {
+      colorClass = 'green';
+    } else if (level === 'intermediate') {
+      colorClass = 'yellow';
+    } else if (level === 'advanced') {
+      colorClass = 'red';
+    }
+    // Handle situation types
+    else if (level === 'realistic') {
+      colorClass = 'blue';
+    } else if (level === 'futuristic') {
+      colorClass = 'purple';
+    } else if (level === 'historical') {
+      colorClass = 'amber';
+    } else {
+      colorClass = 'gray'; // fallback
+    }
+    
+    button.className = `lesson-btn bg-${colorClass}-600/20 hover:bg-${colorClass}-600/30 text-${colorClass}-300 text-xs py-2 px-3 rounded-md transition-all border border-${colorClass}-600/30`;
     button.setAttribute('data-topic', topic);
     button.textContent = topic;
     button.style.opacity = '0';
@@ -596,6 +651,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Set up intervals for each level (8 seconds for smoother experience)
     topicRotationIntervals.push(setInterval(rotateTopics, 8000));
+  }
+
+  function rotateSituations() {
+    const containers = {
+      realistic: document.getElementById('realistic-container'),
+      futuristic: document.getElementById('futuristic-container'),
+      historical: document.getElementById('historical-container')
+    };
+
+    Object.entries(containers).forEach(([situation, container], containerIndex) => {
+      // Stagger the start of each container's animation for smoother overall effect
+      setTimeout(() => {
+        animateTopicsOut(container);
+
+        setTimeout(() => {
+          const newTopics = getRandomSituationTopics(situation, 4);
+          animateTopicsIn(container, newTopics, situation);
+        }, 500); // Faster transition overlap
+      }, containerIndex * 150); // Reduced stagger timing
+    });
+  }
+
+  function getRandomSituationTopics(situation, count = 4) {
+    const topicPools = getTopicPools();
+    const pool = topicPools[situation] || [];
+    const shuffled = [...pool].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+  }
+
+  function startSituationsRotations() {
+    // Initial population with staggered start
+    setTimeout(() => {
+      rotateSituations();
+    }, 500); // Small delay for initial load
+
+    // Set up intervals for each situation (8 seconds for smoother experience)
+    topicRotationIntervals.push(setInterval(rotateSituations, 8000));
   }
 
   function stopTopicRotations() {

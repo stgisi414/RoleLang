@@ -334,12 +334,20 @@ body {
 /* Fixed heights for topic containers to prevent layout shifts */
 #beginner-container,
 #intermediate-container,
-#advanced-container {
+#advanced-container,
+#realistic-container,
+#futuristic-container,
+#historical-container {
     min-height: 200px;
     max-height: 200px;
     overflow: hidden;
     position: relative;
     transition: all 0.3s ease;
+}
+
+/* Tab content styling */
+.tab-content {
+    transition: opacity 0.3s ease-in-out;
 }
 
 /* Ensure grid layout stays consistent */
