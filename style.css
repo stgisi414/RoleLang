@@ -118,6 +118,38 @@ body {
     text-underline-offset: 3px;
 }
 
+/* Individual sentence highlighting */
+.sentence-span.active-sentence {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(59, 130, 246, 0.25)) !important;
+    border: 2px solid #38bdf8 !important;
+    border-radius: 6px;
+    padding: 4px 8px;
+    margin: 2px;
+    display: inline-block;
+    text-decoration: underline;
+    text-decoration-color: #38bdf8;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+    animation: sentence-pulse 2s ease-in-out infinite;
+}
+
+@keyframes sentence-pulse {
+    0%, 100% { 
+        box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+        transform: scale(1);
+    }
+    50% { 
+        box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
+        transform: scale(1.02);
+    }
+}
+
+.translation-part {
+    font-size: 0.9em;
+    font-style: italic;
+}
+
 /* Specific styling for user vs partner lines */
 .dialogue-line.user-line {
     background-color: rgba(56, 189, 248, 0.1); /* bg-sky-400/10 */

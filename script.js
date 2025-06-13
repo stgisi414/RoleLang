@@ -730,8 +730,47 @@ document.addEventListener('DOMContentLoaded', () => {
           lineDiv.classList.add('dialogue-line', 'text-white', 'cursor-pointer');
           lineDiv.id = `turn-${index}`;
 
-          let lineContent = `<strong>${turn.party}:</strong> ${turn.line} <i class="fas fa-volume-up text-gray-400 ml-2 hover:text-sky-300"></i>`;
-
+          // Create the base content with speaker name
+          let lineContent = `<strong>${turn.party}:</strong> `;
+          
+          // For user lines (A), split into sentences and wrap each in a span
+          if (turn.party === 'A') {
+              const currentLanguage = languageSelect.value;
+              let textToSplit;
+              
+              if (currentLanguage === 'Japanese' && turn.hiragana_line) {
+                  textToSplit = turn.hiragana_line;
+              } else {
+                  textToSplit = removeParentheses(turn.line);
+              }
+              
+              const sentences = splitIntoSentences(textToSplit);
+              
+              if (sentences.length > 1) {
+                  // Multiple sentences - wrap each in a span with ID
+                  sentences.forEach((sentence, sentenceIndex) => {
+                      lineContent += `<span class="sentence-span" id="turn-${index}-sentence-${sentenceIndex}">${sentence}</span>`;
+                      if (sentenceIndex < sentences.length - 1) {
+                          lineContent += ' ';
+                      }
+                  });
+                  
+                  // Add the original line with translation in parentheses if it exists
+                  const originalLine = turn.line;
+                  if (originalLine.includes('(')) {
+                      const translationPart = originalLine.substring(originalLine.indexOf('('));
+                      lineContent += ` <span class="translation-part text-gray-400">${translationPart}</span>`;
+                  }
+              } else {
+                  // Single sentence
+                  lineContent += `<span class="sentence-span" id="turn-${index}-sentence-0">${turn.line}</span>`;
+              }
+          } else {
+              // Partner lines (B) - no sentence splitting needed
+              lineContent += turn.line;
+          }
+          
+          lineContent += ` <i class="fas fa-volume-up text-gray-400 ml-2 hover:text-sky-300"></i>`;
           lineDiv.innerHTML = lineContent;
 
           if (turn.party === 'A') {
@@ -908,7 +947,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const currentTurnData = lessonPlan.dialogue[currentTurnIndex];
 
+      // Clear all previous highlighting
       document.querySelectorAll('.dialogue-line.active').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
+      
       const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
       currentLineEl.classList.add('active');
       currentLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1056,10 +1098,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function enableUserMicForSentence() {
       micBtn.disabled = false;
+      
+      // Clear previous sentence highlighting
+      document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
+      
       if (currentSentences.length > 1) {
+          // Highlight the current sentence
+          const currentSentenceEl = document.getElementById(`turn-${currentTurnIndex}-sentence-${currentSentenceIndex}`);
+          if (currentSentenceEl) {
+              currentSentenceEl.classList.add('active-sentence');
+          }
+          
           micStatus.innerHTML = `<strong>${translateText('recordSentence')} ${currentSentenceIndex + 1}/${currentSentences.length}:</strong><br><span style="color: #38bdf8; font-weight: bold; text-decoration: underline;">"${currentSentences[currentSentenceIndex]}"</span>`;
       } else {
-          micStatus.innerHTML = `<strong>${translateText('yourTurn')}</strong><br><span style="color: #38bdf8; font-style: italic;">Look for the underlined sentence above</span>`;
+          // Single sentence - highlight the entire sentence
+          const singleSentenceEl = document.getElementById(`turn-${currentTurnIndex}-sentence-0`);
+          if (singleSentenceEl) {
+              singleSentenceEl.classList.add('active-sentence');
+          }
+          
+          micStatus.innerHTML = `<strong>${translateText('yourTurn')}</strong><br><span style="color: #38bdf8; font-style: italic;">Look for the highlighted sentence above</span>`;
       }
   }
 
