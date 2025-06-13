@@ -406,7 +406,7 @@ const translations = {
     tryAgain: "Non proprio. Prova a leggere di nuovo la riga.",
     tryAgainStatus: "Premi il microfono e riprova.",
     lessonComplete: "Lezione completata! 🎉",
-    Adding language names in Italian for all supported languages in the translations object in translations.js.Adding language names in Italian for all supported languages in the translations object in translations.js.partnerSpeaking: "Il partner sta parlando...",
+    partnerSpeaking: "Il partner sta parlando...",
     audioFinished: "Audio terminato.",
     audioError: "Errore audio, continuando...",
     audioUnavailable: "Audio non disponibile, continuando...",
