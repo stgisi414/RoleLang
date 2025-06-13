@@ -38,6 +38,36 @@ document.addEventListener('DOMContentLoaded', () => {
   let isRecognizing = false;
   let topicRotationIntervals = [];
   let nativeLang = 'en'; // Default to English
+  let currentTranslations = translations.en; // Default translations
+
+  // Translation function
+  function translateText(key) {
+    return currentTranslations[key] || translations.en[key] || key;
+  }
+
+  // Update all translatable elements
+  function updateTranslations() {
+    // Update document title
+    document.title = translateText('title');
+    
+    // Update all elements with data-translate attribute
+    document.querySelectorAll('[data-translate]').forEach(element => {
+      const key = element.getAttribute('data-translate');
+      element.textContent = translateText(key);
+    });
+
+    // Update all elements with data-translate-placeholder attribute
+    document.querySelectorAll('[data-translate-placeholder]').forEach(element => {
+      const key = element.getAttribute('data-translate-placeholder');
+      element.placeholder = translateText(key);
+    });
+
+    // Update mic status if it has default text
+    const micStatusEl = document.getElementById('mic-status');
+    if (micStatusEl && micStatusEl.textContent === translateText('micStatus')) {
+      micStatusEl.textContent = translateText('micStatus');
+    }
+  }
 
   // Detect browser language and set native language
   const detectNativeLanguage = () => {
@@ -64,6 +94,10 @@ document.addEventListener('DOMContentLoaded', () => {
     nativeLang = langCode;
     nativeFlagEl.textContent = flag;
     nativeLangTextEl.textContent = name;
+    
+    // Update translations
+    currentTranslations = translations[langCode] || translations.en;
+    updateTranslations();
     
     // Store in localStorage for persistence
     localStorage.setItem('rolelang_native_lang', JSON.stringify({ code: langCode, flag, name }));
@@ -138,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
       recognition.interimResults = false;
       recognition.maxAlternatives = 1;
   } else {
-      micStatus.textContent = "Speech recognition not supported in this browser.";
+      micStatus.textContent = translateText('speechNotSupported');
       micBtn.disabled = true;
   }
 
@@ -197,14 +231,14 @@ document.addEventListener('DOMContentLoaded', () => {
           isRecognizing = true;
           micBtn.classList.add('bg-green-600');
           micBtn.classList.remove('bg-red-600');
-          micStatus.textContent = "Listening...";
+          micStatus.textContent = translateText('listening');
       };
 
       recognition.onend = () => {
           isRecognizing = false;
           micBtn.classList.remove('bg-green-600');
           micBtn.classList.add('bg-red-600');
-          micStatus.textContent = "Press the mic and read the highlighted line.";
+          micStatus.textContent = translateText('micStatus');
       };
 
       recognition.onerror = (event) => {
@@ -214,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       recognition.onresult = (event) => {
           const spokenText = event.results[0][0].transcript;
-          micStatus.textContent = `You said: "${spokenText}"`;
+          micStatus.textContent = `${translateText('youSaid')} "${spokenText}"`;
           verifyUserSpeech(spokenText);
       };
   }
@@ -297,12 +331,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const topic = topicInput.value;
 
       if (!topic) {
-          alert('Please enter a roleplay topic.');
+          alert(translateText('enterTopic'));
           return;
       }
 
       if (GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
-          alert('Please replace "YOUR_GEMINI_API_KEY_HERE" in script.js with your actual Gemini API key.');
+          alert(translateText('apiKeyError'));
           return;
       }
 
@@ -347,7 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       } catch (error) {
           console.error("Failed to initialize lesson:", error);
-          alert(`Error loading lesson. Please check the console for details. Error: ${error.message}`);
+          alert(`${translateText('errorLoading')} ${error.message}`);
           landingScreen.classList.remove('hidden');
           lessonScreen.classList.add('hidden');
       } finally {
@@ -419,7 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function advanceTurn() {
       if (currentTurnIndex >= lessonPlan.dialogue.length) {
-          micStatus.textContent = "Lesson complete! 🎉";
+          micStatus.textContent = translateText('lessonComplete');
           micBtn.disabled = true;
           return;
       }
@@ -433,7 +467,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (currentTurnData.party === 'A') { // User's turn
           micBtn.disabled = true;
-          micStatus.textContent = "Listen to the example first...";
+          micStatus.textContent = translateText('listenFirst');
 
           try {
               // Play user's line first for them to hear
@@ -464,7 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
       } else { // Partner's turn
           micBtn.disabled = true;
-          micStatus.textContent = "Partner is speaking...";
+          micStatus.textContent = translateText('partnerSpeaking');
           try {
               const cleanText = removeParentheses(currentTurnData.line);
               const audioBlob = await fetchPartnerAudio(cleanText);
@@ -484,7 +518,7 @@ document.addEventListener('DOMContentLoaded', () => {
               });
 
               audio.addEventListener('ended', () => {
-                  micStatus.textContent = "Audio finished.";
+                  micStatus.textContent = translateText('audioFinished');
                   setTimeout(() => {
                       currentTurnIndex++;
                       advanceTurn();
@@ -493,7 +527,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
               audio.addEventListener('error', (e) => {
                   console.error("Audio error:", e);
-                  micStatus.textContent = "Audio error, continuing...";
+                  micStatus.textContent = translateText('audioError');
                   setTimeout(() => {
                       currentTurnIndex++;
                       advanceTurn();
@@ -502,7 +536,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           } catch (error) {
               console.error("Failed to fetch partner audio:", error);
-              micStatus.textContent = "Audio unavailable, continuing...";
+              micStatus.textContent = translateText('audioUnavailable');
               setTimeout(() => {
                   currentTurnIndex++;
                   advanceTurn();
@@ -513,7 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function enableUserMic() {
       micBtn.disabled = false;
-      micStatus.textContent = "Your turn. Press the mic and read the line.";
+      micStatus.textContent = translateText('yourTurn');
   }
 
   function removeParentheses(text) {
@@ -525,7 +559,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const normalize = (text) => text.trim().toLowerCase().replace(/[.,!?;]/g, '');
 
       if (normalize(spokenText).includes(normalize(requiredText))) {
-          micStatus.textContent = "Correct! Well done.";
+          micStatus.textContent = translateText('correct');
           const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
           currentLineEl.style.borderColor = '#4ade80'; // green-400
           micBtn.disabled = true; // Disable mic while transitioning
@@ -534,7 +568,7 @@ document.addEventListener('DOMContentLoaded', () => {
               advanceTurn();
           }, 1500);
       } else {
-          micStatus.textContent = "Not quite. Try reading the line again.";
+          micStatus.textContent = translateText('tryAgain');
           const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
           currentLineEl.classList.remove('active');
           void currentLineEl.offsetWidth; // Trigger reflow
@@ -542,7 +576,7 @@ document.addEventListener('DOMContentLoaded', () => {
           currentLineEl.style.borderColor = '#f87171'; // red-400
           // Allow user to try again immediately
           setTimeout(() => {
-              micStatus.textContent = "Press the mic and try again.";
+              micStatus.textContent = translateText('tryAgainStatus');
               currentLineEl.style.borderColor = ''; // Reset border color
           }, 2000);
       }
@@ -643,8 +677,8 @@ document.addEventListener('DOMContentLoaded', () => {
       illustrationPlaceholder.innerHTML = `
           <div class="text-center text-gray-400">
               <i class="fas fa-comments text-6xl mb-4"></i>
-              <p class="text-lg">Roleplay Scenario</p>
-              <p class="text-sm mt-2">Image generation temporarily unavailable</p>
+              <p class="text-lg">${translateText('roleplayScenario')}</p>
+              <p class="text-sm mt-2">${translateText('imageUnavailable')}</p>
           </div>
       `;
       illustrationPlaceholder.classList.remove('hidden');
@@ -802,5 +836,6 @@ Now, please generate the JSON for the ${language} lesson about "${topic}".`;
 
   // Initialize everything
   initializeNativeLanguage();
+  updateTranslations(); // Initial translation update
   startTopicRotations();
 });
