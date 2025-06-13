@@ -1180,8 +1180,18 @@ document.addEventListener('DOMContentLoaded', () => {
       // Determine what text to compare against
       let requiredText;
       if (currentSentences.length > 1) {
-          // Multi-sentence mode: compare against current sentence
-          requiredText = currentSentences[currentSentenceIndex];
+          // Multi-sentence mode: we need hiragana for Japanese sentence matching
+          if (currentLanguage === 'Japanese') {
+              // For multi-sentence Japanese, convert the current sentence to hiragana
+              try {
+                  requiredText = await convertJapaneseToHiraganaWithGemini(currentSentences[currentSentenceIndex]);
+              } catch (error) {
+                  console.error('Failed to convert sentence to hiragana:', error);
+                  requiredText = currentSentences[currentSentenceIndex];
+              }
+          } else {
+              requiredText = currentSentences[currentSentenceIndex];
+          }
       } else {
           // Single sentence mode: use pre-converted hiragana for Japanese, original for others
           if (currentLanguage === 'Japanese' && lessonPlan.dialogue[currentTurnIndex].hiragana_line) {
@@ -1191,8 +1201,8 @@ document.addEventListener('DOMContentLoaded', () => {
           }
       }
 
-      // Enhanced normalization function with Gemini conversion for Japanese
-      const normalize = async (text) => {
+      // Normalization function - only converts user speech for Japanese
+      const normalizeUserSpeech = async (text) => {
           let normalized = text.trim().toLowerCase()
               .replace(/[.,!?;:"'`´''""。！？]/g, '') // Remove punctuation including Japanese
               .replace(/\s+/g, ' ') // Normalize whitespace
@@ -1204,11 +1214,11 @@ document.addEventListener('DOMContentLoaded', () => {
               .replace(/[ñ]/g, 'n')
               .replace(/[ç]/g, 'c');
 
-          // Use Gemini for comprehensive Japanese hiragana conversion (only for user speech now)
+          // ONLY convert user speech to hiragana for Japanese
           if (currentLanguage === 'Japanese') {
               try {
                   normalized = await convertJapaneseToHiraganaWithGemini(normalized);
-                  console.log('Gemini converted user speech:', normalized);
+                  console.log('Converted user speech to hiragana:', normalized);
               } catch (error) {
                   console.error('Gemini conversion failed, using fallback:', error);
                   // Fallback to basic katakana to hiragana conversion
@@ -1221,16 +1231,20 @@ document.addEventListener('DOMContentLoaded', () => {
           return normalized;
       };
 
+      // Simple normalization for reference text (no conversion, just cleaning)
+      const normalizeReference = (text) => {
+          return text.trim().toLowerCase()
+              .replace(/[.,!?;:"'`´''""。！？]/g, '')
+              .replace(/\s+/g, ' ');
+      };
+
       try {
           console.log('Original spoken text:', spokenText);
           console.log('Required text for comparison:', requiredText);
 
-          // For Japanese: convert user speech to hiragana, required text is already hiragana
-          // For other languages: normalize both texts
-          const normalizedSpoken = await normalize(spokenText);
-          const normalizedRequired = currentLanguage === 'Japanese' ? 
-              requiredText.trim().toLowerCase().replace(/[.,!?;:"'`´''""。！？]/g, '').replace(/\s+/g, ' ') :
-              await normalize(requiredText);
+          // Convert user speech and normalize reference text
+          const normalizedSpoken = await normalizeUserSpeech(spokenText);
+          const normalizedRequired = normalizeReference(requiredText);
 
           console.log('Final spoken text for comparison:', normalizedSpoken);
           console.log('Final required text for comparison:', normalizedRequired);
