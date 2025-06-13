@@ -1637,7 +1637,8 @@ IMPORTANT JAPANESE SCRIPT REQUIREMENTS:
 - Use hiragana for native Japanese words
 - Use katakana for foreign loanwords
 - Example: "こんにちは。コーヒーをください。" NOT "Konnichiwa. Koohii wo kudasai."
-- This is a beginner lesson, so keep it simple with kana only.`;
+- This is a beginner lesson, so keep it simple with kana only.
+- DO NOT include any furigana (small hiragana above kanji) - use plain kana only.`;
           } else if (isIntermediateTopic) {
               japaneseScriptInstruction = `
 IMPORTANT JAPANESE SCRIPT REQUIREMENTS:
@@ -1646,7 +1647,8 @@ IMPORTANT JAPANESE SCRIPT REQUIREMENTS:
 - Use hiragana for grammatical particles and verb endings
 - Use katakana for foreign loanwords
 - Example: "今日はコーヒーを飲みます。" NOT "Kyou wa koohii wo nomimasu."
-- NO ROMAJI - only use Japanese scripts.`;
+- NO ROMAJI - only use Japanese scripts.
+- DO NOT include any furigana (small hiragana readings above kanji).`;
           } else {
               // Advanced
               japaneseScriptInstruction = `
@@ -1656,7 +1658,8 @@ IMPORTANT JAPANESE SCRIPT REQUIREMENTS:
 - Use hiragana for grammatical particles and okurigana
 - Use katakana for foreign loanwords and emphasis
 - Example: "申し訳ございませんが、今日は営業時間外です。" NOT romaji
-- NO ROMAJI - only use Japanese scripts with proper kanji usage.`;
+- NO ROMAJI - only use Japanese scripts with proper kanji usage.
+- DO NOT include any furigana (small hiragana readings above kanji).`;
           }
       }
 
