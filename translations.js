@@ -63,69 +63,35 @@ const translations = {
         "Exchanging money", "Finding a bathroom", "Ordering at a fast food restaurant", "Buying souvenirs",
         "Asking about prices", "Getting a taxi", "Booking a table", "Asking for WiFi password",
         "Buying medicine", "Getting directions to airport", "Ordering ice cream", "Asking about opening hours",
-        "Paying the bill", "Asking for recommendations", "Buying a phone card", "Getting a haircut",
-        "Asking about local customs", "Buying flowers", "Getting a newspaper", "Asking for a map",
-        "Ordering pizza delivery", "Buying train tickets", "Getting tourist information", "Asking about the menu",
-        "Buying postcards", "Getting directions to hospital", "Asking about wi-fi", "Buying shoes",
-        "Getting a receipt", "Asking for water", "Buying candy", "Getting help with luggage",
-        "Asking about the weather", "Buying a gift", "Getting a room key", "Asking for salt and pepper",
-        "Learning basic Chinese greetings", "Ordering dim sum", "Taking a taxi in Beijing", "Buying tea",
-        "Asking for Korean BBQ menu", "Learning Korean honorifics", "Using Seoul subway", "Buying kimchi"
+        "Paying the bill", "Asking for recommendations", "Buying a phone card", "Getting a haircut"
       ],
       intermediate: [
         "Job interview conversation", "Making a doctor appointment", "Discussing weekend plans", "Renting an apartment",
         "Complaining about service", "Negotiating prices", "Planning a vacation", "Discussing hobbies",
         "Talking about work", "Making new friends", "Discussing movies", "Planning a party",
         "Talking about health issues", "Discussing education", "Making restaurant reservations", "Talking about sports",
-        "Discussing technology", "Planning a business trip", "Talking about relationships", "Discussing current events",
-        "Making travel arrangements", "Talking about food preferences", "Discussing cultural differences", "Planning a date",
-        "Talking about career goals", "Discussing environmental issues", "Making bank transactions", "Talking about music",
-        "Discussing fashion trends", "Planning a move", "Talking about stress", "Discussing exercise routines",
-        "Making insurance claims", "Talking about social media", "Discussing home repairs", "Planning a wedding",
-        "Talking about investments", "Discussing parenting", "Making hotel complaints", "Talking about photography",
-        "Discussing cooking recipes", "Planning retirement", "Talking about mental health", "Discussing online shopping",
-        "Making school applications", "Talking about volunteer work", "Discussing transportation", "Planning a reunion",
-        "Talking about gardening", "Discussing language learning", "Making warranty claims", "Talking about pets",
-        "Discussing Chinese business culture", "Planning Lunar New Year celebration", "Talking about Traditional Chinese Medicine", "Discussing Chinese calligraphy",
-        "Learning about Korean work culture", "Discussing K-pop and Korean entertainment", "Talking about Korean festivals", "Planning a trip to Jeju"
+        "Discussing technology", "Planning a business trip", "Talking about relationships", "Discussing current events"
       ],
       advanced: [
         "Negotiating a business deal", "Discussing politics and current events", "Explaining a complex technical problem", "Debating philosophical concepts",
         "Mediating a workplace conflict", "Presenting a research proposal", "Discussing economic policies", "Analyzing literature",
         "Debating ethical dilemmas", "Explaining scientific theories", "Discussing legal matters", "Analyzing market trends",
-        "Debating social issues", "Explaining medical procedures", "Discussing international relations", "Analyzing historical events",
-        "Debating environmental policies", "Explaining psychological concepts", "Discussing technological ethics", "Analyzing artistic movements",
-        "Debating educational reforms", "Explaining financial strategies", "Discussing cultural anthropology", "Analyzing political systems",
-        "Debating healthcare policies", "Explaining quantum physics", "Discussing urban planning", "Analyzing diplomatic negotiations",
-        "Debating immigration policies", "Explaining biotechnology", "Discussing sustainable development", "Analyzing corporate governance",
-        "Debating artificial intelligence ethics", "Explaining climate science", "Discussing global trade", "Analyzing constitutional law",
-        "Debating social justice", "Explaining neuroscience", "Discussing geopolitics", "Analyzing economic inequality",
-        "Debating media manipulation", "Explaining genetic engineering", "Discussing space exploration", "Analyzing cultural imperialism",
-        "Debating privacy rights", "Explaining renewable energy", "Discussing post-colonial theory", "Analyzing financial derivatives",
-        "Debating automation impact", "Explaining machine learning", "Discussing existentialism", "Analyzing global governance",
-        "Analyzing Chinese economic development", "Discussing Confucian philosophy", "Debatting One Belt One Road initiative", "Explaining Traditional Chinese Medicine principles",
-        "Discussing Korean reunification", "Analyzing the Korean Wave (Hallyu)", "Debating Korean chaebols", "Explaining Korean technological advancement"
+        "Debating social issues", "Explaining medical procedures", "Discussing international relations", "Analyzing historical events"
       ],
       realistic: [
         "Job interview at a tech company", "Emergency at the hospital", "Moving to a new apartment", "Parent-teacher conference",
         "Car breakdown on the highway", "Lost passport at the airport", "Power outage during a storm", "Wedding planning stress",
-        "First day at a new school", "Retirement party planning", "Dealing with noisy neighbors", "Shopping for a new car",
-        "Planning a family vacation", "Cooking dinner for guests", "Getting a driver's license", "Starting a small business",
-        "Dealing with a difficult boss", "Helping elderly parents", "Planning a surprise party", "Handling a medical emergency"
+        "First day at a new school", "Retirement party planning", "Dealing with noisy neighbors", "Shopping for a new car"
       ],
       futuristic: [
         "Space colony daily life", "AI assistant malfunction", "Virtual reality education", "Robot coworker collaboration",
         "Time travel vacation booking", "Holographic meeting conference", "Mars habitat construction", "Neural implant consultation",
-        "Teleportation device repair", "Underwater city tour", "Flying car traffic control", "Memory backup service",
-        "Genetic modification appointment", "Interstellar communication delay", "Quantum computer programming", "Climate control dome operation",
-        "Artificial gravity adjustment", "Cybernetic enhancement surgery", "Digital consciousness transfer", "Alien first contact protocol"
+        "Teleportation device repair", "Underwater city tour", "Flying car traffic control", "Memory backup service"
       ],
       historical: [
         "Victorian era tea party", "Medieval castle siege", "Ancient Roman gladiator training", "Wild West saloon encounter",
         "1920s speakeasy party", "Civil War battlefield medicine", "Renaissance art commission", "Ancient Egyptian tomb exploration",
-        "Viking ship voyage", "Colonial American market", "Industrial revolution factory", "Ancient Greek philosophy debate",
-        "Samurai sword training", "Pioneer wagon train", "Medieval monastery library", "Aztec temple ceremony",
-        "Revolutionary War spy mission", "Stone Age tool making", "Byzantine court intrigue", "Paleolithic cave painting"
+        "Viking ship voyage", "Colonial American market", "Industrial revolution factory", "Ancient Greek philosophy debate"
       ]
     }
   },
@@ -138,14 +104,14 @@ const translations = {
     roleplayTopic: "Tema de Juego de Roles:",
     topicPlaceholder: "Ej., Pedir café, registrarse en un hotel",
     orChooseLesson: "O Elige una Lección:",
-    difficultyTab: "Difficulty",
-    situationsTab: "Situations",
+    difficultyTab: "Dificultad",
+    situationsTab: "Situaciones",
     beginner: "Principiante",
     intermediate: "Intermedio",
     advanced: "Avanzado",
-        realistic: "Realistic",
-    futuristic: "Futuristic",
-    historical: "Historical",
+    realistic: "Realista",
+    futuristic: "Futurista",
+    historical: "Histórico",
     startLesson: "Comenzar Lección",
     illustrationPlaceholder: "La ilustración aparecerá aquí",
     micStatus: "Presiona el micrófono y lee la línea.",
@@ -187,53 +153,27 @@ const translations = {
       beginner: [
         "Presentándote", "Pidiendo comida en un restaurante", "Pidiendo direcciones", "Comprando ropa",
         "Comprando comestibles", "Haciendo charla casual", "Saludando a alguien", "Despidiéndose",
-        "Preguntando la hora", "Contando números", "Describiendo el clima", "Hablando de la familia",
-        "Pidiendo café", "Comprando un boleto de autobús", "Registrándose en un hotel", "Pidiendo ayuda",
-        "Cambiando dinero", "Encontrando un baño", "Pidiendo en un restaurante de comida rápida", "Comprando recuerdos",
-        "Preguntando sobre precios", "Tomando un taxi", "Reservando una mesa", "Preguntando por la contraseña WiFi",
-        "Comprando medicina", "Pidiendo direcciones al aeropuerto", "Pidiendo helado", "Preguntando horarios de apertura",
-        "Pagando la cuenta", "Pidiendo recomendaciones", "Comprando una tarjeta telefónica", "Cortándose el cabello",
-        "Preguntando sobre costumbres locales", "Comprando flores", "Comprando un periódico", "Pidiendo un mapa",
-        "Pidiendo pizza a domicilio", "Comprando boletos de tren", "Obteniendo información turística", "Preguntando sobre el menú",
-        "Comprando postales", "Pidiendo direcciones al hospital", "Preguntando sobre wi-fi", "Comprando zapatos",
-        "Obteniendo un recibo", "Pidiendo agua", "Comprando dulces", "Obteniendo ayuda con el equipaje",
-        "Preguntando sobre el clima", "Comprando un regalo", "Obteniendo la llave de la habitación", "Pidiendo sal y pimienta",
-        "Aprendiendo saludos básicos en chino", "Pidiendo dim sum", "Tomando un taxi en Beijing", "Comprando té",
-        "Pidiendo menú de BBQ coreano", "Aprendiendo honoríficos coreanos", "Usando el metro de Seúl", "Comprando kimchi"
+        "Preguntando la hora", "Contando números", "Describiendo el clima", "Hablando de la familia"
       ],
       intermediate: [
         "Conversación de entrevista de trabajo", "Haciendo cita médica", "Discutiendo planes de fin de semana", "Alquilando un apartamento",
-        "Quejándose del servicio", "Negociando precios", "Planeando vacaciones", "Discutiendo pasatiempos",
-        "Hablando del trabajo", "Haciendo nuevos amigos", "Discutiendo películas", "Planeando una fiesta",
-        "Hablando de problemas de salud", "Discutiendo educación", "Haciendo reservas en restaurante", "Hablando de deportes",
-        "Discutiendo tecnología", "Planeando un viaje de negocios", "Hablando de relaciones", "Discutiendo eventos actuales",
-        "Haciendo arreglos de viaje", "Hablando de preferencias de comida", "Discutiendo diferencias culturales", "Planeando una cita",
-        "Hablando de objetivos profesionales", "Discutiendo temas ambientales", "Haciendo transacciones bancarias", "Hablando de música",
-        "Discutiendo tendencias de moda", "Planeando una mudanza", "Hablando del estrés", "Discutiendo rutinas de ejercicio",
-        "Haciendo reclamaciones de seguro", "Hablando de redes sociales", "Discutiendo reparaciones del hogar", "Planeando una boda",
-        "Hablando de inversiones", "Discutiendo crianza de hijos", "Haciendo quejas de hotel", "Hablando de fotografía",
-        "Discutiendo recetas de cocina", "Planeando la jubilación", "Hablando de salud mental", "Discutiendo compras en línea",
-        "Haciendo solicitudes escolares", "Hablando de trabajo voluntario", "Discutiendo transporte", "Planeando una reunión",
-        "Hablando de jardinería", "Discutiendo aprendizaje de idiomas", "Haciendo reclamaciones de garantía", "Hablando de mascotas",
-        "Discutiendo cultura empresarial china", "Planeando celebración del Año Nuevo Lunar", "Hablando de Medicina Tradicional China", "Discutiendo caligrafía china",
-        "Aprendiendo sobre cultura laboral coreana", "Discutiendo K-pop y entretenimiento coreano", "Hablando de festivales coreanos", "Planeando un viaje a Jeju"
+        "Quejándose del servicio", "Negociando precios", "Planeando vacaciones", "Discutiendo pasatiempos"
       ],
       advanced: [
         "Negociando un trato comercial", "Discutiendo política y eventos actuales", "Explicando un problema técnico complejo", "Debatiendo conceptos filosóficos",
-        "Mediando un conflicto laboral", "Presentando una propuesta de investigación", "Discutiendo políticas económicas", "Analizando literatura",
-        "Debatiendo dilemas éticos", "Explicando teorías científicas", "Discutiendo asuntos legales", "Analizando tendencias del mercado",
-        "Debatiendo temas sociales", "Explicando procedimientos médicos", "Discutiendo relaciones internacionales", "Analizando eventos históricos",
-        "Debatiendo políticas ambientales", "Explicando conceptos psicológicos", "Discutiendo ética tecnológica", "Analizando movimientos artísticos",
-        "Debatiendo reformas educativas", "Explicando estrategias financieras", "Discutiendo antropología cultural", "Analizando sistemas políticos",
-        "Debatiendo políticas de salud", "Explicando física cuántica", "Discutiendo planificación urbana", "Analizando negociaciones diplomáticas",
-        "Debatiendo políticas de inmigración", "Explicando biotecnología", "Discutiendo desarrollo sostenible", "Analizando gobierno corporativo",
-        "Debatiendo ética de inteligencia artificial", "Explicando ciencia del clima", "Discutiendo comercio global", "Analizando derecho constitucional",
-        "Debatiendo justicia social", "Explicando neurociencia", "Discutiendo geopolítica", "Analizando desigualdad económica",
-        "Debatiendo manipulación mediática", "Explicando ingeniería genética", "Discutiendo exploración espacial", "Analizando imperialismo cultural",
-        "Debatiendo derechos de privacidad", "Explicando energía renovable", "Discutiendo teoría postcolonial", "Analizando derivados financieros",
-        "Debatiendo impacto de automatización", "Explicando aprendizaje automático", "Discutiendo existencialismo", "Analizando gobernanza global",
-        "Analizando desarrollo económico chino", "Discutiendo filosofía confuciana", "Debatiendo iniciativa de la Franja y la Ruta", "Explicando principios de Medicina Tradicional China",
-        "Discutiendo reunificación coreana", "Analizando la Ola Coreana (Hallyu)", "Debatiendo chaebols coreanos", "Explicando avances tecnológicos coreanos"
+        "Mediando un conflicto laboral", "Presentando una propuesta de investigación", "Discutiendo políticas económicas", "Analizando literatura"
+      ],
+      realistic: [
+        "Entrevista de trabajo en una empresa tecnológica", "Emergencia en el hospital", "Mudanza a un nuevo apartamento", "Reunión de padres y maestros",
+        "Avería del coche en la autopista", "Pasaporte perdido en el aeropuerto", "Apagón durante una tormenta", "Estrés por la planificación de la boda"
+      ],
+      futuristic: [
+        "Vida cotidiana en una colonia espacial", "Mal funcionamiento del asistente de IA", "Educación en realidad virtual", "Colaboración con un compañero de trabajo robot",
+        "Reserva de vacaciones con viaje en el tiempo", "Conferencia en reunión holográfica", "Construcción de un hábitat en Marte", "Consulta sobre implantes neuronales"
+      ],
+      historical: [
+        "Fiesta de té de la época victoriana", "Asedio a un castillo medieval", "Entrenamiento de gladiadores en la Antigua Roma", "Encuentro en un salón del Salvaje Oeste",
+        "Fiesta en un bar clandestino de los años 20", "Medicina en el campo de batalla de la Guerra Civil", "Encargo de arte del Renacimiento", "Exploración de una tumba del Antiguo Egipto"
       ]
     }
   },
@@ -246,14 +186,14 @@ const translations = {
     roleplayTopic: "Sujet de Jeu de Rôle:",
     topicPlaceholder: "Ex., Commander un café, s'enregistrer à l'hôtel",
     orChooseLesson: "Ou Choisissez une Leçon:",
-    difficultyTab: "Difficulty",
+    difficultyTab: "Difficulté",
     situationsTab: "Situations",
     beginner: "Débutant",
     intermediate: "Intermédiaire",
     advanced: "Avancé",
-            realistic: "Realistic",
-    futuristic: "Futuristic",
-    historical: "Historical",
+    realistic: "Réaliste",
+    futuristic: "Futuriste",
+    historical: "Historique",
     startLesson: "Commencer la Leçon",
     illustrationPlaceholder: "L'illustration apparaîtra ici",
     micStatus: "Appuyez sur le micro et lisez la ligne surlignée.",
@@ -294,54 +234,27 @@ const translations = {
     topics: {
       beginner: [
         "Se présenter", "Commander de la nourriture au restaurant", "Demander son chemin", "Acheter des vêtements",
-        "Faire les courses", "Faire la conversation", "Saluer quelqu'un", "Dire au revoir",
-        "Demander l'heure", "Compter les nombres", "Décrire le temps", "Parler de la famille",
-        "Commander un café", "Acheter un billet de bus", "S'enregistrer à l'hôtel", "Demander de l'aide",
-        "Changer de l'argent", "Trouver les toilettes", "Commander dans un fast-food", "Acheter des souvenirs",
-        "Demander les prix", "Prendre un taxi", "Réserver une table", "Demander le mot de passe WiFi",
-        "Acheter des médicaments", "Demander le chemin vers l'aéroport", "Commander une glace", "Demander les horaires d'ouverture",
-        "Payer l'addition", "Demander des recommandations", "Acheter une carte téléphonique", "Se faire couper les cheveux",
-        "Demander les coutumes locales", "Acheter des fleurs", "Acheter un journal", "Demander une carte",
-        "Commander une pizza à domicile", "Acheter des billets de train", "Obtenir des informations touristiques", "Demander le menu",
-        "Acheter des cartes postales", "Demander le chemin vers l'hôpital", "Demander le wi-fi", "Acheter des chaussures",
-        "Obtenir un reçu", "Demander de l'eau", "Acheter des bonbons", "Obtenir de l'aide pour les bagages",
-        "Demander la météo", "Acheter un cadeau", "Obtenir la clé de chambre", "Demander sel et poivre",
-        "Apprendre les salutations chinoises de base", "Commander des dim sum", "Prendre un taxi à Pékin", "Acheter du thé",
-        "Demander le menu BBQ coréen", "Apprendre les honorifiques coréens", "Utiliser le métro de Séoul", "Acheter du kimchi"
+        "Faire les courses", "Faire la conversation", "Saluer quelqu'un", "Dire au revoir"
       ],
       intermediate: [
         "Conversation d'entretien d'embauche", "Prendre rendez-vous chez le médecin", "Discuter des projets de week-end", "Louer un appartement",
-        "Se plaindre du service", "Négocier les prix", "Planifier des vacances", "Discuter des passe-temps",
-        "Parler du travail", "Se faire de nouveaux amis", "Discuter de films", "Organiser une fête",
-        "Parler de problèmes de santé", "Discuter d'éducation", "Faire des réservations au restaurant", "Parler de sport",
-        "Discuter de technologie", "Planifier un voyage d'affaires", "Parler de relations", "Discuter de l'actualité",
-        "Organiser des voyages", "Parler de préférences alimentaires", "Discuter des différences culturelles", "Planifier un rendez-vous",
-        "Parler d'objectifs de carrière", "Discuter de questions environnementales", "Faire des transactions bancaires", "Parler de musique",
-        "Discuter des tendances de mode", "Planifier un déménagement", "Parler du stress", "Discuter de routines d'exercice",
-        "Faire des réclamations d'assurance", "Parler des réseaux sociaux", "Discuter de réparations domestiques", "Planifier un mariage",
-        "Parler d'investissements", "Discuter de parentalité", "Faire des plaintes d'hôtel", "Parler de photographie",
-        "Discuter de recettes de cuisine", "Planifier la retraite", "Parler de santé mentale", "Discuter d'achats en ligne",
-        "Faire des candidatures scolaires", "Parler de bénévolat", "Discuter de transport", "Planifier une réunion",
-        "Parler de jardinage", "Discuter d'apprentissage des langues", "Faire des réclamations de garantie", "Parler d'animaux",
-        "Discuter de la culture d'entreprise chinoise", "Planifier la célébration du Nouvel An lunaire", "Parler de médecine traditionnelle chinoise", "Discuter de calligraphie chinoise",
-        "Apprendre la culture du travail coréenne", "Discuter de K-pop et divertissement coréen", "Parler des festivals coréens", "Planifier un voyage à Jeju"
+        "Se plaindre du service", "Négocier les prix", "Planifier des vacances", "Discuter des passe-temps"
       ],
       advanced: [
         "Négocier un accord commercial", "Discuter de politique et actualités", "Expliquer un problème technique complexe", "Débattre de concepts philosophiques",
-        "Médiatiser un conflit de travail", "Présenter une proposition de recherche", "Discuter de politiques économiques", "Analyser la littérature",
-        "Débattre de dilemmes éthiques", "Expliquer des théories scientifiques", "Discuter d'affaires juridiques", "Analyser les tendances du marché",
-        "Débattre de questions sociales", "Expliquer des procédures médicales", "Discuter de relations internationales", "Analyser des événements historiques",
-        "Débattre de politiques environnementales", "Expliquer des concepts psychologiques", "Discuter d'éthique technologique", "Analyser des mouvements artistiques",
-        "Débattre de réformes éducatives", "Expliquer des stratégies financières", "Discuter d'anthropologie culturelle", "Analyser des systèmes politiques",
-        "Débattre de politiques de santé", "Expliquer la physique quantique", "Discuter d'urbanisme", "Analyser des négociations diplomatiques",
-        "Débattre de politiques d'immigration", "Expliquer la biotechnologie", "Discuter de développement durable", "Analyser la gouvernance d'entreprise",
-        "Débattre d'éthique de l'IA", "Expliquer la science du climat", "Discuter du commerce mondial", "Analyser le droit constitutionnel",
-        "Débattre de justice sociale", "Expliquer les neurosciences", "Discuter de géopolitique", "Analyser l'inégalité économique",
-        "Débattre de manipulation médiatique", "Expliquer l'ingénierie génétique", "Discuter d'exploration spatiale", "Analyser l'impérialisme culturel",
-        "Débattre des droits à la vie privée", "Expliquer l'énergie renouvelable", "Discuter de théorie postcoloniale", "Analyser les dérivés financiers",
-        "Débattre de l'impact de l'automatisation", "Expliquer l'apprentissage automatique", "Discuter d'existentialisme", "Analyser la gouvernance mondiale",
-        "Analyser le développement économique chinois", "Discuter de philosophie confucéenne", "Débattre de l'initiative Belt and Road", "Expliquer les principes de médecine traditionnelle chinoise",
-        "Discuter de la réunification coréenne", "Analyser la Vague coréenne (Hallyu)", "Débattre des chaebols coréens", "Expliquer l'avancement technologique coréen"
+        "Médiatiser un conflit de travail", "Présenter une proposition de recherche", "Discuter de politiques économiques", "Analyser la littérature"
+      ],
+      realistic: [
+        "Entretien d'embauche dans une entreprise technologique", "Urgence à l'hôpital", "Déménager dans un nouvel appartement", "Conférence parents-professeurs",
+        "Panne de voiture sur l'autoroute", "Passeport perdu à l'aéroport", "Coupure de courant pendant une tempête", "Stress de l'organisation du mariage"
+      ],
+      futuristic: [
+        "Vie quotidienne dans une colonie spatiale", "Dysfonctionnement de l'assistant IA", "Éducation en réalité virtuelle", "Collaboration avec un collègue robot",
+        "Réservation de vacances par voyage dans le temps", "Conférence par réunion holographique", "Construction d'un habitat sur Mars", "Consultation pour un implant neural"
+      ],
+      historical: [
+        "Thé à l'époque victorienne", "Siège d'un château médiéval", "Entraînement de gladiateurs dans la Rome antique", "Rencontre dans un saloon du Far West",
+        "Fête dans un bar clandestin des années 1920", "Médecine sur le champ de bataille de la guerre de Sécession", "Commande d'art de la Renaissance", "Exploration d'une tombe de l'Égypte ancienne"
       ]
     }
   },
@@ -354,14 +267,14 @@ const translations = {
     roleplayTopic: "Rollenspiel-Thema:",
     topicPlaceholder: "Z.B., Kaffee bestellen, im Hotel einchecken",
     orChooseLesson: "Oder Wählen Sie eine Lektion:",
-    difficultyTab: "Difficulty",
-    situationsTab: "Situations",
+    difficultyTab: "Schwierigkeit",
+    situationsTab: "Situationen",
     beginner: "Anfänger",
     intermediate: "Mittelstufe",
     advanced: "Fortgeschritten",
-            realistic: "Realistic",
-    futuristic: "Futuristic",
-    historical: "Historical",
+    realistic: "Realistisch",
+    futuristic: "Futuristisch",
+    historical: "Historisch",
     startLesson: "Lektion Starten",
     illustrationPlaceholder: "Die Illustration wird hier erscheinen",
     micStatus: "Drücken Sie das Mikrofon und lesen Sie die Zeile.",
@@ -402,54 +315,27 @@ const translations = {
     topics: {
       beginner: [
         "Sich vorstellen", "Essen im Restaurant bestellen", "Nach dem Weg fragen", "Kleidung einkaufen",
-        "Lebensmittel einkaufen", "Small Talk führen", "Jemanden begrüßen", "Sich verabschieden",
-        "Nach der Uhrzeit fragen", "Zahlen zählen", "Das Wetter beschreiben", "Über Familie sprechen",
-        "Kaffee bestellen", "Busfahrkarte kaufen", "Im Hotel einchecken", "Um Hilfe bitten",
-        "Geld wechseln", "Toilette finden", "Im Fast-Food-Restaurant bestellen", "Souvenirs kaufen",
-        "Nach Preisen fragen", "Taxi nehmen", "Tisch reservieren", "Nach WLAN-Passwort fragen",
-        "Medikamente kaufen", "Weg zum Flughafen erfragen", "Eis bestellen", "Nach Öffnungszeiten fragen",
-        "Rechnung bezahlen", "Nach Empfehlungen fragen", "Telefonkarte kaufen", "Haare schneiden lassen",
-        "Nach lokalen Bräuchen fragen", "Blumen kaufen", "Zeitung kaufen", "Nach Karte fragen",
-        "Pizza bestellen", "Zugfahrkarten kaufen", "Touristeninformation erhalten", "Nach Speisekarte fragen",
-        "Postkarten kaufen", "Weg zum Krankenhaus erfragen", "Nach WLAN fragen", "Schuhe kaufen",
-        "Quittung erhalten", "Nach Wasser fragen", "Süßigkeiten kaufen", "Hilfe mit Gepäck erhalten",
-        "Nach dem Wetter fragen", "Geschenk kaufen", "Zimmerschlüssel erhalten", "Nach Salz und Pfeffer fragen",
-        "Grundlegende chinesische Begrüßungen lernen", "Dim Sum bestellen", "Taxi in Peking nehmen", "Tee kaufen",
-        "Nach koreanischem BBQ-Menü fragen", "Koreanische Höflichkeitsformen lernen", "U-Bahn in Seoul benutzen", "Kimchi kaufen"
+        "Lebensmittel einkaufen", "Small Talk führen", "Jemanden begrüßen", "Sich verabschieden"
       ],
       intermediate: [
         "Vorstellungsgespräch führen", "Arzttermin vereinbaren", "Wochenendpläne besprechen", "Wohnung mieten",
-        "Sich über Service beschweren", "Preise verhandeln", "Urlaub planen", "Hobbys besprechen",
-        "Über Arbeit sprechen", "Neue Freunde finden", "Filme besprechen", "Party planen",
-        "Über Gesundheitsprobleme sprechen", "Bildung besprechen", "Restaurantreservierung machen", "Über Sport sprechen",
-        "Technologie besprechen", "Geschäftsreise planen", "Über Beziehungen sprechen", "Aktuelle Ereignisse besprechen",
-        "Reisearrangements treffen", "Über Essensvorlieben sprechen", "Kulturelle Unterschiede besprechen", "Date planen",
-        "Über Karriereziele sprechen", "Umweltthemen besprechen", "Banktransaktionen durchführen", "Über Musik sprechen",
-        "Modetrends besprechen", "Umzug planen", "Über Stress sprechen", "Trainingsroutinen besprechen",
-        "Versicherungsansprüche stellen", "Über soziale Medien sprechen", "Hausreparaturen besprechen", "Hochzeit planen",
-        "Über Investitionen sprechen", "Kindererziehung besprechen", "Hotelbeschwerden machen", "Über Fotografie sprechen",
-        "Kochrezepte besprechen", "Rente planen", "Über psychische Gesundheit sprechen", "Online-Shopping besprechen",
-        "Schulbewerbungen machen", "Über Freiwilligenarbeit sprechen", "Transport besprechen", "Wiedersehen planen",
-        "Über Gartenarbeit sprechen", "Sprachenlernen besprechen", "Garantieansprüche stellen", "Über Haustiere sprechen",
-        "Chinesische Geschäftskultur besprechen", "Mondneujahr-Feier planen", "Traditionelle chinesische Medizin besprechen", "Chinesische Kalligrafie besprechen",
-        "Koreanische Arbeitskultur lernen", "K-Pop und koreanische Unterhaltung besprechen", "Koreanische Festivals besprechen", "Jeju-Reise planen"
+        "Sich über Service beschweren", "Preise verhandeln", "Urlaub planen", "Hobbys besprechen"
       ],
       advanced: [
         "Geschäftsabschluss verhandeln", "Politik und aktuelle Ereignisse besprechen", "Komplexes technisches Problem erklären", "Philosophische Konzepte debattieren",
-        "Arbeitsplatzkonflikt vermitteln", "Forschungsvorschlag präsentieren", "Wirtschaftspolitik besprechen", "Literatur analysieren",
-        "Ethische Dilemmata debattieren", "Wissenschaftliche Theorien erklären", "Rechtliche Angelegenheiten besprechen", "Markttrends analysieren",
-        "Soziale Themen debattieren", "Medizinische Verfahren erklären", "Internationale Beziehungen besprechen", "Historische Ereignisse analysieren",
-        "Umweltpolitik debattieren", "Psychologische Konzepte erklären", "Technologieethik besprechen", "Kunstbewegungen analysieren",
-        "Bildungsreformen debattieren", "Finanzstrategien erklären", "Kulturanthropologie besprechen", "Politische Systeme analysieren",
-        "Gesundheitspolitik debattieren", "Quantenphysik erklären", "Stadtplanung besprechen", "Diplomatische Verhandlungen analysieren",
-        "Einwanderungspolitik debattieren", "Biotechnologie erklären", "Nachhaltige Entwicklung besprechen", "Unternehmensführung analysieren",
-        "KI-Ethik debattieren", "Klimawissenschaft erklären", "Welthandel besprechen", "Verfassungsrecht analysieren",
-        "Soziale Gerechtigkeit debattieren", "Neurowissenschaft erklären", "Geopolitik besprechen", "Wirtschaftliche Ungleichheit analysieren",
-        "Medienmanipulation debattieren", "Gentechnik erklären", "Raumfahrt besprechen", "Kulturimperialismus analysieren",
-        "Datenschutzrechte debattieren", "Erneuerbare Energie erklären", "Postkoloniale Theorie besprechen", "Finanzderivate analysieren",
-        "Automatisierungsauswirkungen debattieren", "Maschinelles Lernen erklären", "Existentialismus besprechen", "Globale Regierungsführung analysieren",
-        "Chinesische Wirtschaftsentwicklung analysieren", "Konfuzianische Philosophie besprechen", "Belt and Road Initiative debattieren", "Prinzipien der traditionellen chinesischen Medizin erklären",
-        "Koreanische Wiedervereinigung besprechen", "Koreanische Welle (Hallyu) analysieren", "Koreanische Chaebols debattieren", "Koreanischen technologischen Fortschritt erklären"
+        "Arbeitsplatzkonflikt vermitteln", "Forschungsvorschlag präsentieren", "Wirtschaftspolitik besprechen", "Literatur analysieren"
+      ],
+      realistic: [
+        "Vorstellungsgespräch in einer Technologiefirma", "Notfall im Krankenhaus", "Umzug in eine neue Wohnung", "Eltern-Lehrer-Konferenz",
+        "Autopanne auf der Autobahn", "Verlorener Pass am Flughafen", "Stromausfall während eines Sturms", "Hochzeitsplanungsstress"
+      ],
+      futuristic: [
+        "Alltag in einer Weltraumkolonie", "Fehlfunktion des KI-Assistenten", "Bildung in der virtuellen Realität", "Zusammenarbeit mit einem Roboter-Kollegen",
+        "Buchung eines Zeitreise-Urlaubs", "Holografische Besprechung", "Bau einer Mars-Siedlung", "Beratung für ein neuronales Implantat"
+      ],
+      historical: [
+        "Teeparty im viktorianischen Zeitalter", "Belagerung einer mittelalterlichen Burg", "Gladiatorentraining im alten Rom", "Begegnung in einem Saloon im Wilden Westen",
+        "Party in einer Flüsterkneipe der 1920er Jahre", "Medizin auf dem Schlachtfeld des Bürgerkriegs", "Kunstauftrag in der Renaissance", "Erkundung eines altägyptischen Grabes"
       ]
     }
   },
@@ -462,14 +348,14 @@ const translations = {
     roleplayTopic: "Argomento di Gioco di Ruolo:",
     topicPlaceholder: "Es., Ordinare caffè, fare check-in in hotel",
     orChooseLesson: "O Scegli una Lezione:",
-    difficultyTab: "Difficulty",
-    situationsTab: "Situations",
+    difficultyTab: "Difficoltà",
+    situationsTab: "Situazioni",
     beginner: "Principiante",
     intermediate: "Intermedio",
     advanced: "Avanzato",
-            realistic: "Realistic",
-    futuristic: "Futuristic",
-    historical: "Historical",
+    realistic: "Realistico",
+    futuristic: "Futuristico",
+    historical: "Storico",
     startLesson: "Inizia Lezione",
     illustrationPlaceholder: "L'illustrazione apparirà qui",
     micStatus: "Premi il microfono e leggi la riga evidenziata.",
@@ -510,54 +396,27 @@ const translations = {
     topics: {
       beginner: [
         "Presentarsi", "Ordinare cibo al ristorante", "Chiedere indicazioni", "Comprare vestiti",
-        "Comprare generi alimentari", "Fare conversazione", "Salutare qualcuno", "Dire addio",
-        "Chiedere l'ora", "Contare i numeri", "Descrivere il tempo", "Parlare della famiglia",
-        "Ordinare caffè", "Comprare biglietto autobus", "Fare check-in in hotel", "Chiedere aiuto",
-        "Cambiare denaro", "Trovare il bagno", "Ordinare al fast food", "Comprare souvenir",
-        "Chiedere prezzi", "Prendere un taxi", "Prenotare un tavolo", "Chiedere password WiFi",
-        "Comprare medicine", "Chiedere indicazioni per aeroporto", "Ordinare gelato", "Chiedere orari di apertura",
-        "Pagare il conto", "Chiedere raccomandazioni", "Comprare scheda telefonica", "Tagliare i capelli",
-        "Chiedere usanze locali", "Comprare fiori", "Comprare giornale", "Chiedere mappa",
-        "Ordinare pizza a domicilio", "Comprare biglietti treno", "Ottenere informazioni turistiche", "Chiedere il menu",
-        "Comprare cartoline", "Chiedere indicazioni per ospedale", "Chiedere wi-fi", "Comprare scarpe",
-        "Ottenere ricevuta", "Chiedere acqua", "Comprare caramelle", "Ottenere aiuto con bagagli",
-        "Chiedere del tempo", "Comprare regalo", "Ottenere chiave camera", "Chiedere sale e pepe",
-        "Imparare saluti cinesi base", "Ordinare dim sum", "Prendere taxi a Pechino", "Comprare tè",
-        "Chiedere menu BBQ coreano", "Imparare onorifici coreani", "Usare metro di Seoul", "Comprare kimchi"
+        "Comprare generi alimentari", "Fare conversazione", "Salutare qualcuno", "Dire addio"
       ],
       intermediate: [
         "Conversazione colloquio lavoro", "Fissare appuntamento medico", "Discutere piani weekend", "Affittare appartamento",
-        "Lamentarsi del servizio", "Negoziare prezzi", "Pianificare vacanze", "Discutere hobby",
-        "Parlare del lavoro", "Fare nuovi amici", "Discutere film", "Pianificare festa",
-        "Parlare problemi salute", "Discutere educazione", "Fare prenotazioni ristorante", "Parlare di sport",
-        "Discutere tecnologia", "Pianificare viaggio affari", "Parlare di relazioni", "Discutere eventi attuali",
-        "Organizzare viaggi", "Parlare preferenze cibo", "Discutere differenze culturali", "Pianificare appuntamento",
-        "Parlare obiettivi carriera", "Discutere questioni ambientali", "Fare transazioni bancarie", "Parlare di musica",
-        "Discutere tendenze moda", "Pianificare trasloco", "Parlare dello stress", "Discutere routine esercizio",
-        "Fare reclami assicurazione", "Parlare social media", "Discutere riparazioni casa", "Pianificare matrimonio",
-        "Parlare investimenti", "Discutere genitorialità", "Fare reclami hotel", "Parlare di fotografia",
-        "Discutere ricette cucina", "Pianificare pensione", "Parlare salute mentale", "Discutere shopping online",
-        "Fare domande scuola", "Parlare volontariato", "Discutere trasporti", "Pianificare riunione",
-        "Parlare di giardinaggio", "Discutere apprendimento lingue", "Fare reclami garanzia", "Parlare di animali",
-        "Discutere cultura aziendale cinese", "Pianificare celebrazione Capodanno lunare", "Parlare medicina tradizionale cinese", "Discutere calligrafia cinese",
-        "Imparare cultura lavorativa coreana", "Discutere K-pop e intrattenimento coreano", "Parlare festival coreani", "Pianificare viaggio a Jeju"
+        "Lamentarsi del servizio", "Negoziare prezzi", "Pianificare vacanze", "Discutere hobby"
       ],
       advanced: [
         "Negoziare accordo commerciale", "Discutere politica ed eventi attuali", "Spiegare problema tecnico complesso", "Dibattere concetti filosofici",
-        "Mediare conflitto lavorativo", "Presentare proposta ricerca", "Discutere politiche economiche", "Analizzare letteratura",
-        "Dibattere dilemmi etici", "Spiegare teorie scientifiche", "Discutere questioni legali", "Analizzare tendenze mercato",
-        "Dibattere questioni sociali", "Spiegare procedure mediche", "Discutere relazioni internazionali", "Analizzare eventi storici",
-        "Dibattere politiche ambientali", "Spiegare concetti psicologici", "Discutere etica tecnologica", "Analizzare movimenti artistici",
-        "Dibattere riforme educative", "Spiegare strategie finanziarie", "Discutere antropologia culturale", "Analizzare sistemi politici",
-        "Dibattere politiche sanitarie", "Spiegare fisica quantistica", "Discutere pianificazione urbana", "Analizzare negoziazioni diplomatiche",
-        "Dibattere politiche immigrazione", "Spiegare biotecnologie", "Discutere sviluppo sostenibile", "Analizzare governance aziendale",
-        "Dibattere etica intelligenza artificiale", "Spiegare scienza climatica", "Discutere commercio globale", "Analizzare diritto costituzionale",
-        "Dibattere giustizia sociale", "Spiegare neuroscienze", "Discutere geopolitica", "Analizzare disuguaglianza economica",
-        "Dibattere manipolazione mediatica", "Spiegare ingegneria genetica", "Discutere esplorazione spaziale", "Analizzare imperialismo culturale",
-        "Dibattere diritti privacy", "Spiegare energia rinnovabile", "Discutere teoria postcoloniale", "Analizzare derivati finanziari",
-        "Dibattere impatto automazione", "Spiegare apprendimento automatico", "Discutere esistenzialismo", "Analizzare governance globale",
-        "Analizzare sviluppo economico cinese", "Discutere filosofia confuciana", "Dibattere iniziativa Belt and Road", "Spiegare principi medicina tradizionale cinese",
-        "Discutere riunificazione coreana", "Analizzare Onda Coreana (Hallyu)", "Dibattere chaebol coreani", "Spiegare avanzamento tecnologico coreano"
+        "Mediare conflitto lavorativo", "Presentare proposta ricerca", "Discutere politiche economiche", "Analizzare letteratura"
+      ],
+      realistic: [
+        "Colloquio di lavoro in un'azienda tecnologica", "Emergenza in ospedale", "Trasloco in un nuovo appartamento", "Conferenza genitori-insegnanti",
+        "Guasto all'auto in autostrada", "Passaporto smarrito in aeroporto", "Blackout durante un temporale", "Stress per l'organizzazione del matrimonio"
+      ],
+      futuristic: [
+        "Vita quotidiana in una colonia spaziale", "Malfunzionamento dell'assistente AI", "Educazione in realtà virtuale", "Collaborazione con un collega robot",
+        "Prenotazione di una vacanza con viaggio nel tempo", "Conferenza olografica", "Costruzione di un habitat su Marte", "Consulto per un impianto neurale"
+      ],
+      historical: [
+        "Tea party dell'era vittoriana", "Assedio di un castello medievale", "Addestramento di gladiatori nell'antica Roma", "Incontro in un saloon del selvaggio west",
+        "Festa in uno speakeasy degli anni '20", "Medicina sul campo di battaglia della guerra civile", "Commissione d'arte rinascimentale", "Esplorazione di una tomba dell'antico Egitto"
       ]
     }
   },
@@ -570,14 +429,14 @@ const translations = {
     roleplayTopic: "角色扮演主题：",
     topicPlaceholder: "例如，点咖啡，酒店入住",
     orChooseLesson: "或选择课程：",
-        difficultyTab: "Difficulty",
-    situationsTab: "Situations",
+    difficultyTab: "难度",
+    situationsTab: "情景",
     beginner: "初级",
     intermediate: "中级",
     advanced: "高级",
-            realistic: "Realistic",
-    futuristic: "Futuristic",
-    historical: "Historical",
+    realistic: "现实",
+    futuristic: "未来",
+    historical: "历史",
     startLesson: "开始课程",
     illustrationPlaceholder: "插图将在此处显示",
     micStatus: "按下麦克风并朗读高亮的句子。",
@@ -618,54 +477,27 @@ const translations = {
     topics: {
       beginner: [
         "自我介绍", "在餐厅点餐", "问路", "买衣服",
-        "买杂货", "闲聊", "问候某人", "告别",
-        "询问时间", "数数字", "描述天气", "谈论家庭",
-        "点咖啡", "买公交车票", "酒店登记", "寻求帮助",
-        "兑换货币", "找厕所", "在快餐店点餐", "买纪念品",
-        "询问价格", "打车", "预订桌子", "询问WiFi密码",
-        "买药", "询问去机场的路", "点冰淇淋", "询问营业时间",
-        "付账", "寻求建议", "买电话卡", "理发",
-        "询问当地习俗", "买花", "买报纸", "要地图",
-        "叫外卖披萨", "买火车票", "获取旅游信息", "询问菜单",
-        "买明信片", "询问去医院的路", "询问wifi", "买鞋",
-        "要收据", "要水", "买糖果", "寻求行李帮助",
-        "询问天气", "买礼物", "拿房间钥匙", "要盐和胡椒",
-        "学习基本中文问候", "点点心", "在北京打车", "买茶",
-        "询问韩式烤肉菜单", "学习韩语敬语", "使用首尔地铁", "买泡菜"
+        "买杂货", "闲聊", "问候某人", "告别"
       ],
       intermediate: [
         "求职面试对话", "预约医生", "讨论周末计划", "租公寓",
-        "投诉服务", "讨价还价", "计划假期", "讨论爱好",
-        "谈论工作", "交新朋友", "讨论电影", "计划聚会",
-        "谈论健康问题", "讨论教育", "预订餐厅", "谈论运动",
-        "讨论技术", "计划商务旅行", "谈论关系", "讨论时事",
-        "安排旅行", "谈论食物偏好", "讨论文化差异", "计划约会",
-        "谈论职业目标", "讨论环境问题", "进行银行交易", "谈论音乐",
-        "讨论时尚趋势", "计划搬家", "谈论压力", "讨论锻炼例程",
-        "申请保险理赔", "谈论社交媒体", "讨论家庭维修", "计划婚礼",
-        "谈论投资", "讨论育儿", "投诉酒店", "谈论摄影",
-        "讨论烹饪食谱", "计划退休", "谈论心理健康", "讨论网购",
-        "申请学校", "谈论志愿工作", "讨论交通", "计划聚会",
-        "谈论园艺", "讨论语言学习", "申请保修", "谈论宠物",
-        "讨论中国商业文化", "计划农历新年庆祝", "谈论中医", "讨论中国书法",
-        "了解韩国工作文化", "讨论韩流和韩国娱乐", "讨论韩国节日", "计划济州岛之旅"
+        "投诉服务", "讨价还价", "计划假期", "讨论爱好"
       ],
       advanced: [
         "商业交易谈判", "讨论政治和时事", "解释复杂技术问题", "辩论哲学概念",
-        "调解工作冲突", "展示研究提案", "讨论经济政策", "分析文学",
-        "辩论道德困境", "解释科学理论", "讨论法律事务", "分析市场趋势",
-        "辩论社会问题", "解释医疗程序", "讨论国际关系", "分析历史事件",
-        "辩论环境政策", "解释心理概念", "讨论技术伦理", "分析艺术运动",
-        "辩论教育改革", "解释金融策略", "讨论文化人类学", "分析政治制度",
-        "辩论医疗政策", "解释量子物理", "讨论城市规划", "分析外交谈判",
-        "辩论移民政策", "解释生物技术", "讨论可持续发展", "分析公司治理",
-        "辩论人工智能伦理", "解释气候科学", "讨论全球贸易", "分析宪法",
-        "辩论社会正义", "解释神经科学", "讨论地缘政治", "分析经济不平等",
-        "辩论媒体操控", "解释基因工程", "讨论太空探索", "分析文化帝国主义",
-        "辩论隐私权", "解释可再生能源", "讨论后殖民理论", "分析金融衍生品",
-        "辩论自动化影响", "解释机器学习", "讨论存在主义", "分析全球治理",
-        "分析中国经济发展", "讨论儒家哲学", "辩论一带一路倡议", "解释中医原理",
-        "讨论朝鲜统一", "分析韩流", "辩论韩国财阀", "解释韩国技术进步"
+        "调解工作冲突", "展示研究提案", "讨论经济政策", "分析文学"
+      ],
+      realistic: [
+        "科技公司的工作面试", "医院里的紧急情况", "搬到新公寓", "家长会",
+        "高速公路上的汽车故障", "在机场丢失护照", "暴风雨中断电", "婚礼策划的压力"
+      ],
+      futuristic: [
+        "太空殖民地的日常生活", "人工智能助手故障", "虚拟现实教育", "机器人同事协作",
+        "时空旅行度假预订", "全息会议", "火星栖息地建设", "神经植入咨询"
+      ],
+      historical: [
+        "维多利亚时代的茶会", "中世纪城堡围攻", "古罗马角斗士训练", "西部世界酒吧偶遇",
+        "1920年代的地下酒吧派对", "内战战场医疗", "文艺复兴时期的艺术委托", "古埃及古墓探险"
       ]
     }
   },
@@ -678,14 +510,14 @@ const translations = {
     roleplayTopic: "ロールプレイトピック：",
     topicPlaceholder: "例：コーヒーを注文する、ホテルにチェックイン",
     orChooseLesson: "またはレッスンを選択：",
-        difficultyTab: "Difficulty",
-    situationsTab: "Situations",
+    difficultyTab: "難易度",
+    situationsTab: "状況",
     beginner: "初級",
     intermediate: "中級",
     advanced: "上級",
-            realistic: "Realistic",
-    futuristic: "Futuristic",
-    historical: "Historical",
+    realistic: "現実的",
+    futuristic: "未来的",
+    historical: "歴史的",
     startLesson: "レッスン開始",
     illustrationPlaceholder: "イラストがここに表示されます",
     micStatus: "マイクを押してハイライトされた行を読んでください。",
@@ -696,8 +528,6 @@ const translations = {
     correct: "正解！よくできました。",
     tryAgain: "惜しい。もう一度その行を読んでみてください。",
     tryAgainStatus: "マイクを押してもう一度試してください。",
-    sentenceCorrect: "正解！次の文...",
-    allSentencesCorrect: "全ての文が正解！よくできました。",
     lessonComplete: "レッスン完了！🎉",
     partnerSpeaking: "パートナーが話しています...",
     audioFinished: "オーディオ終了。",
@@ -728,54 +558,27 @@ const translations = {
     topics: {
       beginner: [
         "自己紹介", "レストランで食事を注文", "道を尋ねる", "服を買う",
-        "食料品を買う", "雑談をする", "誰かに挨拶する", "さよならを言う",
-        "時間を尋ねる", "数を数える", "天気を説明する", "家族について話す",
-        "コーヒーを注文", "バスの切符を買う", "ホテルにチェックイン", "助けを求める",
-        "両替する", "トイレを見つける", "ファストフードで注文", "お土産を買う",
-        "値段を尋ねる", "タクシーに乗る", "テーブルを予約", "WiFiパスワードを尋ねる",
-        "薬を買う", "空港への道を尋ねる", "アイスクリームを注文", "営業時間を尋ねる",
-        "会計を払う", "おすすめを尋ねる", "電話カードを買う", "髪を切る",
-        "地元の習慣を尋ねる", "花を買う", "新聞を買う", "地図を求める",
-        "ピザの宅配を注文", "電車の切符を買う", "観光情報を得る", "メニューを尋ねる",
-        "絵葉書を買う", "病院への道を尋ねる", "wifiについて尋ねる", "靴を買う",
-        "レシートをもらう", "水を求める", "お菓子を買う", "荷物の手伝いを得る",
-        "天気について尋ねる", "贈り物を買う", "部屋の鍵をもらう", "塩と胡椒を求める",
-        "基本的な中国語の挨拶を学ぶ", "点心を注文", "北京でタクシーに乗る", "お茶を買う",
-        "韓国BBQメニューを尋ねる", "韓国語の敬語を学ぶ", "ソウルの地下鉄を使う", "キムチを買う"
+        "食料品を買う", "雑談をする", "誰かに挨拶する", "さよならを言う"
       ],
       intermediate: [
         "就職面接の会話", "医者の予約を取る", "週末の計画を話し合う", "アパートを借りる",
-        "サービスについて苦情を言う", "値段を交渉", "休暇を計画", "趣味について話し合う",
-        "仕事について話す", "新しい友達を作る", "映画について話し合う", "パーティーを計画",
-        "健康問題について話す", "教育について話し合う", "レストランを予約", "スポーツについて話す",
-        "技術について話し合う", "出張を計画", "人間関係について話す", "時事問題を話し合う",
-        "旅行の手配をする", "食べ物の好みについて話す", "文化の違いを話し合う", "デートを計画",
-        "キャリア目標について話す", "環境問題を話し合う", "銀行取引をする", "音楽について話す",
-        "ファッションの傾向を話し合う", "引っ越しを計画", "ストレスについて話す", "運動ルーチンを話し合う",
-        "保険請求をする", "ソーシャルメディアについて話す", "家の修理を話し合う", "結婚式を計画",
-        "投資について話す", "子育てを話し合う", "ホテルに苦情を言う", "写真について話す",
-        "料理のレシピを話し合う", "退職を計画", "心の健康について話す", "オンラインショッピングを話し合う",
-        "学校に申し込む", "ボランティア活動について話す", "交通について話し合う", "同窓会を計画",
-        "ガーデニングについて話す", "言語学習を話し合う", "保証請求をする", "ペットについて話す",
-        "中国のビジネス文化を話し合う", "旧正月の祝いを計画", "中国伝統医学について話す", "中国書道を話し合う",
-        "韓国の労働文化について学ぶ", "K-popと韓国エンターテイメントを話し合う", "韓国の祭りについて話す", "済州島旅行を計画"
+        "サービスについて苦情を言う", "値段を交渉", "休暇を計画", "趣味について話し合う"
       ],
       advanced: [
         "ビジネス取引を交渉", "政治と時事問題を話し合う", "複雑な技術問題を説明", "哲学的概念を議論",
-        "職場の対立を仲裁", "研究提案を発表", "経済政策を話し合う", "文学を分析",
-        "倫理的ジレンマを議論", "科学理論を説明", "法的問題を話し合う", "市場動向を分析",
-        "社会問題を議論", "医療手順を説明", "国際関係を話し合う", "歴史的出来事を分析",
-        "環境政策を議論", "心理学的概念を説明", "技術倫理を話し合う", "芸術運動を分析",
-        "教育改革を議論", "金融戦略を説明", "文化人類学を話し合う", "政治制度を分析",
-        "健康政策を議論", "量子物理学を説明", "都市計画を話し合う", "外交交渉を分析",
-        "移民政策を議論", "バイオテクノロジーを説明", "持続可能な開発を話し合う", "企業統治を分析",
-        "AI倫理を議論", "気候科学を説明", "グローバル貿易を話し合う", "憲法を分析",
-        "社会正義を議論", "神経科学を説明", "地政学を話し合う", "経済格差を分析",
-        "メディア操作を議論", "遺伝子工学を説明", "宇宙探査を話し合う", "文化帝国主義を分析",
-        "プライバシー権を議論", "再生可能エネルギーを説明", "ポストコロニアル理論を話し合う", "金融デリバティブを分析",
-        "自動化の影響を議論", "機械学習を説明", "実存主義を話し合う", "グローバルガバナンスを分析",
-        "中国の経済発展を分析", "儒教哲学を話し合う", "一帯一路構想を議論", "中国伝統医学の原理を説明",
-        "朝鮮統一を話し合う", "韓流を分析", "韓国の財閥を議論", "韓国の技術発展を説明"
+        "職場の対立を仲裁", "研究提案を発表", "経済政策を話し合う", "文学を分析"
+      ],
+      realistic: [
+        "ハイテク企業での就職面接", "病院での緊急事態", "新しいアパートへの引っ越し", "保護者面談",
+        "高速道路での車の故障", "空港でのパスポート紛失", "嵐の中の停電", "結婚式の準備のストレス"
+      ],
+      futuristic: [
+        "宇宙コロニーでの日常生活", "AIアシスタントの故障", "バーチャルリアリティ教育", "ロボットの同僚との協働",
+        "タイムトラベル休暇の予約", "ホログラフィック会議", "火星の居住施設の建設", "ニューラルインプラントの相談"
+      ],
+      historical: [
+        "ビクトリア朝のティーパーティー", "中世の城の包囲", "古代ローマの剣闘士の訓練", "西部開拓時代の酒場での出会い",
+        "1920年代の禁酒法時代のパーティー", "南北戦争の戦場での医療", "ルネサンス期の芸術依頼", "古代エジプトの墓の探検"
       ]
     }
   },
@@ -788,14 +591,14 @@ const translations = {
     roleplayTopic: "역할놀이 주제:",
     topicPlaceholder: "예: 커피 주문하기, 호텔 체크인",
     orChooseLesson: "또는 레슨 선택:",
-        difficultyTab: "Difficulty",
-    situationsTab: "Situations",
+    difficultyTab: "난이도",
+    situationsTab: "상황",
     beginner: "초급",
     intermediate: "중급",
     advanced: "고급",
-            realistic: "Realistic",
-    futuristic: "Futuristic",
-    historical: "Historical",
+    realistic: "현실적",
+    futuristic: "미래적",
+    historical: "역사적",
     startLesson: "레슨 시작",
     illustrationPlaceholder: "일러스트가 여기에 나타납니다",
     micStatus: "마이크를 누르고 강조된 줄을 읽으세요.",
@@ -836,54 +639,27 @@ const translations = {
     topics: {
       beginner: [
         "자기소개하기", "식당에서 음식 주문하기", "길 묻기", "옷 쇼핑하기",
-        "식료품 사기", "잡담하기", "인사하기", "작별 인사하기",
-        "시간 묻기", "숫자 세기", "날씨 설명하기", "가족에 대해 이야기하기",
-        "커피 주문하기", "버스표 사기", "호텔 체크인하기", "도움 요청하기",
-        "환전하기", "화장실 찾기", "패스트푸드점에서 주문하기", "기념품 사기",
-        "가격 묻기", "택시 타기", "테이블 예약하기", "WiFi 비밀번호 묻기",
-        "약 사기", "공항 가는 길 묻기", "아이스크림 주문하기", "영업시간 묻기",
-        "계산하기", "추천 요청하기", "전화카드 사기", "머리 자르기",
-        "현지 관습 묻기", "꽃 사기", "신문 사기", "지도 요청하기",
-        "피자 배달 주문하기", "기차표 사기", "관광 정보 얻기", "메뉴 문의하기",
-        "엽서 사기", "병원 가는 길 묻기", "와이파이 문의하기", "신발 사기",
-        "영수증 받기", "물 요청하기", "사탕 사기", "짐 도움 받기",
-        "날씨 묻기", "선물 사기", "방 열쇠 받기", "소금과 후추 요청하기",
-        "기본 중국어 인사 배우기", "딤섬 주문하기", "베이징에서 택시 타기", "차 사기",
-        "한국 BBQ 메뉴 문의하기", "한국어 존댓말 배우기", "서울 지하철 이용하기", "김치 사기"
+        "식료품 사기", "잡담하기", "인사하기", "작별 인사하기"
       ],
       intermediate: [
         "취업 면접 대화", "병원 예약하기", "주말 계획 논의하기", "아파트 임대하기",
-        "서비스에 대해 불만 제기하기", "가격 협상하기", "휴가 계획하기", "취미 논의하기",
-        "일에 대해 이야기하기", "새 친구 사귀기", "영화 논의하기", "파티 계획하기",
-        "건강 문제 이야기하기", "교육 논의하기", "식당 예약하기", "스포츠 이야기하기",
-        "기술 논의하기", "출장 계획하기", "인간관계 이야기하기", "시사 문제 논의하기",
-        "여행 준비하기", "음식 취향 이야기하기", "문화 차이 논의하기", "데이트 계획하기",
-        "커리어 목표 이야기하기", "환경 문제 논의하기", "은행 업무 보기", "음악 이야기하기",
-        "패션 트렌드 논의하기", "이사 계획하기", "스트레스 이야기하기", "운동 루틴 논의하기",
-        "보험 청구하기", "소셜 미디어 이야기하기", "집 수리 논의하기", "결혼식 계획하기",
-        "투자 이야기하기", "육아 논의하기", "호텔 불만 제기하기", "사진 이야기하기",
-        "요리 레시피 논의하기", "은퇴 계획하기", "정신 건강 이야기하기", "온라인 쇼핑 논의하기",
-        "학교 지원하기", "봉사활동 이야기하기", "교통 논의하기", "동창회 계획하기",
-        "원예 이야기하기", "언어 학습 논의하기", "보증 청구하기", "애완동물 이야기하기",
-        "중국 비즈니스 문화 논의하기", "설날 축하 계획하기", "중국 전통 의학 이야기하기", "중국 서예 논의하기",
-        "한국 직장 문화 배우기", "K-pop과 한국 엔터테인먼트 논의하기", "한국 축제 이야기하기", "제주도 여행 계획하기"
+        "서비스에 대해 불만 제기하기", "가격 협상하기", "휴가 계획하기", "취미 논의하기"
       ],
       advanced: [
         "비즈니스 거래 협상하기", "정치와 시사 논의하기", "복잡한 기술 문제 설명하기", "철학적 개념 토론하기",
-        "직장 갈등 중재하기", "연구 제안서 발표하기", "경제 정책 논의하기", "문학 분석하기",
-        "윤리적 딜레마 토론하기", "과학 이론 설명하기", "법적 문제 논의하기", "시장 동향 분석하기",
-        "사회 문제 토론하기", "의료 절차 설명하기", "국제 관계 논의하기", "역사적 사건 분석하기",
-        "환경 정책 토론하기", "심리학적 개념 설명하기", "기술 윤리 논의하기", "예술 운동 분석하기",
-        "교육 개혁 토론하기", "금융 전략 설명하기", "문화 인류학 논의하기", "정치 체제 분석하기",
-        "의료 정책 토론하기", "양자 물리학 설명하기", "도시 계획 논의하기", "외교 협상 분석하기",
-        "이민 정책 토론하기", "생명공학 설명하기", "지속 가능한 개발 논의하기", "기업 지배구조 분석하기",
-        "AI 윤리 토론하기", "기후 과학 설명하기", "글로벌 무역 논의하기", "헌법 분석하기",
-        "사회 정의 토론하기", "신경과학 설명하기", "지정학 논의하기", "경제 불평등 분석하기",
-        "미디어 조작 토론하기", "유전 공학 설명하기", "우주 탐사 논의하기", "문화 제국주의 분석하기",
-        "개인정보 보호 권리 토론하기", "재생 에너지 설명하기", "탈식민주의 이론 논의하기", "금융 파생상품 분석하기",
-        "자동화 영향 토론하기", "머신러닝 설명하기", "실존주의 논의하기", "글로벌 거버넌스 분석하기",
-        "중국 경제 발전 분석하기", "유교 철학 논의하기", "일대일로 이니셔티브 토론하기", "중의학 원리 설명하기",
-        "한국 통일 논의하기", "한류 분석하기", "한국 재벌 토론하기", "한국 기술 발전 설명하기"
+        "직장 갈등 중재하기", "연구 제안서 발표하기", "경제 정책 논의하기", "문학 분석하기"
+      ],
+      realistic: [
+        "기술 회사의 면접", "병원에서의 응급 상황", "새 아파트로 이사하기", "학부모-교사 회의",
+        "고속도로에서 자동차 고장", "공항에서 여권 분실", "폭풍 중 정전", "결혼 준비 스트레스"
+      ],
+      futuristic: [
+        "우주 식민지의 일상 생활", "AI 비서 오작동", "가상 현실 교육", "로봇 동료와의 협업",
+        "시간 여행 휴가 예약", "홀로그램 회의", "화성 거주지 건설", "신경 임플란트 상담"
+      ],
+      historical: [
+        "빅토리아 시대의 티 파티", "중세 성의 공성전", "고대 로마 검투사 훈련", "서부 개척 시대 술집에서의 만남",
+        "1920년대 밀주점 파티", "남북전쟁 당시의 야전 의료", "르네상스 미술 작품 의뢰", "고대 이집트 무덤 탐험"
       ]
     }
   }
