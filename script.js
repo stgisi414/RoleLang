@@ -743,6 +743,27 @@ document.addEventListener('DOMContentLoaded', () => {
       }
   }
 
+  // Add variables to track sentence-by-sentence recording
+  let currentSentences = [];
+  let currentSentenceIndex = 0;
+
+  // Helper function to split text into sentences
+  function splitIntoSentences(text) {
+      // Split by common sentence endings, but keep the punctuation
+      const sentences = text.split(/([.!?]+\s*)/).filter(s => s.trim().length > 0);
+      const result = [];
+      
+      for (let i = 0; i < sentences.length; i += 2) {
+          const sentence = sentences[i];
+          const punctuation = sentences[i + 1] || '';
+          if (sentence.trim()) {
+              result.push((sentence + punctuation).trim());
+          }
+      }
+      
+      return result.length > 0 ? result : [text];
+  }
+
   async function advanceTurn() {
       if (currentTurnIndex >= lessonPlan.dialogue.length) {
           micStatus.textContent = translateText('lessonComplete');
@@ -769,12 +790,16 @@ document.addEventListener('DOMContentLoaded', () => {
       saveState();
 
       if (currentTurnData.party === 'A') { // User's turn
+          // Split the line into sentences for sentence-by-sentence recording
+          const cleanText = removeParentheses(currentTurnData.line);
+          currentSentences = splitIntoSentences(cleanText);
+          currentSentenceIndex = 0;
+          
           micBtn.disabled = true;
           micStatus.textContent = translateText('listenFirst');
 
           try {
               // Play user's line first for them to hear
-              const cleanText = removeParentheses(currentTurnData.line);
               const audioBlob = await fetchPartnerAudio(cleanText);
               const audioUrl = URL.createObjectURL(audioBlob);
               const audio = new Audio(audioUrl);
@@ -783,24 +808,28 @@ document.addEventListener('DOMContentLoaded', () => {
                   audio.playbackRate = parseFloat(audioSpeedSelect.value);
                   audio.play().catch(error => {
                       console.error("Audio play failed:", error);
-                      enableUserMic();
+                      enableUserMicForSentence();
                   });
               });
 
               audio.addEventListener('ended', () => {
-                  enableUserMic();
+                  enableUserMicForSentence();
               });
 
               audio.addEventListener('error', (e) => {
                   console.error("Audio error:", e);
-                  enableUserMic();
+                  enableUserMicForSentence();
               });
 
           } catch (error) {
               console.error("Failed to fetch user audio:", error);
-              enableUserMic();
+              enableUserMicForSentence();
           }
       } else { // Partner's turn
+          // Reset sentence tracking for partner turns
+          currentSentences = [];
+          currentSentenceIndex = 0;
+          
           micBtn.disabled = true;
           micStatus.textContent = translateText('partnerSpeaking');
           try {
@@ -850,9 +879,22 @@ document.addEventListener('DOMContentLoaded', () => {
       }
   }
 
+  function enableUserMicForSentence() {
+      micBtn.disabled = false;
+      if (currentSentences.length > 1) {
+          micStatus.textContent = `${translateText('recordSentence')} ${currentSentenceIndex + 1}/${currentSentences.length}: "${currentSentences[currentSentenceIndex]}"`;
+      } else {
+          micStatus.textContent = translateText('yourTurn');
+      }
+  }
+
   function enableUserMic() {
       micBtn.disabled = false;
-      micStatus.textContent = translateText('yourTurn');
+      if (currentSentences.length > 1) {
+          enableUserMicForSentence();
+      } else {
+          micStatus.textContent = translateText('yourTurn');
+      }
   }
 
   function removeParentheses(text) {
@@ -860,7 +902,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function verifyUserSpeech(spokenText) {
-      const requiredText = lessonPlan.dialogue[currentTurnIndex].line.split('(')[0]; // Ignore translation
+      // Determine what text to compare against
+      let requiredText;
+      if (currentSentences.length > 1) {
+          // Multi-sentence mode: compare against current sentence
+          requiredText = currentSentences[currentSentenceIndex];
+      } else {
+          // Single sentence mode: compare against full line
+          requiredText = lessonPlan.dialogue[currentTurnIndex].line.split('(')[0]; // Ignore translation
+      }
       
       // Enhanced normalization function
       const normalize = (text) => {
@@ -906,29 +956,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Check for exact match first
       if (normalizedSpoken === normalizedRequired) {
-          micStatus.textContent = translateText('correct');
-          const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
-          currentLineEl.style.borderColor = '#4ade80'; // green-400
-          micBtn.disabled = true;
-          currentTurnIndex++;
-          saveState();
-          setTimeout(() => {
-              advanceTurn();
-          }, 1500);
+          handleCorrectSpeech();
           return;
       }
 
       // Check for substring match (original logic)
       if (normalizedSpoken.includes(normalizedRequired) || normalizedRequired.includes(normalizedSpoken)) {
-          micStatus.textContent = translateText('correct');
-          const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
-          currentLineEl.style.borderColor = '#4ade80'; // green-400
-          micBtn.disabled = true;
-          currentTurnIndex++;
-          saveState();
-          setTimeout(() => {
-              advanceTurn();
-          }, 1500);
+          handleCorrectSpeech();
           return;
       }
 
@@ -939,6 +973,37 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Accept if similarity is 75% or higher
       if (similarity >= 0.75) {
+          handleCorrectSpeech();
+      } else {
+          handleIncorrectSpeech(similarity, normalizedRequired, normalizedSpoken);
+      }
+  }
+
+  function handleCorrectSpeech() {
+      if (currentSentences.length > 1) {
+          // Multi-sentence mode
+          currentSentenceIndex++;
+          
+          if (currentSentenceIndex >= currentSentences.length) {
+              // All sentences completed
+              micStatus.textContent = translateText('allSentencesCorrect');
+              const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
+              currentLineEl.style.borderColor = '#4ade80'; // green-400
+              micBtn.disabled = true;
+              currentTurnIndex++;
+              saveState();
+              setTimeout(() => {
+                  advanceTurn();
+              }, 1500);
+          } else {
+              // Move to next sentence
+              micStatus.textContent = translateText('sentenceCorrect');
+              setTimeout(() => {
+                  enableUserMicForSentence();
+              }, 1000);
+          }
+      } else {
+          // Single sentence mode
           micStatus.textContent = translateText('correct');
           const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
           currentLineEl.style.borderColor = '#4ade80'; // green-400
@@ -948,25 +1013,34 @@ document.addEventListener('DOMContentLoaded', () => {
           setTimeout(() => {
               advanceTurn();
           }, 1500);
-      } else {
-          // Show debug info to help troubleshoot
-          console.log('Speech recognition debug:');
-          console.log('Required:', normalizedRequired);
-          console.log('Spoken:', normalizedSpoken);
-          console.log('Similarity:', (similarity * 100).toFixed(1) + '%');
-          
-          micStatus.textContent = translateText('tryAgain') + ` (${(similarity * 100).toFixed(0)}% match)`;
-          const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
-          currentLineEl.classList.remove('active');
-          void currentLineEl.offsetWidth;
-          currentLineEl.classList.add('active');
-          currentLineEl.style.borderColor = '#f87171'; // red-400
-          
-          setTimeout(() => {
-              micStatus.textContent = translateText('tryAgainStatus');
-              currentLineEl.style.borderColor = '';
-          }, 3000);
       }
+  }
+
+  function handleIncorrectSpeech(similarity, normalizedRequired, normalizedSpoken) {
+      // Show debug info to help troubleshoot
+      console.log('Speech recognition debug:');
+      console.log('Required:', normalizedRequired);
+      console.log('Spoken:', normalizedSpoken);
+      console.log('Similarity:', (similarity * 100).toFixed(1) + '%');
+      
+      const sentenceInfo = currentSentences.length > 1 ? 
+          ` (Sentence ${currentSentenceIndex + 1}/${currentSentences.length})` : '';
+      
+      micStatus.textContent = translateText('tryAgain') + ` (${(similarity * 100).toFixed(0)}% match)${sentenceInfo}`;
+      const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
+      currentLineEl.classList.remove('active');
+      void currentLineEl.offsetWidth;
+      currentLineEl.classList.add('active');
+      currentLineEl.style.borderColor = '#f87171'; // red-400
+      
+      setTimeout(() => {
+          if (currentSentences.length > 1) {
+              enableUserMicForSentence();
+          } else {
+              micStatus.textContent = translateText('tryAgainStatus');
+          }
+          currentLineEl.style.borderColor = '';
+      }, 3000);
   }
 
   function toggleSpeechRecognition() {
