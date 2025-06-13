@@ -1151,17 +1151,6 @@ document.addEventListener('DOMContentLoaded', () => {
       // Determine what text to compare against
       let requiredText;
       if (currentSentences.length > 1) {
-          // Multi-sentence mode: split the hiragana line from the lesson plan
-          const hiraganaLineSentences = splitIntoSentences(currentTurnData.line.hiragana);
-          requiredText = hiraganaLineSentences[currentSentenceIndex] || '';
-      } else {
-          // Single sentence mode: use the entire hiragana line
-          requiredText = currentTurnData.line.hiragana;
-      }
-
-      // Determine what text to compare against
-      let requiredText;
-      if (currentSentences.length > 1) {
           // Multi-sentence mode: for Japanese, we need to split the pre-converted hiragana
           if (currentLanguage === 'Japanese' && lessonPlan.dialogue[currentTurnIndex].hiragana_line) {
               // Split the pre-converted hiragana line into sentences
