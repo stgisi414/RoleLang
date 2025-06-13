@@ -769,8 +769,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Helper function to split text into sentences
   function splitIntoSentences(text) {
-      // Split by common sentence endings, but keep the punctuation
-      const sentences = text.split(/([.!?]+\s*)/).filter(s => s.trim().length > 0);
+      // Split by common sentence endings including CJK punctuation, but keep the punctuation
+      // Western: .!? | Chinese/Japanese: 。！？ | Korean: .!?
+      const sentences = text.split(/([.!?。！？]+\s*)/).filter(s => s.trim().length > 0);
       const result = [];
       
       for (let i = 0; i < sentences.length; i += 2) {
