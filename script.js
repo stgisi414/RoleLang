@@ -885,18 +885,61 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Helper function to split text into sentences
   function splitIntoSentences(text) {
-      // For Japanese and other CJK languages, split more carefully
-      // Western: .!? | Chinese/Japanese: 。！？ | Korean: .!?
+      const currentLanguage = languageSelect.value;
       
-      // First, try to split by sentence endings while preserving the full sentence
+      // For Japanese, use a simpler approach that works better with hiragana
+      if (currentLanguage === 'Japanese') {
+          // Japanese sentence endings: 。！？です ます た だ
+          // Split on major punctuation and common sentence endings
+          const japaneseEndings = /[。！？]/;
+          
+          if (!japaneseEndings.test(text)) {
+              // No clear sentence endings, try splitting on common patterns
+              // Look for です、ます、た、だ followed by space or end
+              const patterns = /(です|ます|した|だった|たい|ない)[。\s]?/g;
+              const sentences = [];
+              let lastIndex = 0;
+              let match;
+              
+              while ((match = patterns.exec(text)) !== null) {
+                  const sentence = text.substring(lastIndex, match.index + match[0].length).trim();
+                  if (sentence) {
+                      sentences.push(sentence);
+                  }
+                  lastIndex = match.index + match[0].length;
+              }
+              
+              // Add remaining text
+              const remaining = text.substring(lastIndex).trim();
+              if (remaining) {
+                  sentences.push(remaining);
+              }
+              
+              return sentences.length > 0 ? sentences : [text.trim()];
+          }
+          
+          // Split on punctuation for Japanese
+          const sentences = text.split(/([。！？])/).filter(s => s.trim());
+          const result = [];
+          
+          for (let i = 0; i < sentences.length; i += 2) {
+              const sentence = sentences[i];
+              const punctuation = sentences[i + 1] || '';
+              if (sentence.trim()) {
+                  result.push((sentence + punctuation).trim());
+              }
+          }
+          
+          return result.length > 0 ? result : [text.trim()];
+      }
+      
+      // For other languages, use the original logic
       const sentenceEndings = /[.!?。！？]/;
       
       if (!sentenceEndings.test(text)) {
-          // No sentence endings found, return as single sentence
           return [text.trim()];
       }
 
-      // Split while keeping the punctuation with the sentence
       const sentences = [];
       let currentSentence = '';
       
@@ -904,25 +947,21 @@ document.addEventListener('DOMContentLoaded', () => {
           const char = text[i];
           currentSentence += char;
           
-          // Check if this character is a sentence ending
           if (/[.!?。！？]/.test(char)) {
-              // Look ahead for any trailing whitespace
               let j = i + 1;
               while (j < text.length && /\s/.test(text[j])) {
                   currentSentence += text[j];
                   j++;
               }
               
-              // Add the complete sentence
               if (currentSentence.trim()) {
                   sentences.push(currentSentence.trim());
               }
               currentSentence = '';
-              i = j - 1; // Continue from after the whitespace
+              i = j - 1;
           }
       }
       
-      // Add any remaining text as the last sentence
       if (currentSentence.trim()) {
           sentences.push(currentSentence.trim());
       }
