@@ -373,8 +373,8 @@ body {
 #beginner-container,
 #intermediate-container,
 #advanced-container {
-    min-height: 100px;
-    max-height: 100px;
+    min-height: 200px;
+    max-height: 200px;
     overflow: hidden;
     position: relative;
     transition: all 0.3s ease;
@@ -384,8 +384,10 @@ body {
 .grid.grid-cols-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(2, 1fr);
     gap: 0.5rem;
     align-content: start;
+    height: 100%;
 }
 
 /* Smooth hover effects for topic buttons */
