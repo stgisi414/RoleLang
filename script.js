@@ -42,6 +42,102 @@ document.addEventListener('DOMContentLoaded', () => {
   let nativeLang = 'en'; // Default to English
   let currentTranslations = translations.en; // Default translations
 
+  // State management
+  const STATE_KEY = 'rolelang_app_state';
+  
+  function saveState() {
+    const state = {
+      lessonPlan: lessonPlan,
+      currentTurnIndex: currentTurnIndex,
+      currentScreen: lessonPlan ? 'lesson' : 'landing',
+      selectedLanguage: languageSelect.value,
+      topicInput: topicInput.value,
+      nativeLang: nativeLang,
+      lessonsVisible: !lessonsContainer.classList.contains('hidden'),
+      lastSaved: Date.now()
+    };
+    
+    try {
+      localStorage.setItem(STATE_KEY, JSON.stringify(state));
+    } catch (error) {
+      console.warn('Failed to save state to localStorage:', error);
+    }
+  }
+  
+  function loadState() {
+    try {
+      const savedState = localStorage.getItem(STATE_KEY);
+      if (!savedState) return null;
+      
+      const state = JSON.parse(savedState);
+      
+      // Check if state is recent (within 7 days)
+      const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+      if (state.lastSaved < sevenDaysAgo) {
+        localStorage.removeItem(STATE_KEY);
+        return null;
+      }
+      
+      return state;
+    } catch (error) {
+      console.warn('Failed to load state from localStorage:', error);
+      localStorage.removeItem(STATE_KEY);
+      return null;
+    }
+  }
+  
+  function clearState() {
+    localStorage.removeItem(STATE_KEY);
+  }
+  
+  function restoreState(state) {
+    // Restore form values
+    if (state.selectedLanguage) {
+      languageSelect.value = state.selectedLanguage;
+    }
+    if (state.topicInput) {
+      topicInput.value = state.topicInput;
+    }
+    
+    // Restore lessons visibility
+    if (state.lessonsVisible) {
+      lessonsContainer.classList.remove('hidden');
+      const chevronIcon = toggleLessonsBtn.querySelector('i');
+      chevronIcon.style.transform = 'rotate(180deg)';
+    }
+    
+    // Restore lesson if it exists
+    if (state.lessonPlan && state.currentScreen === 'lesson') {
+      lessonPlan = state.lessonPlan;
+      currentTurnIndex = state.currentTurnIndex;
+      
+      // Set speech recognition language
+      if (recognition) {
+        recognition.lang = getLangCode(state.selectedLanguage);
+      }
+      
+      // Switch to lesson screen
+      landingScreen.classList.add('hidden');
+      lessonScreen.classList.remove('hidden');
+      
+      // Restore conversation
+      restoreConversation();
+      
+      // Restore illustration
+      if (lessonPlan.illustration_url) {
+        restoreIllustration(lessonPlan.illustration_url);
+      } else if (lessonPlan.illustration_prompt) {
+        fetchAndDisplayIllustration(lessonPlan.illustration_prompt);
+      }
+      
+      // Resume from current turn
+      advanceTurn();
+      
+      // Stop topic rotations when in lesson
+      stopTopicRotations();
+    }
+  }
+
   // Translation function
   function translateText(key) {
     return currentTranslations[key] || translations.en[key] || key;
@@ -146,6 +242,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (event.target.classList.contains('lesson-btn')) {
           const topic = event.target.getAttribute('data-topic');
           topicInput.value = topic;
+          // Save state when topic changes
+          saveState();
           // Visual feedback
           event.target.style.transform = 'scale(0.95)';
           setTimeout(() => {
@@ -153,6 +251,10 @@ document.addEventListener('DOMContentLoaded', () => {
           }, 150);
       }
   });
+
+  // Save state when form inputs change
+  languageSelect.addEventListener('change', saveState);
+  topicInput.addEventListener('input', debounce(saveState, 500));
   closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
   modal.addEventListener('click', (event) => {
       // Close modal if clicking on the backdrop
@@ -233,6 +335,9 @@ document.addEventListener('DOMContentLoaded', () => {
       // Stop topic rotations when hiding lessons
       stopTopicRotations();
     }
+    
+    // Save state when lessons visibility changes
+    saveState();
   }
 
   // --- Topic Rotation Functions ---
@@ -349,6 +454,8 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
       }
 
+      // Clear previous state when starting new lesson
+      clearState();
 
       // Update UI
       loadingSpinner.classList.remove('hidden');
@@ -377,7 +484,9 @@ document.addEventListener('DOMContentLoaded', () => {
           lessonPlan = JSON.parse(jsonString);
 
           // Set speech recognition language
-          recognition.lang = getLangCode(language);
+          if (recognition) {
+            recognition.lang = getLangCode(language);
+          }
 
           // Stop topic rotations when lesson starts
           stopTopicRotations();
@@ -387,6 +496,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
           fetchAndDisplayIllustration(lessonPlan.illustration_prompt);
           startConversation();
+
+          // Save initial state
+          saveState();
 
       } catch (error) {
           console.error("Failed to initialize lesson:", error);
@@ -398,8 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
   }
 
-  function startConversation() {
-      currentTurnIndex = 0;
+  function restoreConversation() {
       conversationContainer.innerHTML = ''; // Clear previous conversation
       lessonPlan.dialogue.forEach((turn, index) => {
           const lineDiv = document.createElement('div');
@@ -443,6 +554,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
           conversationContainer.appendChild(lineDiv);
       });
+  }
+
+  function restoreIllustration(imageUrl) {
+      illustrationPlaceholder.classList.add('hidden');
+      imageLoader.classList.add('hidden');
+      illustrationImg.src = imageUrl;
+      illustrationImg.classList.remove('hidden');
+  }
+
+  function startConversation() {
+      currentTurnIndex = 0;
+      restoreConversation();
+      addBackToLandingButton();
       advanceTurn();
   }
 
@@ -464,6 +588,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (currentTurnIndex >= lessonPlan.dialogue.length) {
           micStatus.textContent = translateText('lessonComplete');
           micBtn.disabled = true;
+          // Clear state when lesson is complete
+          clearState();
           return;
       }
 
@@ -473,6 +599,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
       currentLineEl.classList.add('active');
       currentLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      // Save state after turn advance
+      saveState();
 
       if (currentTurnData.party === 'A') { // User's turn
           micBtn.disabled = true;
@@ -573,6 +702,8 @@ document.addEventListener('DOMContentLoaded', () => {
           currentLineEl.style.borderColor = '#4ade80'; // green-400
           micBtn.disabled = true; // Disable mic while transitioning
           currentTurnIndex++;
+          // Save state after user successfully completes a turn
+          saveState();
           setTimeout(() => {
               advanceTurn();
           }, 1500);
@@ -664,6 +795,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
           if (result.imageUrl) {
               console.log('Generated image with seed:', result.seed);
+              
+              // Save image URL to lesson plan for state persistence
+              if (lessonPlan) {
+                  lessonPlan.illustration_url = result.imageUrl;
+                  saveState();
+              }
+              
               illustrationImg.src = result.imageUrl;
               illustrationImg.onload = () => {
                   imageLoader.classList.add('hidden');
@@ -843,8 +981,53 @@ Now, please generate the JSON for the ${language} lesson about "${topic}".`;
       }
   };
 
+  // Debounce utility
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  // Add back to landing button functionality
+  function addBackToLandingButton() {
+    // Check if button already exists
+    if (document.getElementById('back-to-landing-btn')) return;
+    
+    const backBtn = document.createElement('button');
+    backBtn.id = 'back-to-landing-btn';
+    backBtn.className = 'absolute top-4 left-4 bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-colors text-sm';
+    backBtn.innerHTML = '<i class="fas fa-arrow-left mr-2"></i>Back';
+    backBtn.onclick = () => {
+      // Clear lesson state and return to landing
+      clearState();
+      lessonPlan = null;
+      currentTurnIndex = 0;
+      landingScreen.classList.remove('hidden');
+      lessonScreen.classList.add('hidden');
+      startTopicRotations();
+    };
+    
+    lessonScreen.appendChild(backBtn);
+  }
+
   // Initialize everything
   initializeNativeLanguage();
   updateTranslations(); // Initial translation update
-  startTopicRotations();
+  
+  // Load saved state
+  const savedState = loadState();
+  if (savedState) {
+    restoreState(savedState);
+    if (savedState.currentScreen === 'lesson') {
+      addBackToLandingButton();
+    }
+  } else {
+    startTopicRotations();
+  }
 });
