@@ -189,16 +189,16 @@ const translations = {
         "Fiesta en un bar clandestino de los años 20", "Medicina en el campo de batalla de la Guerra Civil", "Encargo de arte del Renacimiento", "Exploración de una tumba del Antiguo Egipto"
       ],
       drama: [
-        "Family confrontation over inheritance", "Workplace betrayal by best friend", "Discovering partner's secret affair", "Terminal illness diagnosis conversation",
-        "Parent-child estrangement reconciliation", "Courtroom testimony in murder trial", "Breaking up long-term relationship", "Confronting childhood bully as adult"
+        "Confrontación familiar por herencia", "Traición laboral del mejor amigo", "Descubrir aventura secreta de la pareja", "Conversación sobre diagnóstico terminal",
+        "Reconciliación padre-hijo después de distanciamiento", "Testimonio en juicio por asesinato", "Terminar relación de larga duración", "Confrontar al acosador de la infancia siendo adulto"
       ],
       comedy: [
-        "Disastrous cooking show contestant", "Awkward elevator stuck with ex", "Mistaken identity at costume party", "Terrible blind date at fancy restaurant",
-        "Stand-up comedian bombing on stage", "Wedding crasher gets caught", "Trying to return obviously used item", "Job interview going hilariously wrong"
+        "Concursante desastroso en programa de cocina", "Ascensor incómodo atascado con ex", "Identidad equivocada en fiesta de disfraces", "Cita a ciegas terrible en restaurante elegante",
+        "Comediante fracasando en el escenario", "Intruso en boda que es descubierto", "Intentar devolver artículo obviamente usado", "Entrevista de trabajo saliendo cómicamente mal"
       ],
       horror: [
-        "Exploring abandoned haunted mansion", "Trapped in elevator during power outage", "Camping trip with strange sounds", "Home alone during mysterious blackout",
-        "Lost in fog-covered forest at night", "Strange neighbor with dark secrets", "Old antique shop with cursed objects", "Night shift at creepy hospital"
+        "Explorando mansión abandonada embrujada", "Atrapado en ascensor durante apagón", "Viaje de camping con sonidos extraños", "Solo en casa durante apagón misterioso",
+        "Perdido en bosque cubierto de niebla por la noche", "Vecino extraño con secretos oscuros", "Tienda de antigüedades con objetos malditos", "Turno nocturno en hospital espeluznante"
       ]
     }
   },
@@ -284,15 +284,15 @@ const translations = {
       ],
       drama: [
         "Confrontation familiale pour héritage", "Trahison au travail par meilleur ami", "Découvrir l'aventure secrète du partenaire", "Conversation sur diagnostic terminal",
-        "Réconciliation entre parent et enfant", "Témoignage au procès pour meurtre", "Rompre relation à long terme", "Confronter intimidateur d'enfance"
+        "Réconciliation parent-enfant après éloignement", "Témoignage au tribunal pour meurtre", "Rompre relation à long terme", "Confronter intimidateur d'enfance adulte"
       ],
       comedy: [
-        "Candidat désastreux à émission culinaire", "Ascenseur coincé avec ex", "Erreur d'identité à fête costumée", "Rendez-vous aveugle terrible au restaurant chic",
-        "Comédien qui échoue sur scène", "Intrus à mariage qui se fait prendre", "Essayer de retourner article utilisé", "Entrevue d'emploi qui tourne mal"
+        "Candidat désastreux à émission culinaire", "Ascenseur gênant coincé avec ex", "Erreur d'identité à fête costumée", "Rendez-vous aveugle terrible au restaurant chic",
+        "Comédien qui échoue sur scène", "Intrus à mariage qui se fait prendre", "Essayer de retourner article visiblement utilisé", "Entrevue d'emploi qui tourne hilarant mal"
       ],
       horror: [
         "Explorer manoir abandonné hanté", "Coincé dans ascenseur pendant panne", "Voyage camping avec bruits étranges", "Seul à la maison pendant panne mystérieuse",
-        "Perdu dans forêt couverte de brouillard", "Voisin étrange avec secrets sombres", "Magasin d'antiquités avec objets maudits", "Quart de nuit à hôpital effrayant"
+        "Perdu dans forêt couverte de brouillard la nuit", "Voisin étrange avec secrets sombres", "Magasin d'antiquités avec objets maudits", "Quart de nuit à hôpital effrayant"
       ]
     }
   },
@@ -377,16 +377,16 @@ const translations = {
         "Party in einer Flüsterkneipe der 1920er Jahre", "Medizin auf dem Schlachtfeld des Bürgerkriegs", "Kunstauftrag in der Renaissance", "Erkundung eines altägyptischen Grabes"
       ],
       drama: [
-        "Family confrontation over inheritance", "Workplace betrayal by best friend", "Discovering partner's secret affair", "Terminal illness diagnosis conversation",
-        "Parent-child estrangement reconciliation", "Courtroom testimony in murder trial", "Breaking up long-term relationship", "Confronting childhood bully as adult"
+        "Familiäre Konfrontation wegen Erbschaft", "Arbeitsplatzverrat durch besten Freund", "Geheime Affäre des Partners entdecken", "Gespräch über terminale Diagnose",
+        "Eltern-Kind-Versöhnung nach Entfremdung", "Gerichtssaal-Zeugnis im Mordprozess", "Beendigung langfristiger Beziehung", "Kindheitsmobber als Erwachsener konfrontieren"
       ],
       comedy: [
-        "Disastrous cooking show contestant", "Awkward elevator stuck with ex", "Mistaken identity at costume party", "Terrible blind date at fancy restaurant",
-        "Stand-up comedian bombing on stage", "Wedding crasher gets caught", "Trying to return obviously used item", "Job interview going hilariously wrong"
+        "Katastrophaler Kochshow-Teilnehmer", "Peinlicher Aufzug mit Ex steckengeblieben", "Verwechslung auf Kostümparty", "Schreckliches Blind Date im schicken Restaurant",
+        "Stand-up-Comedian versagt auf der Bühne", "Hochzeitscrashser wird erwischt", "Offensichtlich benutzten Artikel zurückgeben", "Vorstellungsgespräch läuft urkomisch schief"
       ],
       horror: [
-        "Exploring abandoned haunted mansion", "Trapped in elevator during power outage", "Camping trip with strange sounds", "Home alone during mysterious blackout",
-        "Lost in fog-covered forest at night", "Strange neighbor with dark secrets", "Old antique shop with cursed objects", "Night shift at creepy hospital"
+        "Verlassenes Spukschloss erkunden", "Im Aufzug während Stromausfall gefangen", "Campingausflug mit seltsamen Geräuschen", "Allein zu Hause während mysteriösem Blackout",
+        "In nebliger Waldnacht verloren", "Seltsamer Nachbar mit dunklen Geheimnissen", "Alter Antiquitätenladen mit verfluchten Objekten", "Nachtschicht im gruseligen Krankenhaus"
       ]
     }
   },
@@ -753,16 +753,16 @@ const translations = {
         "1920년대 밀주점 파티", "남북전쟁 당시의 야전 의료", "르네상스 미술 작품 의뢰", "고대 이집트 무덤 탐험"
       ],
       drama: [
-        "Family confrontation over inheritance", "Workplace betrayal by best friend", "Discovering partner's secret affair", "Terminal illness diagnosis conversation",
-        "Parent-child estrangement reconciliation", "Courtroom testimony in murder trial", "Breaking up long-term relationship", "Confronting childhood bully as adult"
+        "유산을 둘러싼 가족 갈등", "절친의 직장 배신", "파트너의 비밀 불륜 발견", "말기 진단 대화",
+        "부모-자식 소원함 후 화해", "살인 재판 증언", "장기 관계 끝내기", "어른이 되어 어린 시절 괴롭힘당한 사람과 마주하기"
       ],
       comedy: [
-        "Disastrous cooking show contestant", "Awkward elevator stuck with ex", "Mistaken identity at costume party", "Terrible blind date at fancy restaurant",
-        "Stand-up comedian bombing on stage", "Wedding crasher gets caught", "Trying to return obviously used item", "Job interview going hilariously wrong"
+        "재앙적인 요리 프로그램 참가자", "전 연인과 엘리베이터에 갇힌 어색함", "가장 파티에서 신원 착각", "고급 레스토랑에서 끔찍한 소개팅",
+        "무대에서 실패하는 스탠드업 코미디언", "결혼식 무단침입자가 잡힘", "명백히 사용한 물건 반품 시도", "우스꽝스럽게 잘못된 면접"
       ],
       horror: [
-        "Exploring abandoned haunted mansion", "Trapped in elevator during power outage", "Camping trip with strange sounds", "Home alone during mysterious blackout",
-        "Lost in fog-covered forest at night", "Strange neighbor with dark secrets", "Old antique shop with cursed objects", "Night shift at creepy hospital"
+        "버려진 유령 저택 탐험", "정전 중 엘리베이터에 갇힘", "이상한 소리가 나는 캠핑 여행", "신비한 정전 중 혼자 집에",
+        "밤에 안개 낀 숲에서 길 잃음", "어두운 비밀을 가진 이상한 이웃", "저주받은 물건이 있는 오래된 골동품점", "소름끼치는 병원에서 야간 근무"
       ]
     }
   }
