@@ -1300,12 +1300,54 @@ document.addEventListener('DOMContentLoaded', () => {
           ? "For the user's lines (party A), do not include translations since this is English practice."
           : `For the user's lines (party A), also include the English translation in parentheses. Example: "Bonjour (Hello)".`;
       
+      // Special Japanese script instructions based on difficulty level
+      let japaneseScriptInstruction = '';
+      if (language === 'Japanese') {
+          // Determine difficulty level based on topic
+          const topicPools = getTopicPools();
+          const beginnerTopics = topicPools.beginner || [];
+          const intermediateTopics = topicPools.intermediate || [];
+          
+          const isBeginnerTopic = beginnerTopics.some(t => t.toLowerCase().includes(topic.toLowerCase()) || topic.toLowerCase().includes(t.toLowerCase()));
+          const isIntermediateTopic = intermediateTopics.some(t => t.toLowerCase().includes(topic.toLowerCase()) || topic.toLowerCase().includes(t.toLowerCase()));
+          
+          if (isBeginnerTopic) {
+              japaneseScriptInstruction = `
+IMPORTANT JAPANESE SCRIPT REQUIREMENTS:
+- Write ALL Japanese dialogue using HIRAGANA and KATAKANA only (no kanji, no romaji)
+- Use hiragana for native Japanese words
+- Use katakana for foreign loanwords
+- Example: "こんにちは。コーヒーをください。" NOT "Konnichiwa. Koohii wo kudasai."
+- This is a beginner lesson, so keep it simple with kana only.`;
+          } else if (isIntermediateTopic) {
+              japaneseScriptInstruction = `
+IMPORTANT JAPANESE SCRIPT REQUIREMENTS:
+- Write Japanese dialogue using appropriate mix of HIRAGANA, KATAKANA, and BASIC KANJI
+- Use common kanji for intermediate level (numbers, days, basic verbs/nouns)
+- Use hiragana for grammatical particles and verb endings
+- Use katakana for foreign loanwords
+- Example: "今日はコーヒーを飲みます。" NOT "Kyou wa koohii wo nomimasu."
+- NO ROMAJI - only use Japanese scripts.`;
+          } else {
+              // Advanced
+              japaneseScriptInstruction = `
+IMPORTANT JAPANESE SCRIPT REQUIREMENTS:
+- Write Japanese dialogue using full HIRAGANA, KATAKANA, and KANJI as appropriate for advanced level
+- Use complex kanji, compound words, and formal expressions
+- Use hiragana for grammatical particles and okurigana
+- Use katakana for foreign loanwords and emphasis
+- Example: "申し訳ございませんが、今日は営業時間外です。" NOT romaji
+- NO ROMAJI - only use Japanese scripts with proper kanji usage.`;
+          }
+      }
+      
       return `
 You are a language tutor creating a lesson for a web application named "RoleLang".
 Your task is to generate a complete, structured lesson plan in JSON format. Do not include any explanatory text outside of the JSON structure itself.
 
 The user wants to ${isEnglish ? 'practice' : 'learn'} ${language}.
 The roleplaying scenario is: "${topic}".
+${japaneseScriptInstruction}
 
 Please generate a JSON object with the following structure:
 1.  "scenario": A brief, one-sentence description of the lesson's context.
@@ -1315,7 +1357,7 @@ Please generate a JSON object with the following structure:
   - The conversation must involve at least two parties, 'A' (the user) and 'B' (the partner).
   - Each object in the array must have two properties:
       - "party": "A" or "B"
-      - "line": The line of dialogue in the target language (${language}). ${translationInstruction}
+      - "line": The line of dialogue in the target language (${language}). ${language === 'Japanese' ? 'MUST use proper Japanese scripts (hiragana/katakana/kanji) - NO ROMAJI.' : ''} ${translationInstruction}
       - "explanation" (optional): An object with "title" and "body" properties. Include this ONLY when a specific grammar rule, vocabulary word, or cultural note in that line is important to explain. The title should be the concept (e.g., "Gender of Nouns"), and the body should be a concise, simple explanation (1-2 sentences).
 
 Example of required JSON output format:
