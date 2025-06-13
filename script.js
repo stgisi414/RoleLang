@@ -946,10 +946,23 @@ document.addEventListener('DOMContentLoaded', () => {
           requiredText = lessonPlan.dialogue[currentTurnIndex].line.split('(')[0]; // Ignore translation
       }
       
+      // Function to convert Japanese text to hiragana
+      const toHiragana = (text) => {
+          return text.replace(/[\u30A1-\u30FA]/g, (char) => {
+              // Convert katakana to hiragana
+              return String.fromCharCode(char.charCodeAt(0) - 0x60);
+          }).replace(/[\u4E00-\u9FAF]/g, (char) => {
+              // For kanji, we'll keep them as-is since perfect conversion requires a dictionary
+              // In practice, speech recognition usually returns hiragana/katakana
+              return char;
+          });
+      };
+
       // Enhanced normalization function
       const normalize = (text) => {
-          return text.trim().toLowerCase()
-              .replace(/[.,!?;:"'`´''""]/g, '') // Remove punctuation
+          const currentLanguage = languageSelect.value;
+          let normalized = text.trim().toLowerCase()
+              .replace(/[.,!?;:"'`´''""。！？]/g, '') // Remove punctuation including Japanese
               .replace(/\s+/g, ' ') // Normalize whitespace
               .replace(/[àáâãäå]/g, 'a')
               .replace(/[èéêë]/g, 'e')
@@ -958,6 +971,13 @@ document.addEventListener('DOMContentLoaded', () => {
               .replace(/[ùúûü]/g, 'u')
               .replace(/[ñ]/g, 'n')
               .replace(/[ç]/g, 'c');
+          
+          // Convert to hiragana for Japanese
+          if (currentLanguage === 'Japanese') {
+              normalized = toHiragana(normalized);
+          }
+          
+          return normalized;
       };
 
       const normalizedSpoken = normalize(spokenText);
