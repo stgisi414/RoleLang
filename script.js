@@ -740,15 +740,10 @@ document.addEventListener('DOMContentLoaded', () => {
           // For user lines (A), split into sentences and wrap each in a span
           if (turn.party === 'A') {
               const currentLanguage = languageSelect.value;
-              let textToSplit;
-
-              if (currentLanguage === 'Japanese' && turn.hiragana_line) {
-                  textToSplit = turn.hiragana_line;
-              } else {
-                  textToSplit = removeParentheses(turn.line);
-              }
-
-              const sentences = splitIntoSentences(textToSplit);
+              
+              // Always use the original line for display, regardless of language
+              const displayText = removeParentheses(turn.line);
+              const sentences = splitIntoSentences(displayText);
 
               if (sentences.length > 1) {
                   // Multiple sentences - wrap each in a span with ID
@@ -767,7 +762,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   }
               } else {
                   // Single sentence
-                  lineContent += `<span class="sentence-span" id="turn-${index}-sentence-0">${turn.line}</span>`;
+                  lineContent += `<span class="sentence-span" id="turn-${index}-sentence-0">${displayText}</span>`;
               }
           } else {
               // Partner lines (B) - no sentence splitting needed
@@ -1011,16 +1006,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (currentTurnData.party === 'A') { // User's turn
           // Split the line into sentences for sentence-by-sentence recording
           const currentLanguage = languageSelect.value;
-          let cleanText;
-
-          if (currentLanguage === 'Japanese' && currentTurnData.hiragana_line) {
-              // Use pre-converted hiragana text for Japanese
-              cleanText = currentTurnData.hiragana_line;
-          } else {
-              // Use original text for other languages
-              cleanText = removeParentheses(currentTurnData.line);
-          }
-
+          
+          // Always use original text for display and sentence splitting
+          const cleanText = removeParentheses(currentTurnData.line);
           currentSentences = splitIntoSentences(cleanText);
           currentSentenceIndex = 0;
 
@@ -1159,7 +1147,9 @@ document.addEventListener('DOMContentLoaded', () => {
               currentSentenceEl.classList.add('active-sentence');
           }
 
-          micStatus.innerHTML = `<strong>${translateText('recordSentence')} ${currentSentenceIndex + 1}/${currentSentences.length}:</strong><br><span style="color: #38bdf8; font-weight: bold; text-decoration: underline;">"${currentSentences[currentSentenceIndex]}"</span>`;
+          // Show the sentence as it appears in the UI (original text)
+          const displaySentence = currentSentenceEl ? currentSentenceEl.textContent : currentSentences[currentSentenceIndex];
+          micStatus.innerHTML = `<strong>${translateText('recordSentence')} ${currentSentenceIndex + 1}/${currentSentences.length}:</strong><br><span style="color: #38bdf8; font-weight: bold; text-decoration: underline;">"${displaySentence}"</span>`;
       } else {
           // Single sentence - highlight the entire sentence
           const singleSentenceEl = document.getElementById(`turn-${currentTurnIndex}-sentence-0`);
