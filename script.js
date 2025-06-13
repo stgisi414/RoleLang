@@ -1153,13 +1153,22 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- Japanese-Specific Verification using AI ---
             if (currentLanguage === 'Japanese') {
                 micStatus.textContent = 'Verifying with AI...';
-                const expectedLine = removeParentheses(currentTurnData.line.display);
+
+                // *** THIS IS THE FIX: Determine the correct single sentence to verify. ***
+                let expectedLine;
+                if (currentSentences.length > 1) {
+                    // If we are in a multi-sentence turn, use the specific sentence at the current index.
+                    expectedLine = currentSentences[currentSentenceIndex];
+                } else {
+                    // Otherwise, it's a single-sentence turn, so use the whole line.
+                    expectedLine = removeParentheses(currentTurnData.line.display);
+                }
+                // *** END OF FIX ***
 
                 console.log(`Verifying Japanese speech with AI method...`);
-                console.log(`Expected line: ${expectedLine}`);
+                console.log(`Expected sentence: ${expectedLine}`); // Now logs the single sentence
                 console.log(`Spoken text: ${spokenText}`);
 
-                // This is the updated prompt with the new rule to ignore punctuation.
                 const verificationPrompt = `
     You are a Japanese language evaluation tool. Your task is to determine if a student's spoken text is a correct phonetic match for a given sentence.
 
@@ -1226,8 +1235,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // --- Logic for all other languages ---
                 let requiredText;
                 if (currentSentences.length > 1) {
-                    const lineSentences = splitIntoSentences(removeParentheses(currentTurnData.line.display));
-                    requiredText = lineSentences[currentSentenceIndex] || '';
+                    requiredText = currentSentences[currentSentenceIndex] || '';
                 } else {
                     requiredText = removeParentheses(currentTurnData.line.display);
                 }
@@ -1236,7 +1244,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const normalizedSpoken = normalize(spokenText);
                 const normalizedRequired = normalize(requiredText);
 
-                // Helper function for calculating similarity
                 function levenshteinDistance(str1, str2) {
                     const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null));
                     for (let i = 0; i <= str1.length; i++) { matrix[0][i] = i; }
@@ -1263,7 +1270,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Critical error in verifyUserSpeech:", error);
             micStatus.textContent = 'A critical error occurred. Please reset the lesson.';
-            micBtn.disabled = true; // Disable mic to prevent further errors
+            micBtn.disabled = true;
         }
     }
 
