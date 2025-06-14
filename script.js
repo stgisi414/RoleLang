@@ -494,7 +494,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         hour: '2-digit',
                         minute: '2-digit'
                     }),
-                    lessonPlan: lessonPlan
+                    lessonPlan: lessonPlan,
+                    languageTopicKey: `${selectedLanguage}-${originalTopic}` // Add unique key for language+topic combination
                 };
                 history.unshift(newLessonRecord);
             }
@@ -553,6 +554,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       `;
 
             lessonCard.addEventListener('click', () => {
+                // Validate that we're not mixing languages inappropriately
+                const currentSelectedLanguage = languageSelect.value;
+                if (lesson.language !== currentSelectedLanguage) {
+                    // Switch to the lesson's language before reviewing
+                    languageSelect.value = lesson.language;
+                    // Update speech recognition language
+                    if (recognition) {
+                        const langKey = languageSelect.options[languageSelect.selectedIndex].getAttribute('data-translate');
+                        recognition.lang = getLangCode(langKey);
+                    }
+                }
                 reviewLesson(lesson);
             });
 
@@ -569,7 +581,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         lessonPlan = lessonRecord.lessonPlan;
         // Backward compatibility for old records without an ID in the lessonPlan
         if (!lessonPlan.id) {
-            lessonPlan.id = lessonRecord.id || `lesson-${Date.now()}`;
+            lessonPlan.id = lessonRecord.id || `lesson-${lessonRecord.language}-${Date.now()}`;
         }
         currentTurnIndex = 0;
 
@@ -1319,7 +1331,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
             // Add a unique ID to the lesson plan itself if it doesn't have one
             if (!lessonPlan.id) {
-                lessonPlan.id = `lesson-${Date.now()}`;
+                lessonPlan.id = `lesson-${language}-${Date.now()}`;
             }
 
             // Set speech recognition language
