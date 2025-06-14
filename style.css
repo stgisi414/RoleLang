@@ -44,6 +44,20 @@ body {
     object-fit: cover;
 }
 
+/* Logo styling */
+.banner-logo {
+    height: 50px;
+    width: auto;
+    margin-right: 15px;
+    object-fit: contain;
+}
+
+/* Header logo specific styling */
+header img[alt="RoleLang Logo"] {
+    object-fit: cover;
+    border-radius: 50%;
+}
+
 /* Custom Scrollbar for the conversation container */
 #conversation-container::-webkit-scrollbar {
     width: 8px;
