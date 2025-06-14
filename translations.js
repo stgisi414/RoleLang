@@ -41,6 +41,7 @@ const translations = {
     youSaid: "You said:",
     imageUnavailable: "Image generation temporarily unavailable",
     roleplayScenario: "Roleplay Scenario",
+    resetLesson: "Reset",
     enterTopic: "Please enter a roleplay topic.",
     apiKeyError: 'Please replace "YOUR_GEMINI_API_KEY_HERE" in script.js with your actual Gemini API key.',
     errorLoading: "Error loading lesson. Please check the console for details. Error:",
