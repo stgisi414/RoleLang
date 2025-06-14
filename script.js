@@ -485,11 +485,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         startConversation();
 
-        // Add review indicator
+        // Add review indicator with vocabulary quiz button
         const reviewIndicator = document.createElement('div');
-        reviewIndicator.className = 'absolute top-16 left-4 bg-purple-600 text-white px-3 py-1 rounded-lg text-sm z-10';
-        reviewIndicator.innerHTML = '<i class="fas fa-history mr-2"></i>Review Mode';
+        reviewIndicator.className = 'absolute top-16 left-4 bg-purple-600 text-white px-3 py-1 rounded-lg text-sm z-10 flex items-center space-x-2';
+        reviewIndicator.innerHTML = `
+            <span><i class="fas fa-history mr-2"></i>Review Mode</span>
+            <button id="vocab-quiz-btn" class="bg-purple-700 hover:bg-purple-800 px-2 py-1 rounded text-xs transition-colors">
+                <i class="fas fa-brain mr-1"></i>Vocab Quiz
+            </button>
+        `;
         lessonScreen.appendChild(reviewIndicator);
+
+        // Add vocabulary quiz button event listener
+        document.getElementById('vocab-quiz-btn').addEventListener('click', () => {
+            startVocabularyQuiz(lessonRecord.language);
+        });
 
         // Save state for review session
         saveState();
@@ -757,6 +767,209 @@ document.addEventListener('DOMContentLoaded', () => {
     function stopTopicRotations() {
         topicRotationIntervals.forEach(interval => clearInterval(interval));
         topicRotationIntervals = [];
+    }
+
+    // --- Vocabulary Quiz Functions ---
+
+    function extractVocabularyFromDialogue() {
+        if (!lessonPlan || !lessonPlan.dialogue) return [];
+        
+        const vocabulary = [];
+        const seenWords = new Set();
+        
+        lessonPlan.dialogue.forEach(turn => {
+            if (turn.line && turn.line.display) {
+                const cleanText = removeParentheses(turn.line.display);
+                const translation = extractTranslation(turn.line.display);
+                
+                if (translation) {
+                    const word = cleanText.replace(/[.,!?;:"'`´''""。！？]/g, '').trim();
+                    const translationClean = translation.replace(/[()]/g, '').trim();
+                    
+                    if (word && translationClean && !seenWords.has(word.toLowerCase())) {
+                        vocabulary.push({
+                            word: word,
+                            translation: translationClean,
+                            context: turn.line.display
+                        });
+                        seenWords.add(word.toLowerCase());
+                    }
+                }
+            }
+        });
+        
+        return vocabulary.slice(0, 10); // Limit to 10 vocabulary items
+    }
+
+    function extractTranslation(text) {
+        const match = text.match(/\(([^)]+)\)/);
+        return match ? match[1] : null;
+    }
+
+    function startVocabularyQuiz(language) {
+        const vocabulary = extractVocabularyFromDialogue();
+        
+        if (vocabulary.length === 0) {
+            alert(translateText('noVocabularyFound') || 'No vocabulary with translations found in this lesson.');
+            return;
+        }
+
+        createVocabularyQuizModal(vocabulary, language);
+    }
+
+    function createVocabularyQuizModal(vocabulary, language) {
+        // Create quiz modal
+        const quizModal = document.createElement('div');
+        quizModal.id = 'vocab-quiz-modal';
+        quizModal.className = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4';
+        
+        const quizContent = document.createElement('div');
+        quizContent.className = 'bg-gray-800 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto glassmorphism';
+        
+        // Shuffle vocabulary and create quiz questions
+        const shuffledVocab = [...vocabulary].sort(() => 0.5 - Math.random());
+        let currentQuestion = 0;
+        let score = 0;
+        let isQuizCompleted = false;
+
+        function updateQuizContent() {
+            if (currentQuestion >= shuffledVocab.length) {
+                // Quiz completed
+                isQuizCompleted = true;
+                const percentage = Math.round((score / shuffledVocab.length) * 100);
+                quizContent.innerHTML = `
+                    <div class="text-center">
+                        <h3 class="text-2xl font-bold text-purple-300 mb-4">
+                            <i class="fas fa-trophy mr-2"></i>${translateText('quizComplete') || 'Quiz Complete!'}
+                        </h3>
+                        <div class="text-6xl mb-4">${percentage >= 80 ? '🎉' : percentage >= 60 ? '👏' : '📚'}</div>
+                        <p class="text-xl text-white mb-4">
+                            ${translateText('yourScore') || 'Your Score'}: ${score}/${shuffledVocab.length} (${percentage}%)
+                        </p>
+                        <p class="text-gray-300 mb-6">
+                            ${percentage >= 80 ? (translateText('excellentWork') || 'Excellent work!') : 
+                              percentage >= 60 ? (translateText('goodJob') || 'Good job!') : 
+                              (translateText('keepPracticing') || 'Keep practicing!')}
+                        </p>
+                        <div class="flex space-x-4 justify-center">
+                            <button id="retry-quiz-btn" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors">
+                                <i class="fas fa-redo mr-2"></i>${translateText('retryQuiz') || 'Retry Quiz'}
+                            </button>
+                            <button id="close-quiz-btn" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors">
+                                ${translateText('close') || 'Close'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('retry-quiz-btn').addEventListener('click', () => {
+                    currentQuestion = 0;
+                    score = 0;
+                    isQuizCompleted = false;
+                    updateQuizContent();
+                });
+                
+                document.getElementById('close-quiz-btn').addEventListener('click', () => {
+                    document.body.removeChild(quizModal);
+                });
+                return;
+            }
+
+            const currentVocab = shuffledVocab[currentQuestion];
+            const allTranslations = shuffledVocab.map(v => v.translation);
+            const wrongAnswers = allTranslations.filter(t => t !== currentVocab.translation)
+                .sort(() => 0.5 - Math.random()).slice(0, 3);
+            const allOptions = [currentVocab.translation, ...wrongAnswers]
+                .sort(() => 0.5 - Math.random());
+
+            quizContent.innerHTML = `
+                <div class="text-center mb-6">
+                    <h3 class="text-xl font-bold text-purple-300 mb-2">
+                        <i class="fas fa-brain mr-2"></i>${translateText('vocabularyQuiz') || 'Vocabulary Quiz'}
+                    </h3>
+                    <div class="text-sm text-gray-400">
+                        ${translateText('question') || 'Question'} ${currentQuestion + 1} ${translateText('of') || 'of'} ${shuffledVocab.length}
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2 mt-2">
+                        <div class="bg-purple-600 h-2 rounded-full transition-all duration-300" 
+                             style="width: ${((currentQuestion) / shuffledVocab.length) * 100}%"></div>
+                    </div>
+                </div>
+
+                <div class="text-center mb-6">
+                    <p class="text-gray-300 text-sm mb-2">${translateText('whatDoesThisMean') || 'What does this mean in English?'}</p>
+                    <div class="text-3xl font-bold text-white mb-2">${currentVocab.word}</div>
+                    <div class="text-sm text-gray-400 italic">"${currentVocab.context}"</div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-3 mb-6">
+                    ${allOptions.map((option, index) => `
+                        <button class="quiz-option w-full p-4 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors text-left" 
+                                data-answer="${option}">
+                            <span class="font-bold mr-3">${String.fromCharCode(65 + index)}.</span>${option}
+                        </button>
+                    `).join('')}
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <div class="text-sm text-gray-400">
+                        ${translateText('score') || 'Score'}: ${score}/${currentQuestion}
+                    </div>
+                    <button id="close-quiz-btn" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fas fa-times text-lg"></i>
+                    </button>
+                </div>
+            `;
+
+            // Add option click handlers
+            const options = quizContent.querySelectorAll('.quiz-option');
+            options.forEach(option => {
+                option.addEventListener('click', () => {
+                    const selectedAnswer = option.dataset.answer;
+                    const isCorrect = selectedAnswer === currentVocab.translation;
+                    
+                    // Disable all options
+                    options.forEach(opt => {
+                        opt.classList.remove('hover:bg-gray-600');
+                        opt.style.cursor = 'not-allowed';
+                        
+                        if (opt.dataset.answer === currentVocab.translation) {
+                            opt.classList.add('bg-green-600');
+                        } else if (opt === option && !isCorrect) {
+                            opt.classList.add('bg-red-600');
+                        } else {
+                            opt.classList.add('bg-gray-600');
+                        }
+                    });
+
+                    if (isCorrect) {
+                        score++;
+                    }
+
+                    // Move to next question after delay
+                    setTimeout(() => {
+                        currentQuestion++;
+                        updateQuizContent();
+                    }, 1500);
+                });
+            });
+
+            document.getElementById('close-quiz-btn').addEventListener('click', () => {
+                document.body.removeChild(quizModal);
+            });
+        }
+
+        quizModal.appendChild(quizContent);
+        document.body.appendChild(quizModal);
+        
+        updateQuizContent();
+
+        // Close modal when clicking outside
+        quizModal.addEventListener('click', (e) => {
+            if (e.target === quizModal) {
+                document.body.removeChild(quizModal);
+            }
+        });
     }
 
     // --- Core Functions ---
