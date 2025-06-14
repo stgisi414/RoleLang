@@ -344,12 +344,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Event Listeners ---
     startLessonBtn.addEventListener('click', initializeLesson);
     micBtn.addEventListener('click', toggleSpeechRecognition);
-    toggleLessonsBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('Toggle lessons button clicked');
-        toggleLessonsVisibility();
-    });
+    
+    // Ensure toggle buttons exist and add event listeners
+    if (toggleLessonsBtn) {
+        toggleLessonsBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Toggle lessons button clicked');
+            toggleLessonsVisibility();
+        });
+    }
     
     const toggleHistoryBtn = document.getElementById('toggle-history-btn');
     if (toggleHistoryBtn) {
@@ -705,8 +709,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Toggle Functions ---
 
     function toggleLessonsVisibility() {
-        if (!lessonsContainer || !toggleLessonsBtn) {
-            console.error('Lessons container or toggle button not found');
+        console.log('toggleLessonsVisibility called');
+        console.log('lessonsContainer:', lessonsContainer ? 'exists' : 'null');
+        console.log('toggleLessonsBtn:', toggleLessonsBtn ? 'exists' : 'null');
+        
+        if (!lessonsContainer) {
+            console.error('Lessons container not found');
+            return;
+        }
+        
+        if (!toggleLessonsBtn) {
+            console.error('Toggle lessons button not found');
             return;
         }
         
@@ -714,9 +727,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const chevronIcon = toggleLessonsBtn.querySelector('i');
 
         console.log('Toggling lessons visibility. Currently hidden:', isHidden);
+        console.log('Chevron icon found:', chevronIcon ? 'yes' : 'no');
 
         if (isHidden) {
             lessonsContainer.classList.remove('hidden');
+            lessonsContainer.style.display = 'block';
             if (chevronIcon) {
                 chevronIcon.style.transform = 'rotate(180deg)';
                 chevronIcon.style.transition = 'transform 0.3s ease';
@@ -728,6 +743,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Lessons container shown');
         } else {
             lessonsContainer.classList.add('hidden');
+            lessonsContainer.style.display = 'none';
             if (chevronIcon) {
                 chevronIcon.style.transform = 'rotate(0deg)';
                 chevronIcon.style.transition = 'transform 0.3s ease';
@@ -742,11 +758,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function toggleHistoryVisibility() {
+        console.log('toggleHistoryVisibility called');
+        
         const historyContainer = document.getElementById('history-container');
         const toggleHistoryBtn = document.getElementById('toggle-history-btn');
         
-        if (!historyContainer || !toggleHistoryBtn) {
-            console.error('History container or toggle button not found');
+        console.log('historyContainer:', historyContainer ? 'exists' : 'null');
+        console.log('toggleHistoryBtn:', toggleHistoryBtn ? 'exists' : 'null');
+        
+        if (!historyContainer) {
+            console.error('History container not found');
+            return;
+        }
+        
+        if (!toggleHistoryBtn) {
+            console.error('Toggle history button not found');
             return;
         }
         
@@ -754,9 +780,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const chevronIcon = toggleHistoryBtn.querySelector('i');
 
         console.log('Toggling history visibility. Currently hidden:', isHidden);
+        console.log('Chevron icon found:', chevronIcon ? 'yes' : 'no');
 
         if (isHidden) {
             historyContainer.classList.remove('hidden');
+            historyContainer.style.display = 'block';
             if (chevronIcon) {
                 chevronIcon.style.transform = 'rotate(180deg)';
                 chevronIcon.style.transition = 'transform 0.3s ease';
@@ -765,6 +793,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('History container shown');
         } else {
             historyContainer.classList.add('hidden');
+            historyContainer.style.display = 'none';
             if (chevronIcon) {
                 chevronIcon.style.transform = 'rotate(0deg)';
                 chevronIcon.style.transition = 'transform 0.3s ease';
@@ -2679,9 +2708,23 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     
     // Double-check that buttons are working
     setTimeout(() => {
+        console.log('=== TOGGLE BUTTON DEBUG ===');
         console.log('Toggle lessons button:', toggleLessonsBtn ? 'found' : 'not found');
         console.log('Toggle history button:', document.getElementById('toggle-history-btn') ? 'found' : 'not found');
         console.log('Lessons container:', lessonsContainer ? 'found' : 'not found');
         console.log('History container:', document.getElementById('history-container') ? 'found' : 'not found');
+        
+        // Test click handlers
+        if (toggleLessonsBtn) {
+            console.log('Testing lessons toggle click...');
+            // toggleLessonsBtn.click(); // Uncomment to test auto-click
+        }
+        
+        const histBtn = document.getElementById('toggle-history-btn');
+        if (histBtn) {
+            console.log('Testing history toggle click...');
+            // histBtn.click(); // Uncomment to test auto-click
+        }
+        console.log('=== END DEBUG ===');
     }, 100);
 });
