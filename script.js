@@ -1486,18 +1486,12 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
                 // Track quotation marks - handle different opening and closing quote types
                 if (!inQuotes) {
-                    if (char === '"') {
+                    if (char === '"' || char === '"') {
                         inQuotes = true;
-                        quoteChar = '"';
-                    } else if (char === '"') {
+                        quoteChar = '"'; // Both open and close with curly close quote
+                    } else if (char === "'" || char === "'") {
                         inQuotes = true;
-                        quoteChar = '"';
-                    } else if (char === "'") {
-                        inQuotes = true;
-                        quoteChar = "'";
-                    } else if (char === "'") {
-                        inQuotes = true;
-                        quoteChar = "'";
+                        quoteChar = "'"; // Both open and close with curly close quote
                     } else if (char === '「') {
                         inQuotes = true;
                         quoteChar = '」';
@@ -1505,9 +1499,14 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                         inQuotes = true;
                         quoteChar = '』';
                     }
-                } else if (inQuotes && char === quoteChar) {
-                    inQuotes = false;
-                    quoteChar = '';
+                } else if (inQuotes) {
+                    // Check for closing quotes
+                    if ((quoteChar === '"' && (char === '"' || char === '"')) ||
+                        (quoteChar === "'" && (char === "'" || char === "'")) ||
+                        (char === quoteChar)) {
+                        inQuotes = false;
+                        quoteChar = '';
+                    }
                 }
 
                 // Check for sentence endings
