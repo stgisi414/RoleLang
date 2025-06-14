@@ -21,6 +21,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalBody = document.getElementById('modal-body');
     const closeModalBtn = document.getElementById('close-modal-btn');
 
+    // Tutorial modal elements
+    const tutorialBtn = document.getElementById('tutorial-btn');
+    const tutorialModal = document.getElementById('tutorial-modal');
+    const closeTutorialBtn = document.getElementById('close-tutorial-btn');
+    const startTutorialLessonBtn = document.getElementById('start-tutorial-lesson-btn');
+
     // Native language dropdown elements
     const nativeLangBtn = document.getElementById('native-lang-btn');
     const nativeLangDropdown = document.getElementById('native-lang-dropdown');
@@ -351,6 +357,29 @@ document.addEventListener('DOMContentLoaded', () => {
         // Close modal if clicking on the backdrop
         if (event.target === modal) {
             modal.classList.add('hidden');
+        }
+    });
+
+    // Tutorial modal event listeners
+    tutorialBtn.addEventListener('click', () => {
+        tutorialModal.classList.remove('hidden');
+        updateTranslations(); // Ensure tutorial content is translated
+    });
+
+    closeTutorialBtn.addEventListener('click', () => {
+        tutorialModal.classList.add('hidden');
+    });
+
+    startTutorialLessonBtn.addEventListener('click', () => {
+        tutorialModal.classList.add('hidden');
+        // Set a beginner-friendly example
+        topicInput.value = translateText('beginnerExample') || 'Introducing yourself at a coffee shop';
+    });
+
+    tutorialModal.addEventListener('click', (event) => {
+        // Close modal if clicking on the backdrop
+        if (event.target === tutorialModal) {
+            tutorialModal.classList.add('hidden');
         }
     });
 
