@@ -1,7 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Import stop word functions
-    if (typeof getStopWords === 'undefined' || typeof isStopWord === 'undefined') {
-        console.warn('Stop words not loaded. Stop word grouping may not work properly.');
+    // Import stop word functions with fallback
+    function safeIsStopWord(word, language) {
+        if (typeof isStopWord !== 'undefined') {
+            return isStopWord(word, language);
+        }
+        console.warn('Stop word function not available, returning false');
+        return false;
+    }
+    
+    function safeGetStopWords(language) {
+        if (typeof getStopWords !== 'undefined') {
+            return getStopWords(language);
+        }
+        console.warn('Stop word function not available, returning empty array');
+        return [];
     }
 
     // --- DOM Elements ---
@@ -1503,7 +1515,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                 let currentSentence = sentences[i];
                 
                 // Check if current sentence is a stop word
-                if (isStopWord(currentSentence, language)) {
+                if (safeIsStopWord(currentSentence, language)) {
                     // Group with next sentence if available
                     if (i + 1 < sentences.length) {
                         currentSentence = currentSentence + ' ' + sentences[i + 1];
@@ -1968,7 +1980,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                 }
 
                 // For stop word verification, be more lenient with matching
-                const isStopWordSentence = expectedLine.split(' ').some(word => isStopWord(word, currentLanguage));
+                const isStopWordSentence = expectedLine.split(' ').some(word => safeIsStopWord(word, currentLanguage));
                 if (isStopWordSentence) {
                     console.log('Expected sentence contains stop words, using more lenient verification');
                 }
