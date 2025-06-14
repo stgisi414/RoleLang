@@ -185,6 +185,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Ensure the lesson is marked as completed
                 lessonPlan.isCompleted = true;
                 showReviewModeUI(state.selectedLanguage);
+                // Don't call advanceTurn() for completed lessons
             } else {
                 // Clear any incorrect completion flag and resume from current turn
                 lessonPlan.isCompleted = false;
@@ -1481,7 +1482,16 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
         currentTurnIndex = 0;
         restoreConversation();
         addBackToLandingButton();
-        advanceTurn();
+        
+        // For new lessons, ensure we start at the beginning properly
+        if (!lessonPlan.isCompleted) {
+            // Reset any previous state
+            micBtn.disabled = false;
+            micStatus.textContent = translateText('micStatus');
+            
+            // Start the first turn
+            advanceTurn();
+        }
     }
 
     // Global audio state management
