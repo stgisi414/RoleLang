@@ -148,6 +148,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             lessonPlan = state.lessonPlan;
             currentTurnIndex = state.currentTurnIndex;
 
+            // Validate lesson plan structure
+            if (!lessonPlan.dialogue || !Array.isArray(lessonPlan.dialogue) || lessonPlan.dialogue.length === 0) {
+                console.warn('Invalid lesson plan detected in saved state, clearing state');
+                clearState();
+                return;
+            }
+
             // Set speech recognition language
             if (recognition) {
                 const langKey = languageSelect.options[languageSelect.selectedIndex].getAttribute('data-translate');
@@ -168,14 +175,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 fetchAndDisplayIllustration(lessonPlan.illustration_prompt);
             }
 
-            // Check if lesson was completed
-            if (lessonPlan.isCompleted || currentTurnIndex >= lessonPlan.dialogue.length) {
-                // Lesson is completed, show review mode
+            // Only check for completion based on actual progress, not stored completion flag
+            const isActuallyCompleted = currentTurnIndex >= lessonPlan.dialogue.length;
+            
+            if (isActuallyCompleted) {
+                // Lesson is actually completed, show review mode
                 micStatus.textContent = translateText('lessonComplete');
                 micBtn.disabled = true;
+                // Ensure the lesson is marked as completed
+                lessonPlan.isCompleted = true;
                 showReviewModeUI(state.selectedLanguage);
             } else {
-                // Resume from current turn
+                // Clear any incorrect completion flag and resume from current turn
+                lessonPlan.isCompleted = false;
                 advanceTurn();
             }
 
@@ -519,9 +531,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     function getLessonHistory() {
         try {
             const history = localStorage.getItem(LESSON_HISTORY_KEY);
-            return history ? JSON.parse(history) : [];
+            if (!history) return [];
+            
+            const parsedHistory = JSON.parse(history);
+            
+            // Filter out invalid lesson records (legacy data)
+            const validHistory = parsedHistory.filter(record => {
+                return record && 
+                       record.lessonPlan &&
+                       record.lessonPlan.dialogue &&
+                       Array.isArray(record.lessonPlan.dialogue) &&
+                       record.lessonPlan.dialogue.length > 0 &&
+                       record.language &&
+                       record.topic;
+            });
+            
+            // Save cleaned history back to localStorage if it was filtered
+            if (validHistory.length !== parsedHistory.length) {
+                localStorage.setItem(LESSON_HISTORY_KEY, JSON.stringify(validHistory));
+                console.log(`Cleaned lesson history: removed ${parsedHistory.length - validHistory.length} invalid entries`);
+            }
+            
+            return validHistory;
         } catch (error) {
             console.warn('Failed to load lesson history:', error);
+            // Clear corrupted history
+            localStorage.removeItem(LESSON_HISTORY_KEY);
             return [];
         }
     }
@@ -1571,7 +1606,18 @@ Now, provide the JSON array for the given text.
     }
 
     async function advanceTurn() {
-        if (currentTurnIndex >= lessonPlan.dialogue.length) {
+        // Validate lesson plan structure before checking completion
+        if (!lessonPlan || !lessonPlan.dialogue || !Array.isArray(lessonPlan.dialogue)) {
+            console.error('Invalid lesson plan structure detected');
+            micStatus.textContent = 'Lesson data error. Please start a new lesson.';
+            micBtn.disabled = true;
+            return;
+        }
+
+        // Check if lesson is actually completed (not just marked as completed)
+        const isActuallyCompleted = currentTurnIndex >= lessonPlan.dialogue.length;
+        
+        if (isActuallyCompleted) {
             micStatus.textContent = translateText('lessonComplete');
             micBtn.disabled = true;
 
