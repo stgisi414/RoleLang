@@ -1404,7 +1404,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
             // Add debounced click listener for audio playback
             lineDiv.addEventListener('click', (e) => {
-                playLineAudioDebounced(turn.line.display);
+                playLineAudioDebounced(turn.line.display, turn.party);
             });
 
             // Add click listener for explanations
@@ -1442,10 +1442,10 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     let audioDebounceTimer = null;
     let isAudioPlaying = false;
 
-    async function playLineAudio(text) {
+    async function playLineAudio(text, party = 'B') {
         try {
             const cleanText = removeParentheses(text);
-            const audioBlob = await fetchPartnerAudio(cleanText);
+            const audioBlob = await fetchPartnerAudio(cleanText, party);
             const audioUrl = URL.createObjectURL(audioBlob);
             const audio = new Audio(audioUrl);
             audio.playbackRate = parseFloat(audioSpeedSelect.value);
@@ -1481,7 +1481,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     }
 
     // Debounced version of playLineAudio
-    function playLineAudioDebounced(text) {
+    function playLineAudioDebounced(text, party = 'B') {
         // Clear any existing debounce timer
         if (audioDebounceTimer) {
             clearTimeout(audioDebounceTimer);
@@ -1497,7 +1497,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
         // Set new debounce timer
         audioDebounceTimer = setTimeout(() => {
-            playLineAudio(text);
+            playLineAudio(text, party);
             audioDebounceTimer = null;
         }, 300); // 300ms debounce delay
     }
@@ -1617,8 +1617,8 @@ Now, provide the JSON array for the given text.
                     currentAudio = null;
                 }
 
-                // Play user's line first for them to hear
-                const audioBlob = await fetchPartnerAudio(cleanText);
+                // Play user's line first for them to hear (using party A voice)
+                const audioBlob = await fetchPartnerAudio(cleanText, 'A');
                 const audioUrl = URL.createObjectURL(audioBlob);
                 const audio = new Audio(audioUrl);
 
@@ -1671,7 +1671,7 @@ Now, provide the JSON array for the given text.
                     currentAudio = null;
                 }
 
-                const audioBlob = await fetchPartnerAudio(cleanText);
+                const audioBlob = await fetchPartnerAudio(cleanText, 'B');
                 const audioUrl = URL.createObjectURL(audioBlob);
                 const audio = new Audio(audioUrl);
 
@@ -2013,9 +2013,9 @@ Now, provide the JSON array for the given text.
     }
 
 
-    async function fetchPartnerAudio(text) {
+    async function fetchPartnerAudio(text, party = 'B') {
         const currentLanguage = languageSelect.value;
-        const voiceConfig = getVoiceConfig(currentLanguage);
+        const voiceConfig = getVoiceConfig(currentLanguage, party);
 
         // Strip parentheses and content before sending to TTS
         const cleanText = removeParentheses(text);
@@ -2160,68 +2160,84 @@ Now, provide the JSON array for the given text.
 
     // Function to test all voice IDs
     async function testAllVoiceIds() {
-        const voiceConfigs = {
-            'English': { voice_id: "pNInz6obpgDQGcFmaJgB", language_code: "en" },
-            'Spanish': { voice_id: "XrExE9yKIg1WjnnlVkGX", language_code: "es" },
-            'French': { voice_id: "ThT5KcBeYPX3keUQqHPh", language_code: "fr" },
-            'German': { voice_id: "pNInz6obpgDQGcFmaJgB", language_code: "de" },
-            'Italian': { voice_id: "XB0fDUnXU5powFXDhCwa", language_code: "it" },
-            'Japanese': { voice_id: "jBpfuIE2acCO8z3wKNLl", language_code: "ja" },
-            'Chinese': { voice_id: "2EiwWnXFnvU5JabPnv8n", language_code: "zh" },
-            'Korean': { voice_id: "bVMeCyTHy58xNoL34h3p", language_code: "ko" } // Updated Korean voice ID
-        };
+        const languages = ['English', 'Spanish', 'French', 'German', 'Italian', 'Japanese', 'Chinese', 'Korean'];
 
         console.log("Testing all voice IDs...");
-        for (const [language, config] of Object.entries(voiceConfigs)) {
-            const isValid = await testVoiceId(config.voice_id, config.language_code);
-            console.log(`${language} (${config.voice_id}): ${isValid ? '✅ Valid' : '❌ Invalid'}`);
-            if (!isValid) {
-                console.warn(`Voice ID ${config.voice_id} for ${language} is invalid and needs to be updated`);
+        for (const language of languages) {
+            const configA = getVoiceConfig(language, 'A');
+            const configB = getVoiceConfig(language, 'B');
+            
+            const isValidA = await testVoiceId(configA.voice_id, configA.language_code);
+            const isValidB = await testVoiceId(configB.voice_id, configB.language_code);
+            
+            console.log(`${language} A (${configA.voice_id}): ${isValidA ? '✅ Valid' : '❌ Invalid'}`);
+            console.log(`${language} B (${configB.voice_id}): ${isValidB ? '✅ Valid' : '❌ Invalid'}`);
+            
+            if (!isValidA) {
+                console.warn(`Voice ID ${configA.voice_id} for ${language} Party A is invalid and needs to be updated`);
+            }
+            if (!isValidB) {
+                console.warn(`Voice ID ${configB.voice_id} for ${language} Party B is invalid and needs to be updated`);
             }
         }
     }
 
-    function getVoiceConfig(language) {
+    function getVoiceConfig(language, party = 'A') {
         // Updated voice configurations with tested valid IDs
+        // Each language now has two voices: one for party A (user) and one for party B (conversation partner)
         const voiceConfigs = {
             'English': {
-                voice_id: "pNInz6obpgDQGcFmaJgB", // Male English voice
+                voice_id_a: "pNInz6obpgDQGcFmaJgB", // Male English voice for party A
+                voice_id_b: "21m00Tcm4TlvDq8ikWAM", // Female English voice for party B
                 language_code: "en"
             },
             'Spanish': {
-                voice_id: "XrExE9yKIg1WjnnlVkGX", // Male Spanish voice
+                voice_id_a: "XrExE9yKIg1WjnnlVkGX", // Male Spanish voice for party A
+                voice_id_b: "VR6AewLTigWG4xSOukaG", // Female Spanish voice for party B
                 language_code: "es"
             },
             'French': {
-                voice_id: "ThT5KcBeYPX3keUQqHPh", // Male French voice
+                voice_id_a: "ThT5KcBeYPX3keUQqHPh", // Male French voice for party A
+                voice_id_b: "XB0fDUnXU5powFXDhCwa", // Female French voice for party B
                 language_code: "fr"
             },
             'German': {
-                voice_id: "pNInz6obpgDQGcFmaJgB", // Using reliable English voice for German (multilingual)
+                voice_id_a: "pNInz6obpgDQGcFmaJgB", // Using reliable English voice for German (multilingual) party A
+                voice_id_b: "21m00Tcm4TlvDq8ikWAM", // Using reliable English voice for German (multilingual) party B
                 language_code: "de"
             },
             'Italian': {
-                voice_id: "XB0fDUnXU5powFXDhCwa", // Male Italian voice
+                voice_id_a: "XB0fDUnXU5powFXDhCwa", // Male Italian voice for party A
+                voice_id_b: "jsCqWAovK2LkecY7zXl4", // Female Italian voice for party B
                 language_code: "it"
             },
             'Japanese': {
-                voice_id: "jBpfuIE2acCO8z3wKNLl", // Male Japanese voice
+                voice_id_a: "jBpfuIE2acCO8z3wKNLl", // Male Japanese voice for party A
+                voice_id_b: "Xb7hH8MSUJpSbSDYk0k2", // Female Japanese voice for party B
                 language_code: "ja"
             },
             'Chinese': {
-                voice_id: "2EiwWnXFnvU5JabPnv8n", // Male Chinese voice
+                voice_id_a: "2EiwWnXFnvU5JabPnv8n", // Male Chinese voice for party A
+                voice_id_b: "yoZ06aMxZJJ28mfd3POQ", // Female Chinese voice for party B
                 language_code: "zh"
             },
             'Korean': {
-                voice_id: "bVMeCyTHy58xNoL34h3p", // Updated valid Korean voice ID
+                voice_id_a: "bVMeCyTHy58xNoL34h3p", // Male Korean voice for party A
+                voice_id_b: "f4kVuKG9hWxJHcTmJWFR", // Female Korean voice for party B
                 language_code: "ko"
             }
         };
 
-        // Return language-specific config or default English voice
-        return voiceConfigs[language] || {
-            voice_id: "pNInz6obpgDQGcFmaJgB", // Default English voice
+        const config = voiceConfigs[language] || {
+            voice_id_a: "pNInz6obpgDQGcFmaJgB", // Default English voice for party A
+            voice_id_b: "21m00Tcm4TlvDq8ikWAM", // Default English voice for party B
             language_code: "en"
+        };
+
+        // Return the appropriate voice ID based on the party
+        return {
+            voice_id: party === 'A' ? config.voice_id_a : config.voice_id_b,
+            language_code: config.language_code
         };
     }
 
