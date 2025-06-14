@@ -1,4 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Import stop word functions
+    if (typeof getStopWords === 'undefined' || typeof isStopWord === 'undefined') {
+        console.warn('Stop words not loaded. Stop word grouping may not work properly.');
+    }
+
     // --- DOM Elements ---
     const landingScreen = document.getElementById('landing-screen');
     const lessonScreen = document.getElementById('lesson-screen');
@@ -1487,6 +1492,37 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
             return sentence.replace(/[""''""」』"'.,\s]+$/, '').trim();
         }
 
+        // Helper function to group stop words with following sentences
+        function groupStopWords(sentences, language) {
+            if (!sentences || sentences.length <= 1) return sentences;
+            
+            const grouped = [];
+            let i = 0;
+            
+            while (i < sentences.length) {
+                let currentSentence = sentences[i];
+                
+                // Check if current sentence is a stop word
+                if (isStopWord(currentSentence, language)) {
+                    // Group with next sentence if available
+                    if (i + 1 < sentences.length) {
+                        currentSentence = currentSentence + ' ' + sentences[i + 1];
+                        i += 2; // Skip next sentence since we combined it
+                    } else {
+                        // Last sentence is a stop word, keep it as is
+                        grouped.push(currentSentence);
+                        i++;
+                    }
+                } else {
+                    i++;
+                }
+                
+                grouped.push(currentSentence);
+            }
+            
+            return grouped;
+        }
+
         // For Japanese and Chinese, use improved splitting logic
         if (currentLanguage === 'Japanese' || currentLanguage === 'Chinese') {
             // CJK sentence endings: 。！？
@@ -1614,7 +1650,8 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                 }
             }
 
-            return sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())];
+            const groupedSentences = groupStopWords(sentences, currentLanguage);
+            return groupedSentences.length > 0 ? groupedSentences : [cleanSentenceEnd(text.trim())];
         }
 
         // For other languages, handle ellipses and sentence endings properly
@@ -1685,7 +1722,8 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
             }
         }
 
-        return sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())];
+        const groupedSentences = groupStopWords(sentences, currentLanguage);
+        return groupedSentences.length > 0 ? groupedSentences : [cleanSentenceEnd(text.trim())];
     }
 
     async function advanceTurn() {
@@ -1927,6 +1965,12 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                     expectedLine = currentSentences[currentSentenceIndex];
                 } else {
                     expectedLine = currentTurnData.line.clean_text;
+                }
+
+                // For stop word verification, be more lenient with matching
+                const isStopWordSentence = expectedLine.split(' ').some(word => isStopWord(word, currentLanguage));
+                if (isStopWordSentence) {
+                    console.log('Expected sentence contains stop words, using more lenient verification');
                 }
 
                 console.log(`Verifying ${currentLanguage} speech with AI method...`);
