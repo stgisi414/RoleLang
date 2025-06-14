@@ -1727,7 +1727,8 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
             // Show the sentence as it appears in the UI (original text)
             const displaySentence = currentSentenceEl ? currentSentenceEl.textContent : currentSentences[currentSentenceIndex];
-            micStatus.innerHTML = `<strong>${translateText('recordSentence')} ${currentSentenceIndex + 1}/${currentSentences.length}:</strong><br><span style="color: #38bdf8; font-weight: bold; text-decoration: underline;">"${displaySentence}"</span>`;
+            const recordSentenceText = currentTranslations.recordSentence || translations.en.recordSentence || 'Record sentence';
+            micStatus.innerHTML = `<strong>${recordSentenceText} ${currentSentenceIndex + 1}/${currentSentences.length}:</strong><br><span style="color: #38bdf8; font-weight: bold; text-decoration: underline;">"${displaySentence}"</span>`;
         } else {
             // Single sentence - highlight the entire sentence
             const singleSentenceEl = document.getElementById(`turn-${currentTurnIndex}-sentence-0`);
@@ -1735,7 +1736,8 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                 singleSentenceEl.classList.add('active-sentence');
             }
 
-            micStatus.innerHTML = `<strong>${translateText('yourTurn')}</strong><br><span style="color: #38bdf8; font-style: italic;">Look for the highlighted sentence above</span>`;
+            const yourTurnText = currentTranslations.yourTurn || translations.en.yourTurn || 'Your turn';
+            micStatus.innerHTML = `<strong>${yourTurnText}</strong><br><span style="color: #38bdf8; font-style: italic;">Look for the highlighted sentence above</span>`;
         }
     }
 
@@ -1932,7 +1934,8 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
             if (currentSentenceIndex >= currentSentences.length) {
                 // All sentences completed
-                micStatus.textContent = translateText('allSentencesCorrect');
+                const allSentencesCorrectText = currentTranslations.allSentencesCorrect || translations.en.allSentencesCorrect || 'All sentences correct! Well done.';
+                micStatus.textContent = allSentencesCorrectText;
                 const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
                 currentLineEl.style.borderColor = '#4ade80'; // green-400
                 micBtn.disabled = true;
@@ -1943,14 +1946,16 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                 }, 3000); // CHANGED FROM 1500
             } else {
                 // Move to next sentence
-                micStatus.textContent = translateText('sentenceCorrect');
+                const sentenceCorrectText = currentTranslations.sentenceCorrect || translations.en.sentenceCorrect || 'Correct! Next sentence...';
+                micStatus.textContent = sentenceCorrectText;
                 setTimeout(() => {
                     enableUserMicForSentence();
                 }, 2500); // CHANGED FROM 1000
             }
         } else {
             // Single sentence mode
-            micStatus.textContent = translateText('correct');
+            const correctText = currentTranslations.correct || translations.en.correct || 'Correct! Well done.';
+            micStatus.textContent = correctText;
             const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
             currentLineEl.style.borderColor = '#4ade80'; // green-400
             micBtn.disabled = true;
