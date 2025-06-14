@@ -2223,7 +2223,7 @@ Now, provide the JSON array for the given text.
             },
             'Korean': {
                 voice_id_a: "bVMeCyTHy58xNoL34h3p", // Male Korean voice for party A
-                voice_id_b: "f4kVuKG9hWxJHcTmJWFR", // Female Korean voice for party B
+                voice_id_b: "Xb7hH8MSUJpSbSDYk0k2", // Female Korean voice for party B (using tested Japanese female voice for multilingual)
                 language_code: "ko"
             }
         };
