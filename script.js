@@ -1375,7 +1375,15 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
     // --- Core Functions ---
 
-    async function initializeLesson() {
+	async function initializeLesson() {
+		// --- FIX #1: Force reset of any existing audio state ---
+		if (currentAudio) {
+			currentAudio.pause();
+			currentAudio = null;
+		}
+		isAudioPlaying = false;
+		// --- End of FIX #1 ---
+
 		const language = languageSelect.value;
 		const topic = topicInput.value;
 		const langKey = languageSelect.options[languageSelect.selectedIndex].getAttribute('data-translate');
@@ -1390,16 +1398,13 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 			return;
 		}
 
-		// Clear previous state when starting new lesson
 		clearState();
 
-		// Remove any existing review indicators
 		const existingReviewIndicator = lessonScreen.querySelector('.absolute.top-16.left-4');
 		if (existingReviewIndicator) {
 			existingReviewIndicator.remove();
 		}
 
-		// Update UI
 		loadingSpinner.classList.remove('hidden');
 		conversationContainer.innerHTML = '';
 		illustrationImg.classList.add('hidden');
@@ -1411,7 +1416,6 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 		try {
 			const data = await callGeminiAPI(prompt, { modelPreference: 'pro' });
 
-			// Find the JSON part and parse it
 			const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
 			lessonPlan = JSON.parse(jsonString);
 
@@ -1427,7 +1431,6 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 				}
 			}
 
-			// --- FIX: Hide spinner BEFORE starting conversation ---
 			loadingSpinner.classList.add('hidden');
 			
 			stopTopicRotations();
@@ -1445,11 +1448,9 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 			alert(`${translateText('errorLoading')} ${error.message}`);
 			landingScreen.classList.remove('hidden');
 			lessonScreen.classList.add('hidden');
-			// Ensure spinner is hidden on error as well
 			loadingSpinner.classList.add('hidden');
 		}
 	}
-	
     async function restoreConversation() {
         conversationContainer.innerHTML = ''; // Clear previous conversation
         for (const [index, turn] of lessonPlan.dialogue.entries()) {
@@ -1526,20 +1527,20 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     }
 
     function startConversation() {
-        currentTurnIndex = 0;
-        restoreConversation();
-        addBackToLandingButton();
-        
-        // For new lessons, ensure we start at the beginning properly
-        if (!lessonPlan.isCompleted) {
-            // Reset any previous state
-            micBtn.disabled = false;
-            micStatus.textContent = translateText('micStatus');
-            
-            // Start the first turn
-            advanceTurn();
-        }
-    }
+		currentTurnIndex = 0;
+		restoreConversation();
+		addBackToLandingButton();
+		
+		if (!lessonPlan.isCompleted) {
+			micBtn.disabled = false;
+			micStatus.textContent = translateText('micStatus');
+			
+			// --- FIX #2: Defer the first turn to prevent a race condition ---
+			setTimeout(() => {
+				advanceTurn();
+			}, 100); // A 100ms delay gives the browser time to render UI changes
+		}
+	}
 
     // Global audio state management
     let currentAudio = null;
