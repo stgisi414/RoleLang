@@ -1506,9 +1506,9 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
             return sentence.replace(/[""''""」』"'.,\s]+$/, '').trim();
         }
 
-        // For Japanese and Chinese, use improved splitting logic
-        if (currentLanguage === 'Japanese' || currentLanguage === 'Chinese') {
-            // CJK sentence endings: 。！？
+        // For Japanese, Chinese, and Korean, use improved splitting logic
+        if (currentLanguage === 'Japanese' || currentLanguage === 'Chinese' || currentLanguage === 'Korean') {
+            // CJK sentence endings: 。！？ (and Korean endings)
             const cjkEndings = /[。！？]/;
 
             if (!cjkEndings.test(text)) {
@@ -1516,6 +1516,35 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                     // No clear sentence endings, try splitting on common patterns for Japanese
                     // Look for です、ます、た、だ followed by space or end
                     const patterns = /(です|ます|した|だった|たい|ない)(?=[。\s]|$)/g;
+                    const sentences = [];
+                    let lastIndex = 0;
+                    let match;
+
+                    while ((match = patterns.exec(text)) !== null) {
+                        const endIndex = match.index + match[0].length;
+                        const sentence = text.substring(lastIndex, endIndex).trim();
+                        if (sentence) {
+                            sentences.push(cleanSentenceEnd(sentence));
+                        }
+                        lastIndex = endIndex;
+
+                        // Skip any whitespace after the match
+                        while (lastIndex < text.length && /\s/.test(text[lastIndex])) {
+                            lastIndex++;
+                        }
+                    }
+
+                    // Add remaining text
+                    const remaining = text.substring(lastIndex).trim();
+                    if (remaining) {
+                        sentences.push(cleanSentenceEnd(remaining));
+                    }
+
+                    return sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())];
+                } else if (currentLanguage === 'Korean') {
+                    // For Korean without clear punctuation, try splitting on common patterns
+                    // Look for 다、요、해요、습니다 followed by space or end
+                    const patterns = /(다|요|해요|습니다|이다|었다|았다|려고|니다)(?=[。\s]|$)/g;
                     const sentences = [];
                     let lastIndex = 0;
                     let match;
@@ -1639,21 +1668,39 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
             while (i < sentences.length) {
                 let currentSentence = sentences[i];
                 
-                // Check if next sentences are skip words and group them
-                let j = i + 1;
-                while (j < sentences.length && isSkipWord(sentences[j], currentLanguage)) {
-                    currentSentence += ' ' + sentences[j];
-                    j++;
+                // If current sentence is a skip word, group it with next non-skip sentence
+                if (isSkipWord(currentSentence, currentLanguage)) {
+                    let j = i + 1;
+                    // Keep adding skip words
+                    while (j < sentences.length && isSkipWord(sentences[j], currentLanguage)) {
+                        currentSentence += ' ' + sentences[j];
+                        j++;
+                    }
+                    // Add the first non-skip word sentence if it exists
+                    if (j < sentences.length) {
+                        currentSentence += ' ' + sentences[j];
+                        j++;
+                    }
+                    groupedSentences.push(currentSentence);
+                    i = j;
+                } else {
+                    // Current sentence is not a skip word
+                    // Check if next sentences are skip words and group them
+                    let j = i + 1;
+                    while (j < sentences.length && isSkipWord(sentences[j], currentLanguage)) {
+                        currentSentence += ' ' + sentences[j];
+                        j++;
+                    }
+                    
+                    // If there's a sentence after skip words, group it too
+                    if (j < sentences.length && j > i + 1) {
+                        currentSentence += ' ' + sentences[j];
+                        j++;
+                    }
+                    
+                    groupedSentences.push(currentSentence);
+                    i = j;
                 }
-                
-                // If there's a sentence after skip words, group it too
-                if (j < sentences.length && j > i + 1) {
-                    currentSentence += ' ' + sentences[j];
-                    j++;
-                }
-                
-                groupedSentences.push(currentSentence);
-                i = j;
             }
             
             return groupedSentences.length > 0 ? groupedSentences : [cleanSentenceEnd(text.trim())];
@@ -1733,21 +1780,39 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
         while (i < sentences.length) {
             let currentSentence = sentences[i];
             
-            // Check if next sentences are skip words and group them
-            let j = i + 1;
-            while (j < sentences.length && isSkipWord(sentences[j], currentLanguage)) {
-                currentSentence += ' ' + sentences[j];
-                j++;
+            // If current sentence is a skip word, group it with next non-skip sentence
+            if (isSkipWord(currentSentence, currentLanguage)) {
+                let j = i + 1;
+                // Keep adding skip words
+                while (j < sentences.length && isSkipWord(sentences[j], currentLanguage)) {
+                    currentSentence += ' ' + sentences[j];
+                    j++;
+                }
+                // Add the first non-skip word sentence if it exists
+                if (j < sentences.length) {
+                    currentSentence += ' ' + sentences[j];
+                    j++;
+                }
+                groupedSentences.push(currentSentence);
+                i = j;
+            } else {
+                // Current sentence is not a skip word
+                // Check if next sentences are skip words and group them
+                let j = i + 1;
+                while (j < sentences.length && isSkipWord(sentences[j], currentLanguage)) {
+                    currentSentence += ' ' + sentences[j];
+                    j++;
+                }
+                
+                // If there's a sentence after skip words, group it too
+                if (j < sentences.length && j > i + 1) {
+                    currentSentence += ' ' + sentences[j];
+                    j++;
+                }
+                
+                groupedSentences.push(currentSentence);
+                i = j;
             }
-            
-            // If there's a sentence after skip words, group it too
-            if (j < sentences.length && j > i + 1) {
-                currentSentence += ' ' + sentences[j];
-                j++;
-            }
-            
-            groupedSentences.push(currentSentence);
-            i = j;
         }
         
         return groupedSentences.length > 0 ? groupedSentences : [cleanSentenceEnd(text.trim())];
