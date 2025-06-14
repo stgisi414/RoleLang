@@ -992,6 +992,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear previous state when starting new lesson
         clearState();
 
+        // Remove any existing review indicators
+        const existingReviewIndicator = lessonScreen.querySelector('.absolute.top-16.left-4');
+        if (existingReviewIndicator) {
+            existingReviewIndicator.remove();
+        }
+
         // Update UI
         loadingSpinner.classList.remove('hidden');
         conversationContainer.innerHTML = '';
@@ -2143,6 +2149,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Stop any ongoing speech recognition
         if (isRecognizing && recognition) {
             recognition.stop();
+        }
+
+        // Remove review indicator if present (in case this is a review lesson being reset)
+        const existingReviewIndicator = lessonScreen.querySelector('.absolute.top-16.left-4');
+        if (existingReviewIndicator) {
+            existingReviewIndicator.remove();
         }
 
         // Save state and restart conversation
