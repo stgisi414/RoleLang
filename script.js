@@ -2024,7 +2024,7 @@ Now, provide the JSON array for the given text.
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer YOUR_ELEVENLABS_API_KEY', // IMPORTANT: Replace with your actual key
+                'Authorization': 'Bearer wsec_81c54a71adb28dff26425889f84fbdfee3b446707529b33bd0e2a54eb3a43944', // IMPORTANT: Replace with your actual key
                 'Origin': 'https://rolelang.xyz'
             },
             body: JSON.stringify({
@@ -2135,7 +2135,7 @@ Now, provide the JSON array for the given text.
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer YOUR_ELEVENLABS_API_KEY', // IMPORTANT: Replace with your actual key
+                    'Authorization': 'Bearer wsec_81c54a71adb28dff26425889f84fbdfee3b446707529b33bd0e2a54eb3a43944', // IMPORTANT: Replace with your actual key
                     'Origin': 'https://rolelang.xyz'
                 },
                 body: JSON.stringify({
