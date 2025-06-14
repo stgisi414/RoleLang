@@ -840,6 +840,83 @@ document.addEventListener('DOMContentLoaded', () => {
         return match ? match[1] : null;
     }
 
+    async function generateVocabularyTranslations(vocabulary, targetLanguage) {
+        const nativeLangCode = nativeLang || 'en';
+        const langCodeToName = {
+            'en': 'English',
+            'es': 'Spanish',
+            'fr': 'French',
+            'de': 'German',
+            'it': 'Italian',
+            'zh': 'Chinese',
+            'ja': 'Japanese',
+            'ko': 'Korean'
+        };
+        const nativeLangName = langCodeToName[nativeLangCode] || 'English';
+
+        // If native language is English, just return the original vocabulary
+        if (nativeLangName === 'English') {
+            return vocabulary;
+        }
+
+        try {
+            const vocabList = vocabulary.map(v => v.word).join(', ');
+            
+            const prompt = `
+You are a vocabulary translator. Your task is to translate words from ${targetLanguage} into ${nativeLangName}.
+
+Please translate each of the following words/phrases from ${targetLanguage} into ${nativeLangName}. 
+Return ONLY a JSON array with objects containing "word" (original word) and "translation" (translation in ${nativeLangName}).
+
+Words to translate: ${vocabList}
+
+Example format:
+[
+  {"word": "originalWord1", "translation": "translationInNativeLanguage1"},
+  {"word": "originalWord2", "translation": "translationInNativeLanguage2"}
+]
+
+IMPORTANT: Return ONLY the JSON array, no other text.`;
+
+            const response = await fetch(GEMINI_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    safetySettings: [
+                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                    ]
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Translation API error: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+            const translations = JSON.parse(jsonString);
+
+            // Merge translations with original vocabulary
+            const translatedVocabulary = vocabulary.map(vocabItem => {
+                const translationItem = translations.find(t => t.word === vocabItem.word);
+                return {
+                    ...vocabItem,
+                    nativeTranslation: translationItem ? translationItem.translation : vocabItem.translation
+                };
+            });
+
+            return translatedVocabulary;
+        } catch (error) {
+            console.error('Failed to generate native language translations:', error);
+            // Return original vocabulary as fallback
+            return vocabulary;
+        }
+    }
+
     function startVocabularyQuiz(language) {
         const vocabulary = extractVocabularyFromDialogue();
         
@@ -851,7 +928,7 @@ document.addEventListener('DOMContentLoaded', () => {
         createVocabularyQuizModal(vocabulary, language);
     }
 
-    function createVocabularyQuizModal(vocabulary, language) {
+    async function createVocabularyQuizModal(vocabulary, language) {
         // Create quiz modal
         const quizModal = document.createElement('div');
         quizModal.id = 'vocab-quiz-modal';
@@ -860,17 +937,35 @@ document.addEventListener('DOMContentLoaded', () => {
         const quizContent = document.createElement('div');
         quizContent.className = 'bg-gray-800 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto glassmorphism';
         
+        // Show loading while generating translations
+        quizContent.innerHTML = `
+            <div class="text-center">
+                <div class="loader mx-auto mb-4"></div>
+                <p class="text-white">Generating quiz questions...</p>
+            </div>
+        `;
+        
         // Shuffle vocabulary and create quiz questions
         const shuffledVocab = [...vocabulary].sort(() => 0.5 - Math.random());
         let currentQuestion = 0;
         let score = 0;
         let isQuizCompleted = false;
+        let vocabularyWithNativeTranslations = [];
+
+        // Generate translations for vocabulary using Gemini
+        try {
+            vocabularyWithNativeTranslations = await generateVocabularyTranslations(shuffledVocab, language);
+        } catch (error) {
+            console.error('Failed to generate vocabulary translations:', error);
+            // Fallback to English translations
+            vocabularyWithNativeTranslations = shuffledVocab;
+        }
 
         function updateQuizContent() {
-            if (currentQuestion >= shuffledVocab.length) {
+            if (currentQuestion >= vocabularyWithNativeTranslations.length) {
                 // Quiz completed
                 isQuizCompleted = true;
-                const percentage = Math.round((score / shuffledVocab.length) * 100);
+                const percentage = Math.round((score / vocabularyWithNativeTranslations.length) * 100);
                 quizContent.innerHTML = `
                     <div class="text-center">
                         <h3 class="text-2xl font-bold text-purple-300 mb-4">
@@ -878,7 +973,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </h3>
                         <div class="text-6xl mb-4">${percentage >= 80 ? '🎉' : percentage >= 60 ? '👏' : '📚'}</div>
                         <p class="text-xl text-white mb-4">
-                            ${translateText('yourScore') || 'Your Score'}: ${score}/${shuffledVocab.length} (${percentage}%)
+                            ${translateText('yourScore') || 'Your Score'}: ${score}/${vocabularyWithNativeTranslations.length} (${percentage}%)
                         </p>
                         <p class="text-gray-300 mb-6">
                             ${percentage >= 80 ? (translateText('excellentWork') || 'Excellent work!') : 
@@ -896,10 +991,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `;
                 
-                document.getElementById('retry-quiz-btn').addEventListener('click', () => {
+                document.getElementById('retry-quiz-btn').addEventListener('click', async () => {
                     currentQuestion = 0;
                     score = 0;
                     isQuizCompleted = false;
+                    // Regenerate translations
+                    try {
+                        vocabularyWithNativeTranslations = await generateVocabularyTranslations(shuffledVocab, language);
+                    } catch (error) {
+                        vocabularyWithNativeTranslations = shuffledVocab;
+                    }
                     updateQuizContent();
                 });
                 
@@ -909,11 +1010,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const currentVocab = shuffledVocab[currentQuestion];
-            const allTranslations = shuffledVocab.map(v => v.translation);
-            const wrongAnswers = allTranslations.filter(t => t !== currentVocab.translation)
+            const currentVocab = vocabularyWithNativeTranslations[currentQuestion];
+            const allTranslations = vocabularyWithNativeTranslations.map(v => v.nativeTranslation || v.translation);
+            const wrongAnswers = allTranslations.filter(t => t !== (currentVocab.nativeTranslation || currentVocab.translation))
                 .sort(() => 0.5 - Math.random()).slice(0, 3);
-            const allOptions = [currentVocab.translation, ...wrongAnswers]
+            const correctAnswer = currentVocab.nativeTranslation || currentVocab.translation;
+            const allOptions = [correctAnswer, ...wrongAnswers]
                 .sort(() => 0.5 - Math.random());
 
             quizContent.innerHTML = `
@@ -922,11 +1024,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         <i class="fas fa-brain mr-2"></i>${translateText('vocabularyQuiz') || 'Vocabulary Quiz'}
                     </h3>
                     <div class="text-sm text-gray-400">
-                        ${translateText('question') || 'Question'} ${currentQuestion + 1} ${translateText('of') || 'of'} ${shuffledVocab.length}
+                        ${translateText('question') || 'Question'} ${currentQuestion + 1} ${translateText('of') || 'of'} ${vocabularyWithNativeTranslations.length}
                     </div>
                     <div class="w-full bg-gray-700 rounded-full h-2 mt-2">
                         <div class="bg-purple-600 h-2 rounded-full transition-all duration-300" 
-                             style="width: ${((currentQuestion) / shuffledVocab.length) * 100}%"></div>
+                             style="width: ${((currentQuestion) / vocabularyWithNativeTranslations.length) * 100}%"></div>
                     </div>
                 </div>
 
@@ -960,14 +1062,14 @@ document.addEventListener('DOMContentLoaded', () => {
             options.forEach(option => {
                 option.addEventListener('click', () => {
                     const selectedAnswer = option.dataset.answer;
-                    const isCorrect = selectedAnswer === currentVocab.translation;
+                    const isCorrect = selectedAnswer === correctAnswer;
                     
                     // Disable all options
                     options.forEach(opt => {
                         opt.classList.remove('hover:bg-gray-600');
                         opt.style.cursor = 'not-allowed';
                         
-                        if (opt.dataset.answer === currentVocab.translation) {
+                        if (opt.dataset.answer === correctAnswer) {
                             opt.classList.add('bg-green-600');
                         } else if (opt === option && !isCorrect) {
                             opt.classList.add('bg-red-600');
