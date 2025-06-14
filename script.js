@@ -139,7 +139,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Set speech recognition language
             if (recognition) {
-                recognition.lang = getLangCode(state.selectedLanguage);
+                const langKey = languageSelect.options[languageSelect.selectedIndex].getAttribute('data-translate');
+                recognition.lang = getLangCode(langKey);
             }
 
             // Switch to lesson screen
@@ -156,8 +157,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 fetchAndDisplayIllustration(lessonPlan.illustration_prompt);
             }
 
-            // Resume from current turn
-            advanceTurn();
+            // Check if lesson was completed
+            if (lessonPlan.isCompleted || currentTurnIndex >= lessonPlan.dialogue.length) {
+                // Lesson is completed, show review mode
+                micStatus.textContent = translateText('lessonComplete');
+                micBtn.disabled = true;
+                showReviewModeUI(state.selectedLanguage);
+            } else {
+                // Resume from current turn
+                advanceTurn();
+            }
 
             // Stop topic rotations when in lesson
             stopTopicRotations();
@@ -494,16 +503,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showReviewModeUI(language) {
         // Remove any existing review indicator
-        const existingReviewIndicator = lessonScreen.querySelector('.absolute.top-16.left-4');
+        const existingReviewIndicator = lessonScreen.querySelector('.review-mode-indicator');
         if (existingReviewIndicator) {
             existingReviewIndicator.remove();
         }
 
         // Add review indicator with vocabulary quiz button
         const reviewIndicator = document.createElement('div');
-        reviewIndicator.className = 'absolute top-16 left-4 bg-purple-600 text-white px-3 py-1 rounded-lg text-sm z-10 flex items-center space-x-2';
+        reviewIndicator.className = 'review-mode-indicator absolute top-16 left-4 bg-purple-600 text-white px-3 py-1 rounded-lg text-sm z-10 flex items-center space-x-2';
         reviewIndicator.innerHTML = `
-            <span><i class="fas fa-history mr-2"></i>Review Mode</span>
+            <span><i class="fas fa-history mr-2"></i>Review Mode - Lesson Complete!</span>
             <button id="vocab-quiz-btn" class="bg-purple-700 hover:bg-purple-800 px-2 py-1 rounded text-xs transition-colors">
                 <i class="fas fa-brain mr-1"></i>Vocab Quiz
             </button>
@@ -514,6 +523,20 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('vocab-quiz-btn').addEventListener('click', () => {
             startVocabularyQuiz(language);
         });
+
+        // Update mic status to show lesson is complete and review mode is active
+        micStatus.innerHTML = `
+            <div class="text-center">
+                <div class="text-green-400 font-bold mb-2">
+                    <i class="fas fa-check-circle mr-2"></i>${translateText('lessonComplete')}
+                </div>
+                <div class="text-purple-300 text-sm">
+                    <i class="fas fa-history mr-1"></i>Review mode is now active! Use the vocab quiz button above.
+                </div>
+            </div>
+        `;
+
+        console.log('Review mode UI displayed for language:', language);
     }
 
     // --- Tab Switching Functions ---
@@ -1371,13 +1394,20 @@ document.addEventListener('DOMContentLoaded', () => {
             // Save completed lesson to history BEFORE clearing state
             const selectedLanguage = languageSelect.value;
             const originalTopic = topicInput.value;
+            
+            // Mark the lesson as completed in the lesson plan
+            lessonPlan.isCompleted = true;
+            lessonPlan.completedAt = new Date().toISOString();
+            
             saveLessonToHistory(lessonPlan, selectedLanguage, originalTopic);
 
             // Show review mode UI immediately after lesson completion
-            showReviewModeUI(selectedLanguage);
+            setTimeout(() => {
+                showReviewModeUI(selectedLanguage);
+                // Save state with completed lesson
+                saveState();
+            }, 500);
 
-            // Don't clear state immediately - let user interact with review mode
-            // State will be cleared when they go back to landing or start new lesson
             return;
         }
 
