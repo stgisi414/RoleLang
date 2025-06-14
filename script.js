@@ -1487,31 +1487,6 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
             return sentence.replace(/[""''""」』"'.,\s]+$/, '').trim();
         }
 
-        // Helper function to group skip words with following sentences
-        function groupSkipWords(sentences) {
-            if (!window.shouldGroupWithNext) return sentences;
-            
-            const grouped = [];
-            let i = 0;
-            
-            while (i < sentences.length) {
-                let currentSentence = sentences[i];
-                
-                // Check if current sentence is a skip word and there's a next sentence
-                if (i + 1 < sentences.length && window.shouldGroupWithNext(currentSentence, currentLanguage)) {
-                    // Group this skip word with the next sentence
-                    currentSentence = currentSentence + ' ' + sentences[i + 1];
-                    i += 2; // Skip the next sentence since we combined it
-                } else {
-                    i++;
-                }
-                
-                grouped.push(currentSentence.trim());
-            }
-            
-            return grouped;
-        }
-
         // For Japanese and Chinese, use improved splitting logic
         if (currentLanguage === 'Japanese' || currentLanguage === 'Chinese') {
             // CJK sentence endings: 。！？
@@ -1639,8 +1614,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                 }
             }
 
-            const finalSentences = sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())];
-            return groupSkipWords(finalSentences);
+            return sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())];
         }
 
         // For other languages, handle ellipses and sentence endings properly
@@ -1711,8 +1685,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
             }
         }
 
-        const finalSentences = sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())];
-        return groupSkipWords(finalSentences);
+        return sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())];
     }
 
     async function advanceTurn() {
