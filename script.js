@@ -486,6 +486,20 @@ document.addEventListener('DOMContentLoaded', () => {
         startConversation();
 
         // Add review indicator with vocabulary quiz button
+        showReviewModeUI(lessonRecord.language);
+
+        // Save state for review session
+        saveState();
+    }
+
+    function showReviewModeUI(language) {
+        // Remove any existing review indicator
+        const existingReviewIndicator = lessonScreen.querySelector('.absolute.top-16.left-4');
+        if (existingReviewIndicator) {
+            existingReviewIndicator.remove();
+        }
+
+        // Add review indicator with vocabulary quiz button
         const reviewIndicator = document.createElement('div');
         reviewIndicator.className = 'absolute top-16 left-4 bg-purple-600 text-white px-3 py-1 rounded-lg text-sm z-10 flex items-center space-x-2';
         reviewIndicator.innerHTML = `
@@ -498,11 +512,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Add vocabulary quiz button event listener
         document.getElementById('vocab-quiz-btn').addEventListener('click', () => {
-            startVocabularyQuiz(lessonRecord.language);
+            startVocabularyQuiz(language);
         });
-
-        // Save state for review session
-        saveState();
     }
 
     // --- Tab Switching Functions ---
@@ -1362,10 +1373,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const originalTopic = topicInput.value;
             saveLessonToHistory(lessonPlan, selectedLanguage, originalTopic);
 
-            // Clear state when lesson is complete (after saving to history)
-            setTimeout(() => {
-                clearState();
-            }, 1000); // Give time for the save operation to complete
+            // Show review mode UI immediately after lesson completion
+            showReviewModeUI(selectedLanguage);
+
+            // Don't clear state immediately - let user interact with review mode
+            // State will be cleared when they go back to landing or start new lesson
             return;
         }
 
@@ -2178,6 +2190,13 @@ document.addEventListener('DOMContentLoaded', () => {
             clearState();
             lessonPlan = null;
             currentTurnIndex = 0;
+            
+            // Remove any review indicators
+            const existingReviewIndicator = lessonScreen.querySelector('.absolute.top-16.left-4');
+            if (existingReviewIndicator) {
+                existingReviewIndicator.remove();
+            }
+            
             landingScreen.classList.remove('hidden');
             lessonScreen.classList.add('hidden');
             startTopicRotations();
