@@ -458,34 +458,55 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function saveLessonToHistory(lessonPlan, selectedLanguage, originalTopic) {
         try {
-            const history = getLessonHistory();
-            const lessonRecord = {
-                id: Date.now(),
-                timestamp: new Date().toISOString(),
-                language: selectedLanguage,
-                topic: originalTopic,
-                scenario: lessonPlan.scenario,
-                completedAt: new Date().toLocaleDateString(undefined, {
+            let history = getLessonHistory();
+            const lessonId = lessonPlan.id;
+
+            // Find existing lesson in history
+            const existingLessonIndex = history.findIndex(record => record.lessonPlan.id === lessonId);
+
+            if (existingLessonIndex > -1) {
+                // Found it. This is a re-review.
+                const [existingRecord] = history.splice(existingLessonIndex, 1);
+
+                // Update its completion time
+                existingRecord.completedAt = new Date().toLocaleDateString(undefined, {
                     year: 'numeric',
                     month: 'short',
                     day: 'numeric',
                     hour: '2-digit',
                     minute: '2-digit'
-                }),
-                lessonPlan: lessonPlan
-            };
+                });
 
-            // Add to beginning of array
-            history.unshift(lessonRecord);
+                // Put it at the front of the history
+                history.unshift(existingRecord);
+            } else {
+                // This is a new lesson.
+                const newLessonRecord = {
+                    id: lessonId,
+                    timestamp: new Date().toISOString(),
+                    language: selectedLanguage,
+                    topic: originalTopic,
+                    scenario: lessonPlan.scenario,
+                    completedAt: new Date().toLocaleDateString(undefined, {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }),
+                    lessonPlan: lessonPlan
+                };
+                history.unshift(newLessonRecord);
+            }
 
-            // Keep only the most recent MAX_LESSON_HISTORY lessons
+            // Trim history
             if (history.length > MAX_LESSON_HISTORY) {
                 history.splice(MAX_LESSON_HISTORY);
             }
 
             localStorage.setItem(LESSON_HISTORY_KEY, JSON.stringify(history));
 
-            // Refresh history display if visible
+            // Refresh display
             if (!document.getElementById('history-container').classList.contains('hidden')) {
                 displayLessonHistory();
             }
@@ -546,6 +567,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     function reviewLesson(lessonRecord) {
         // Set up the lesson for review
         lessonPlan = lessonRecord.lessonPlan;
+        // Backward compatibility for old records without an ID in the lessonPlan
+        if (!lessonPlan.id) {
+            lessonPlan.id = lessonRecord.id || `lesson-${Date.now()}`;
+        }
         currentTurnIndex = 0;
 
         // Update form values
@@ -1291,6 +1316,11 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
             // Find the JSON part and parse it
             const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
             lessonPlan = JSON.parse(jsonString);
+
+            // Add a unique ID to the lesson plan itself if it doesn't have one
+            if (!lessonPlan.id) {
+                lessonPlan.id = `lesson-${Date.now()}`;
+            }
 
             // Set speech recognition language
             if (recognition) {
