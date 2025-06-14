@@ -202,6 +202,44 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Refresh dynamic elements that don't use data-translate attributes
+    function refreshDynamicElements() {
+        // Update review mode indicator if it exists
+        const reviewIndicator = document.querySelector('.review-mode-indicator');
+        if (reviewIndicator) {
+            const selectedLanguage = languageSelect.value;
+            reviewIndicator.remove();
+            showReviewModeUI(selectedLanguage);
+        }
+
+        // Update back button text
+        updateBackButton();
+
+        // Update history display if visible
+        const historyContainer = document.getElementById('history-container');
+        if (historyContainer && !historyContainer.classList.contains('hidden')) {
+            displayLessonHistory();
+        }
+
+        // Update any existing vocabulary quiz modal
+        const existingQuizModal = document.getElementById('vocab-quiz-modal');
+        if (existingQuizModal) {
+            existingQuizModal.remove();
+        }
+
+        // Update mic status text if lesson is in progress
+        if (lessonPlan && currentTurnIndex < lessonPlan.dialogue.length) {
+            const currentTurnData = lessonPlan.dialogue[currentTurnIndex];
+            if (currentTurnData.party === 'A') {
+                if (currentSentences.length > 1) {
+                    enableUserMicForSentence();
+                } else {
+                    micStatus.textContent = translateText('yourTurn');
+                }
+            }
+        }
+    }
+
     // Detect browser language and set native language
     const detectNativeLanguage = () => {
         const browserLang = navigator.language || navigator.userLanguage || 'en';
@@ -231,6 +269,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update translations
         currentTranslations = translations[langCode] || translations.en;
         updateTranslations();
+
+        // Force refresh of dynamic elements
+        refreshDynamicElements();
 
         // Refresh topics with new language
         stopTopicRotations();
@@ -2316,7 +2357,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
         const backBtn = document.createElement('button');
         backBtn.id = 'back-to-landing-btn';
         backBtn.className = 'absolute top-4 left-4 bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-colors text-sm';
-        backBtn.innerHTML = `<i class="fas fa-arrow-left mr-2"></i>${translateText('back') || 'Back'}`;
+        backBtn.innerHTML = `<i class="fas fa-arrow-left mr-2"></i>${translateText('back')}`;
         backBtn.onclick = () => {
             // Clear lesson state and return to landing
             clearState();
@@ -2335,6 +2376,14 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
         };
 
         lessonScreen.appendChild(backBtn);
+    }
+
+    // Function to update back button text when language changes
+    function updateBackButton() {
+        const backBtn = document.getElementById('back-to-landing-btn');
+        if (backBtn) {
+            backBtn.innerHTML = `<i class="fas fa-arrow-left mr-2"></i>${translateText('back')}`;
+        }
     }
 
     // Initialize everything
