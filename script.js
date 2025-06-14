@@ -346,14 +346,20 @@ document.addEventListener('DOMContentLoaded', () => {
     micBtn.addEventListener('click', toggleSpeechRecognition);
     toggleLessonsBtn.addEventListener('click', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         console.log('Toggle lessons button clicked');
         toggleLessonsVisibility();
     });
-    document.getElementById('toggle-history-btn').addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('Toggle history button clicked');
-        toggleHistoryVisibility();
-    });
+    
+    const toggleHistoryBtn = document.getElementById('toggle-history-btn');
+    if (toggleHistoryBtn) {
+        toggleHistoryBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Toggle history button clicked');
+            toggleHistoryVisibility();
+        });
+    }
     difficultyTab.addEventListener('click', () => switchTab('difficulty'));
     situationsTab.addEventListener('click', () => switchTab('situations'));
     resetLessonBtn.addEventListener('click', resetLesson);
@@ -699,23 +705,36 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Toggle Functions ---
 
     function toggleLessonsVisibility() {
+        if (!lessonsContainer || !toggleLessonsBtn) {
+            console.error('Lessons container or toggle button not found');
+            return;
+        }
+        
         const isHidden = lessonsContainer.classList.contains('hidden');
         const chevronIcon = toggleLessonsBtn.querySelector('i');
 
+        console.log('Toggling lessons visibility. Currently hidden:', isHidden);
+
         if (isHidden) {
             lessonsContainer.classList.remove('hidden');
-            chevronIcon.style.transform = 'rotate(180deg)';
-            chevronIcon.style.transition = 'transform 0.3s ease';
+            if (chevronIcon) {
+                chevronIcon.style.transform = 'rotate(180deg)';
+                chevronIcon.style.transition = 'transform 0.3s ease';
+            }
             // Restart topic rotations when showing lessons
             if (topicRotationIntervals.length === 0) {
                 startTopicRotations();
             }
+            console.log('Lessons container shown');
         } else {
             lessonsContainer.classList.add('hidden');
-            chevronIcon.style.transform = 'rotate(0deg)';
-            chevronIcon.style.transition = 'transform 0.3s ease';
+            if (chevronIcon) {
+                chevronIcon.style.transform = 'rotate(0deg)';
+                chevronIcon.style.transition = 'transform 0.3s ease';
+            }
             // Stop topic rotations when hiding lessons
             stopTopicRotations();
+            console.log('Lessons container hidden');
         }
 
         // Save state when lessons visibility changes
@@ -724,18 +743,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function toggleHistoryVisibility() {
         const historyContainer = document.getElementById('history-container');
+        const toggleHistoryBtn = document.getElementById('toggle-history-btn');
+        
+        if (!historyContainer || !toggleHistoryBtn) {
+            console.error('History container or toggle button not found');
+            return;
+        }
+        
         const isHidden = historyContainer.classList.contains('hidden');
-        const chevronIcon = document.getElementById('toggle-history-btn').querySelector('i');
+        const chevronIcon = toggleHistoryBtn.querySelector('i');
+
+        console.log('Toggling history visibility. Currently hidden:', isHidden);
 
         if (isHidden) {
             historyContainer.classList.remove('hidden');
-            chevronIcon.style.transform = 'rotate(180deg)';
-            chevronIcon.style.transition = 'transform 0.3s ease';
+            if (chevronIcon) {
+                chevronIcon.style.transform = 'rotate(180deg)';
+                chevronIcon.style.transition = 'transform 0.3s ease';
+            }
             displayLessonHistory();
+            console.log('History container shown');
         } else {
             historyContainer.classList.add('hidden');
-            chevronIcon.style.transform = 'rotate(0deg)';
-            chevronIcon.style.transition = 'transform 0.3s ease';
+            if (chevronIcon) {
+                chevronIcon.style.transform = 'rotate(0deg)';
+                chevronIcon.style.transition = 'transform 0.3s ease';
+            }
+            console.log('History container hidden');
         }
     }
 
