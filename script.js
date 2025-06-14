@@ -1417,11 +1417,26 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     }
 
     // --- Core Functions ---
+	
+	function preFetchFirstAudio(firstTurn) {
+		return new Promise(async (resolve, reject) => {
+			if (!firstTurn) {
+				preFetchedFirstAudioBlob = null;
+				return resolve(); // Resolve immediately if there's no dialogue
+			}
+			try {
+				preFetchedFirstAudioBlob = await fetchPartnerAudio(removeParentheses(firstTurn.line.display), firstTurn.party);
+				resolve();
+			} catch (error) {
+				console.error("Failed to pre-fetch audio:", error);
+				preFetchedFirstAudioBlob = null;
+				reject(error); // Reject if audio fetching fails
+			}
+		});
+	}
 
 	async function initializeLesson() {
-		// Clear any previously fetched audio
 		preFetchedFirstAudioBlob = null;
-
 		const language = languageSelect.value;
 		const topic = topicInput.value;
 		if (!topic) {
@@ -1453,26 +1468,28 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 			if (!lessonPlan.id) lessonPlan.id = `lesson-${language}-${Date.now()}`;
 			if (recognition) recognition.lang = getLangCode(language);
 			
-			// --- NEW PRE-FETCH LOGIC ---
-			if (lessonPlan.dialogue && lessonPlan.dialogue.length > 0) {
-				const firstTurn = lessonPlan.dialogue[0];
-				// Fetch the audio for the very first line of dialogue
-				preFetchedFirstAudioBlob = await fetchPartnerAudio(removeParentheses(firstTurn.line.display), firstTurn.party);
-			}
-			// --- END OF PRE-FETCH LOGIC ---
-
 			loadingSpinner.classList.add('hidden');
 			stopTopicRotations();
 			landingScreen.classList.add('hidden');
 			lessonScreen.classList.remove('hidden');
-			fetchAndDisplayIllustration(lessonPlan.illustration_prompt);
 
-			// Render the conversation UI immediately
+			// Render the conversation UI in the background
 			startConversation();
-
-			// Now show the overlay, since the first audio clip is ready
+			
+			// Show the overlay with its button DISABLED
+			const overlayButton = document.getElementById('confirm-start-lesson-btn');
+			overlayButton.disabled = true;
 			document.getElementById('start-lesson-overlay').classList.remove('hidden');
-
+			
+			// --- FINAL FIX: Wait for both image and audio before enabling the button ---
+			const illustrationPromise = fetchAndDisplayIllustration(lessonPlan.illustration_prompt);
+			const audioPromise = preFetchFirstAudio(lessonPlan.dialogue[0]);
+			
+			await Promise.all([illustrationPromise, audioPromise]);
+			
+			// Once both are loaded, enable the button.
+			overlayButton.disabled = false;
+			
 			saveState();
 
 		} catch (error) {
@@ -1481,6 +1498,8 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 			landingScreen.classList.remove('hidden');
 			lessonScreen.classList.add('hidden');
 			loadingSpinner.classList.add('hidden');
+			// Make sure button is usable even if assets fail, to not block the user
+			document.getElementById('confirm-start-lesson-btn').disabled = false;
 		}
 	}
 	
@@ -2134,42 +2153,42 @@ Now, provide the JSON array for the given text.
     }
 
     async function fetchAndDisplayIllustration(prompt) {
-        try {
-            illustrationPlaceholder.classList.add('hidden');
-            imageLoader.classList.remove('hidden');
+		return new Promise(async (resolve, reject) => {
+			try {
+				illustrationPlaceholder.classList.add('hidden');
+				imageLoader.classList.remove('hidden');
 
-            // Use enhanced image generation with better options
-            const result = await generateImage(`${prompt}, digital art, minimalist, educational illustration`, {
-                imageSize: 'square_hd',
-                numInferenceSteps: 50,
-                guidanceScale: 10
-            });
+				const result = await generateImage(`${prompt}, digital art, minimalist, educational illustration`, {
+					imageSize: 'square_hd',
+					numInferenceSteps: 50,
+					guidanceScale: 10
+				});
 
-            if (result.imageUrl) {
-                console.log('Generated image with seed:', result.seed);
-
-                // Save image URL to lesson plan for state persistence
-                if (lessonPlan) {
-                    lessonPlan.illustration_url = result.imageUrl;
-                    saveState();
-                }
-
-                illustrationImg.src = result.imageUrl;
-                illustrationImg.onload = () => {
-                    imageLoader.classList.add('hidden');
-                    illustrationImg.classList.remove('hidden');
-                };
-                illustrationImg.onerror = () => {
-                    showFallbackIllustration();
-                };
-            } else {
-                throw new Error("No image URL returned from API.");
-            }
-        } catch (error) {
-            console.error("Failed to fetch illustration:", error);
-            showFallbackIllustration();
-        }
-    }
+				if (result.imageUrl) {
+					if (lessonPlan) {
+						lessonPlan.illustration_url = result.imageUrl;
+						saveState();
+					}
+					illustrationImg.src = result.imageUrl;
+					illustrationImg.onload = () => {
+						imageLoader.classList.add('hidden');
+						illustrationImg.classList.remove('hidden');
+						resolve(); // Resolve the promise ONCE the image is loaded
+					};
+					illustrationImg.onerror = () => {
+						showFallbackIllustration();
+						reject(new Error("Image failed to load from src"));
+					};
+				} else {
+					throw new Error("No image URL returned from API.");
+				}
+			} catch (error) {
+				console.error("Failed to fetch illustration:", error);
+				showFallbackIllustration();
+				reject(error);
+			}
+		});
+	}
 
     function showFallbackIllustration() {
         imageLoader.classList.add('hidden');
