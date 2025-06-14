@@ -344,8 +344,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Event Listeners ---
     startLessonBtn.addEventListener('click', initializeLesson);
     micBtn.addEventListener('click', toggleSpeechRecognition);
-    toggleLessonsBtn.addEventListener('click', toggleLessonsVisibility);
-    document.getElementById('toggle-history-btn').addEventListener('click', toggleHistoryVisibility);
+    toggleLessonsBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Toggle lessons button clicked');
+        toggleLessonsVisibility();
+    });
+    document.getElementById('toggle-history-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Toggle history button clicked');
+        toggleHistoryVisibility();
+    });
     difficultyTab.addEventListener('click', () => switchTab('difficulty'));
     situationsTab.addEventListener('click', () => switchTab('situations'));
     resetLessonBtn.addEventListener('click', resetLesson);
@@ -353,15 +361,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add event listeners for lesson buttons
     document.addEventListener('click', (event) => {
         if (event.target.classList.contains('lesson-btn')) {
+            console.log('Lesson button clicked:', event.target.textContent);
             const topic = event.target.getAttribute('data-topic');
-            topicInput.value = topic;
-            // Save state when topic changes
-            saveState();
-            // Visual feedback
-            event.target.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                event.target.style.transform = '';
-            }, 150);
+            if (topic) {
+                topicInput.value = topic;
+                console.log('Topic set to:', topic);
+                // Save state when topic changes
+                saveState();
+                // Visual feedback
+                event.target.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    event.target.style.transform = '';
+                }, 150);
+                
+                // Scroll topic input into view
+                topicInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // Brief highlight of the input field
+                topicInput.style.borderColor = '#38bdf8';
+                setTimeout(() => {
+                    topicInput.style.borderColor = '';
+                }, 1000);
+            }
         }
     });
 
@@ -548,7 +569,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="text-gray-400 text-xs">${lesson.completedAt}</div>
       `;
 
-            lessonCard.addEventListener('click', () => {
+            lessonCard.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('History lesson clicked:', lesson.topic);
                 reviewLesson(lesson);
             });
 
@@ -682,6 +705,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isHidden) {
             lessonsContainer.classList.remove('hidden');
             chevronIcon.style.transform = 'rotate(180deg)';
+            chevronIcon.style.transition = 'transform 0.3s ease';
             // Restart topic rotations when showing lessons
             if (topicRotationIntervals.length === 0) {
                 startTopicRotations();
@@ -689,6 +713,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             lessonsContainer.classList.add('hidden');
             chevronIcon.style.transform = 'rotate(0deg)';
+            chevronIcon.style.transition = 'transform 0.3s ease';
             // Stop topic rotations when hiding lessons
             stopTopicRotations();
         }
@@ -705,10 +730,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isHidden) {
             historyContainer.classList.remove('hidden');
             chevronIcon.style.transform = 'rotate(180deg)';
+            chevronIcon.style.transition = 'transform 0.3s ease';
             displayLessonHistory();
         } else {
             historyContainer.classList.add('hidden');
             chevronIcon.style.transform = 'rotate(0deg)';
+            chevronIcon.style.transition = 'transform 0.3s ease';
         }
     }
 
@@ -2594,6 +2621,17 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     initializeNativeLanguage();
     updateTranslations(); // Initial translation update
 
+    // Ensure toggle buttons are properly initialized
+    const toggleLessonsIcon = toggleLessonsBtn.querySelector('i');
+    const toggleHistoryIcon = document.getElementById('toggle-history-btn').querySelector('i');
+    
+    if (toggleLessonsIcon) {
+        toggleLessonsIcon.style.transition = 'transform 0.3s ease';
+    }
+    if (toggleHistoryIcon) {
+        toggleHistoryIcon.style.transition = 'transform 0.3s ease';
+    }
+
     // Load saved state
     const savedState = loadState();
     if (savedState) {
@@ -2604,4 +2642,12 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     } else {
         startTopicRotations();
     }
+    
+    // Double-check that buttons are working
+    setTimeout(() => {
+        console.log('Toggle lessons button:', toggleLessonsBtn ? 'found' : 'not found');
+        console.log('Toggle history button:', document.getElementById('toggle-history-btn') ? 'found' : 'not found');
+        console.log('Lessons container:', lessonsContainer ? 'found' : 'not found');
+        console.log('History container:', document.getElementById('history-container') ? 'found' : 'not found');
+    }, 100);
 });
