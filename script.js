@@ -95,6 +95,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.warn('Failed to save state to localStorage:', error);
         }
     }
+	
+	let audioPlayer = new Audio();
+	let audioController = new AbortController();
+
+    startLessonBtn.addEventListener('click', () => {
+		if (audioPlayer.paused) {
+			audioPlayer.play().catch(() => {});
+			audioPlayer.pause();
+		}
+	}, { once: true });
 
     function loadState() {
         try {
@@ -1376,34 +1386,29 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     // --- Core Functions ---
 
 	async function initializeLesson() {
-		// --- FIX #1: Force reset of any existing audio state ---
-		if (currentAudio) {
-			currentAudio.pause();
-			currentAudio = null;
+		// Force reset of the audio player
+		audioPlayer.pause();
+		if (audioPlayer.src) {
+			URL.revokeObjectURL(audioPlayer.src);
 		}
+		audioPlayer.src = "";
 		isAudioPlaying = false;
-		// --- End of FIX #1 ---
 
 		const language = languageSelect.value;
 		const topic = topicInput.value;
-		const langKey = languageSelect.options[languageSelect.selectedIndex].getAttribute('data-translate');
 
 		if (!topic) {
 			alert(translateText('enterTopic'));
 			return;
 		}
-
 		if (GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
 			alert(translateText('apiKeyError'));
 			return;
 		}
 
 		clearState();
-
 		const existingReviewIndicator = lessonScreen.querySelector('.absolute.top-16.left-4');
-		if (existingReviewIndicator) {
-			existingReviewIndicator.remove();
-		}
+		if (existingReviewIndicator) existingReviewIndicator.remove();
 
 		loadingSpinner.classList.remove('hidden');
 		conversationContainer.innerHTML = '';
@@ -1415,32 +1420,21 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
 		try {
 			const data = await callGeminiAPI(prompt, { modelPreference: 'pro' });
-
 			const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
 			lessonPlan = JSON.parse(jsonString);
 
-			if (!lessonPlan.id) {
-				lessonPlan.id = `lesson-${language}-${Date.now()}`;
-			}
+			if (!lessonPlan.id) lessonPlan.id = `lesson-${language}-${Date.now()}`;
 
 			if (recognition) {
-				const langCode = getLangCode(language);
-				recognition.lang = langCode;
-				if (language === 'Japanese') {
-					console.warn('Japanese speech recognition may have limited accuracy. Consider using the visual verification.');
-				}
+				recognition.lang = getLangCode(language);
 			}
 
 			loadingSpinner.classList.add('hidden');
-			
 			stopTopicRotations();
-
 			landingScreen.classList.add('hidden');
 			lessonScreen.classList.remove('hidden');
-
 			fetchAndDisplayIllustration(lessonPlan.illustration_prompt);
 			startConversation();
-
 			saveState();
 
 		} catch (error) {
@@ -1451,6 +1445,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 			loadingSpinner.classList.add('hidden');
 		}
 	}
+   
     async function restoreConversation() {
         conversationContainer.innerHTML = ''; // Clear previous conversation
         for (const [index, turn] of lessonPlan.dialogue.entries()) {
@@ -1548,65 +1543,42 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     let isAudioPlaying = false;
 
     async function playLineAudio(text, party = 'B') {
-        try {
-            const cleanText = removeParentheses(text);
-            const audioBlob = await fetchPartnerAudio(cleanText, party);
-            const audioUrl = URL.createObjectURL(audioBlob);
-            const audio = new Audio(audioUrl);
-            audio.playbackRate = parseFloat(audioSpeedSelect.value);
+		// Abort any turn-advancement logic from the main lesson flow
+		audioController.abort();
+		audioController = new AbortController();
 
-            // Set up audio event listeners
-            audio.addEventListener('play', () => {
-                isAudioPlaying = true;
-                currentAudio = audio;
-            });
+		try {
+			const cleanText = removeParentheses(text);
+			const audioBlob = await fetchPartnerAudio(cleanText, party);
+			const audioUrl = URL.createObjectURL(audioBlob);
+			
+			if (audioPlayer.src) {
+				URL.revokeObjectURL(audioPlayer.src);
+			}
+			audioPlayer.src = audioUrl;
+			audioPlayer.playbackRate = parseFloat(audioSpeedSelect.value);
+			audioPlayer.load();
+			await audioPlayer.play();
+		} catch (error) {
+			console.error("Failed to fetch audio for playback:", error);
+		}
+	}
 
-            audio.addEventListener('ended', () => {
-                isAudioPlaying = false;
-                currentAudio = null;
-                URL.revokeObjectURL(audioUrl);
-            });
+	function playLineAudioDebounced(text, party = 'B') {
+		if (audioDebounceTimer) {
+			clearTimeout(audioDebounceTimer);
+		}
 
-            audio.addEventListener('error', (error) => {
-                console.error("Audio playback failed:", error);
-                isAudioPlaying = false;
-                currentAudio = null;
-                URL.revokeObjectURL(audioUrl);
-            });
+		if (!audioPlayer.paused) {
+			audioPlayer.pause();
+		}
 
-            audio.play().catch(error => {
-                console.error("Audio playback failed:", error);
-                isAudioPlaying = false;
-                currentAudio = null;
-                URL.revokeObjectURL(audioUrl);
-            });
-        } catch (error) {
-            console.error("Failed to fetch audio for playback:", error);
-        }
-    }
-
-    // Debounced version of playLineAudio
-    function playLineAudioDebounced(text, party = 'B') {
-        // Clear any existing debounce timer
-        if (audioDebounceTimer) {
-            clearTimeout(audioDebounceTimer);
-        }
-
-        // Stop current audio if playing
-        if (currentAudio && isAudioPlaying) {
-            currentAudio.pause();
-            currentAudio.currentTime = 0;
-            isAudioPlaying = false;
-            currentAudio = null;
-        }
-
-        // Set new debounce timer
-        audioDebounceTimer = setTimeout(() => {
-            playLineAudio(text, party);
-            audioDebounceTimer = null;
-        }, 300); // 300ms debounce delay
-    }
-
+		audioDebounceTimer = setTimeout(() => {
+			playLineAudio(text, party);
+			audioDebounceTimer = null;
+		}, 300);
+	}
+	
     // Add variables to track sentence-by-sentence recording
     let currentSentences = [];
     let currentSentenceIndex = 0;
@@ -1662,187 +1634,103 @@ Now, provide the JSON array for the given text.
             return [cleanText];
         }
     }
+	
+	async function playAudioForTurn(party, text) {
+		// Abort any previous listeners to prevent mix-ups
+		audioController.abort();
+		audioController = new AbortController();
+
+		const statusText = party === 'A' ? translateText('listenFirst') : translateText('partnerSpeaking');
+		micStatus.textContent = statusText;
+		micBtn.disabled = true;
+
+		try {
+			const cleanText = removeParentheses(text);
+			const audioBlob = await fetchPartnerAudio(cleanText, party);
+			const audioUrl = URL.createObjectURL(audioBlob);
+
+			if (audioPlayer.src) {
+				URL.revokeObjectURL(audioPlayer.src);
+			}
+			audioPlayer.src = audioUrl;
+			audioPlayer.playbackRate = parseFloat(audioSpeedSelect.value);
+			audioPlayer.load();
+			await audioPlayer.play();
+			isAudioPlaying = true;
+
+			// This listener will handle what happens after the audio finishes
+			audioPlayer.addEventListener('ended', () => {
+				isAudioPlaying = false;
+				URL.revokeObjectURL(audioUrl); // Clean up memory
+				if (party === 'A') {
+					enableUserMicForSentence();
+				} else { // Party 'B'
+					micStatus.textContent = translateText('audioFinished');
+					setTimeout(() => {
+						currentTurnIndex++;
+						advanceTurn();
+					}, 500);
+				}
+			}, { signal: audioController.signal, once: true });
+
+		} catch (error) {
+			isAudioPlaying = false;
+			console.error(`Audio error for party ${party}:`, error);
+			micStatus.textContent = translateText('audioError');
+			// Fallback logic to keep the lesson moving
+			if (party === 'A') {
+				enableUserMicForSentence();
+			} else {
+				setTimeout(() => {
+					currentTurnIndex++;
+					advanceTurn();
+				}, 1000);
+			}
+		}
+	}
 
     async function advanceTurn() {
-        // Validate lesson plan structure before checking completion
-        if (!lessonPlan || !lessonPlan.dialogue || !Array.isArray(lessonPlan.dialogue)) {
-            console.error('Invalid lesson plan structure detected');
-            micStatus.textContent = 'Lesson data error. Please start a new lesson.';
-            micBtn.disabled = true;
-            return;
-        }
+		if (!lessonPlan || !lessonPlan.dialogue) {
+			console.error('Invalid lesson plan structure detected');
+			return;
+		}
 
-        // Check if lesson is actually completed (not just marked as completed)
-        const isActuallyCompleted = currentTurnIndex >= lessonPlan.dialogue.length;
-        
-        if (isActuallyCompleted) {
-            micStatus.textContent = translateText('lessonComplete');
-            micBtn.disabled = true;
+		const isActuallyCompleted = currentTurnIndex >= lessonPlan.dialogue.length;
 
-            // Save completed lesson to history BEFORE clearing state
-            const selectedLanguage = languageSelect.value;
-            const originalTopic = topicInput.value;
+		if (isActuallyCompleted) {
+			micStatus.textContent = translateText('lessonComplete');
+			micBtn.disabled = true;
+			lessonPlan.isCompleted = true;
+			lessonPlan.completedAt = new Date().toISOString();
+			saveLessonToHistory(lessonPlan, languageSelect.value, topicInput.value);
+			setTimeout(() => {
+				showReviewModeUI(languageSelect.value);
+				saveState();
+			}, 500);
+			return;
+		}
 
-            // Mark the lesson as completed in the lesson plan
-            lessonPlan.isCompleted = true;
-            lessonPlan.completedAt = new Date().toISOString();
+		const currentTurnData = lessonPlan.dialogue[currentTurnIndex];
+		document.querySelectorAll('.dialogue-line.active, .sentence-span.active-sentence').forEach(el => el.classList.remove('active', 'active-sentence'));
 
-            saveLessonToHistory(lessonPlan, selectedLanguage, originalTopic);
+		const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
+		currentLineEl.classList.add('active');
+		currentLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-            // Show review mode UI immediately after lesson completion
-            setTimeout(() => {
-                showReviewModeUI(selectedLanguage);
-                // Save state with completed lesson
-                saveState();
-            }, 500);
+		saveState();
 
-            return;
-        }
-
-        const currentTurnData = lessonPlan.dialogue[currentTurnIndex];
-
-        // Clear all previous highlighting
-        document.querySelectorAll('.dialogue-line.active').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
-
-        const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
-        currentLineEl.classList.add('active');
-        currentLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-        // Save state after turn advance
-        saveState();
-
-        if (currentTurnData.party === 'A') { // User's turn
-            // Split the line into sentences for sentence-by-sentence recording
-            const currentLanguage = languageSelect.value;
-
-            // Always use original text for display and sentence splitting
-            const cleanText = removeParentheses(currentTurnData.line.display);
-            currentSentences = await splitIntoSentences(cleanText);
-            currentSentenceIndex = 0;
-
-            micBtn.disabled = true;
-            micStatus.textContent = translateText('listenFirst');
-
-            try {
-                // Stop any currently playing audio before starting new one
-                if (currentAudio && isAudioPlaying) {
-                    currentAudio.pause();
-                    currentAudio.currentTime = 0;
-                    isAudioPlaying = false;
-                    currentAudio = null;
-                }
-
-                // Play user's line first for them to hear (using party A voice)
-                const audioBlob = await fetchPartnerAudio(cleanText, 'A');
-                const audioUrl = URL.createObjectURL(audioBlob);
-                const audio = new Audio(audioUrl);
-
-                audio.addEventListener('loadeddata', () => {
-                    audio.playbackRate = parseFloat(audioSpeedSelect.value);
-                    audio.play().catch(error => {
-                        console.error("Audio play failed:", error);
-                        enableUserMicForSentence();
-                    });
-                });
-
-                audio.addEventListener('play', () => {
-                    isAudioPlaying = true;
-                    currentAudio = audio;
-                });
-
-                audio.addEventListener('ended', () => {
-                    isAudioPlaying = false;
-                    currentAudio = null;
-                    URL.revokeObjectURL(audioUrl);
-                    enableUserMicForSentence();
-                });
-
-                audio.addEventListener('error', (e) => {
-                    console.error("Audio error:", e);
-                    isAudioPlaying = false;
-                    currentAudio = null;
-                    URL.revokeObjectURL(audioUrl);
-                    enableUserMicForSentence();
-                });
-
-            } catch (error) {
-                console.error("Failed to fetch user audio:", error);
-                enableUserMicForSentence();
-            }
-        } else { // Partner's turn
-            // Reset sentence tracking for partner turns
-            currentSentences = [];
-            currentSentenceIndex = 0;
-
-            micBtn.disabled = true;
-            micStatus.textContent = translateText('partnerSpeaking');
-            try {
-                const cleanText = removeParentheses(currentTurnData.line.display);
-                // Stop any currently playing audio before starting new one
-                if (currentAudio && isAudioPlaying) {
-                    currentAudio.pause();
-                    currentAudio.currentTime = 0;
-                    isAudioPlaying = false;
-                    currentAudio = null;
-                }
-
-                const audioBlob = await fetchPartnerAudio(cleanText, 'B');
-                const audioUrl = URL.createObjectURL(audioBlob);
-                const audio = new Audio(audioUrl);
-
-                // Ensure audio loads before playing
-                audio.addEventListener('loadeddata', () => {
-                    audio.playbackRate = parseFloat(audioSpeedSelect.value);
-                    audio.play().catch(error => {
-                        console.error("Audio play failed:", error);
-                        // Continue to next turn even if audio fails
-                        setTimeout(() => {
-                            currentTurnIndex++;
-                            advanceTurn();
-                        }, 2000);
-                    });
-                });
-
-                audio.addEventListener('play', () => {
-                    isAudioPlaying = true;
-                    currentAudio = audio;
-                });
-
-                audio.addEventListener('ended', () => {
-                    isAudioPlaying = false;
-                    currentAudio = null;
-                    URL.revokeObjectURL(audioUrl);
-                    micStatus.textContent = translateText('audioFinished');
-                    setTimeout(() => {
-                        currentTurnIndex++;
-                        advanceTurn();
-                    }, 500);
-                });
-
-                audio.addEventListener('error', (e) => {
-                    console.error("Audio error:", e);
-                    isAudioPlaying = false;
-                    currentAudio = null;
-                    URL.revokeObjectURL(audioUrl);
-                    micStatus.textContent = translateText('audioError');
-                    setTimeout(async () => {
-                        currentTurnIndex++;
-                        advanceTurn();
-                    }, 1000);
-                });
-
-            } catch (error) {
-                console.error("Failed to fetch partner audio:", error);
-                micStatus.textContent = translateText('audioUnavailable');
-                setTimeout(() => {
-                    currentTurnIndex++;
-                    advanceTurn();
-                }, 1500);
-            }
-        }
-    }
-
+		if (currentTurnData.party === 'A') { // User's turn
+			const cleanText = removeParentheses(currentTurnData.line.display);
+			currentSentences = await splitIntoSentences(cleanText);
+			currentSentenceIndex = 0;
+			playAudioForTurn('A', cleanText);
+		} else { // Partner's turn
+			currentSentences = [];
+			currentSentenceIndex = 0;
+			playAudioForTurn('B', currentTurnData.line.display);
+		}
+	}
+	
     function enableUserMicForSentence() {
         micBtn.disabled = false;
 
