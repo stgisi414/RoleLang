@@ -4,6 +4,7 @@ body {
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    padding-bottom: 50px; /* Add space for sticky footer */
 }
 
 @keyframes fadeIn {
