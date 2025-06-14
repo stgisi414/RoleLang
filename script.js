@@ -1801,7 +1801,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                     if (currentLanguage === 'Chinese' && speechAttempts >= 3) {
                         const skipBtn = document.createElement('button');
                         skipBtn.className = 'ml-2 bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm';
-                        skipBtn.textContent = '跳过 (Skip)';
+                        skipBtn.textContent = translateText('skip') || '跳过 (Skip)';
                         skipBtn.onclick = () => {
                             speechAttempts = 0;
                             skipBtn.remove();
@@ -2316,7 +2316,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
         const backBtn = document.createElement('button');
         backBtn.id = 'back-to-landing-btn';
         backBtn.className = 'absolute top-4 left-4 bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-colors text-sm';
-        backBtn.innerHTML = '<i class="fas fa-arrow-left mr-2"></i>Back';
+        backBtn.innerHTML = `<i class="fas fa-arrow-left mr-2"></i>${translateText('back') || 'Back'}`;
         backBtn.onclick = () => {
             // Clear lesson state and return to landing
             clearState();

@@ -71,6 +71,8 @@ const translations = {
     lessonCompleteReview: "Lesson Complete!",
     vocabQuiz: "Vocab Quiz", 
     reviewModeActive: "Review mode is now active! Use the vocab quiz button above.",
+    back: "Back",
+    skip: "Skip",
     topics: {
       beginner: [
         "Introducing yourself", "Ordering food at a restaurant", "Asking for directions", "Shopping for clothes",
@@ -198,6 +200,8 @@ const translations = {
     lessonCompleteReview: "¡Lección Completa!",
     vocabQuiz: "Quiz de Vocabulario",
     reviewModeActive: "¡El modo de revisión está ahora activo! Usa el botón de quiz de vocabulario arriba.",
+    back: "Atrás",
+    skip: "Saltar",
     topics: {
       beginner: [
         "Presentándote", "Pidiendo comida en un restaurante", "Pidiendo direcciones", "Comprando ropa",
@@ -310,6 +314,8 @@ const translations = {
     lessonCompleteReview: "Leçon Terminée!",
     vocabQuiz: "Quiz de Vocabulaire",
     reviewModeActive: "Le mode de révision est maintenant actif! Utilisez le bouton de quiz de vocabulaire ci-dessus.",
+    back: "Retour",
+    skip: "Passer",
     topics: {
       beginner: [
         "Se présenter", "Commander de la nourriture au restaurant", "Demander son chemin", "Acheter des vêtements",
@@ -419,6 +425,8 @@ const translations = {
     lessonCompleteReview: "Lektion Abgeschlossen!",
     vocabQuiz: "Vokabelquiz",
     reviewModeActive: "Der Wiederholungsmodus ist jetzt aktiv! Verwenden Sie die Vokabelquiz-Schaltfläche oben.",
+    back: "Zurück",
+    skip: "Überspringen",
     topics: {
       beginner: [
         "Sich vorstellen", "Essen im Restaurant bestellen", "Nach dem Weg fragen", "Kleidung einkaufen",
@@ -533,6 +541,8 @@ const translations = {
     lessonCompleteReview: "Lezione Completata!",
     vocabQuiz: "Quiz di Vocabolario",
     reviewModeActive: "La modalità revisione è ora attiva! Usa il pulsante del quiz di vocabolario sopra.",
+    back: "Indietro",
+    skip: "Salta",
     topics: {
       beginner: [
         "Presentarsi", "Ordinare cibo al ristorante", "Chiedere indicazioni", "Comprare vestiti",
@@ -647,6 +657,8 @@ const translations = {
     lessonCompleteReview: "课程完成！",
     vocabQuiz: "词汇测验",
     reviewModeActive: "复习模式现已激活！请使用上方的词汇测验按钮。",
+    back: "返回",
+    skip: "跳过",
     topics: {
       beginner: [
         "自我介绍", "在餐厅点餐", "问路", "买衣服",
@@ -761,6 +773,8 @@ const translations = {
     lessonCompleteReview: "レッスン完了！",
     vocabQuiz: "語彙クイズ",
     reviewModeActive: "復習モードが有効になりました！上の語彙クイズボタンをご利用ください。",
+    back: "戻る",
+    skip: "スキップ",
     topics: {
       beginner: [
         "自己紹介", "レストランで食事を注文", "道を尋ねる", "服を買う",
@@ -875,6 +889,8 @@ const translations = {
     lessonCompleteReview: "레슨 완료!",
     vocabQuiz: "어휘 퀴즈",
     reviewModeActive: "복습 모드가 활성화되었습니다! 위의 어휘 퀴즈 버튼을 사용하세요.",
+    back: "뒤로",
+    skip: "건너뛰기",
     topics: {
       beginner: [
         "자기소개하기", "식당에서 음식 주문하기", "길 묻기", "옷 쇼핑하기",
