@@ -96,6 +96,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 	
+	let preFetchedFirstAudioBlob = null;
+	
 	let audioPlayer = new Audio();
 	let audioController = new AbortController();
 
@@ -111,9 +113,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Event listener for the new overlay button
     confirmStartLessonBtn.addEventListener('click', () => {
-        startLessonOverlay.classList.add('hidden');
-        startConversation(); // This now starts the lesson with a guaranteed user click
-    });
+		document.getElementById('start-lesson-overlay').classList.add('hidden');
+
+		if (preFetchedFirstAudioBlob) {
+			const audioUrl = URL.createObjectURL(preFetchedFirstAudioBlob);
+			const audio = new Audio(audioUrl);
+			audio.playbackRate = parseFloat(audioSpeedSelect.value);
+			audio.play();
+
+			// Set the active highlight on the first line
+			const firstLineEl = document.getElementById('turn-0');
+			if (firstLineEl) {
+				firstLineEl.classList.add('active');
+				firstLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			}
+
+			// IMPORTANT: The rest of the lesson starts only after the first audio finishes.
+			audio.addEventListener('ended', () => {
+				URL.revokeObjectURL(audioUrl);
+				advanceTurn(1); // Start the lesson flow from the SECOND turn (index 1)
+			});
+		} else {
+			// Fallback if pre-fetching failed for some reason
+			advanceTurn(0);
+		}
+	});
 
     function loadState() {
         try {
@@ -1395,9 +1419,11 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     // --- Core Functions ---
 
 	async function initializeLesson() {
+		// Clear any previously fetched audio
+		preFetchedFirstAudioBlob = null;
+
 		const language = languageSelect.value;
 		const topic = topicInput.value;
-
 		if (!topic) {
 			alert(translateText('enterTopic'));
 			return;
@@ -1425,10 +1451,15 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 			lessonPlan = JSON.parse(jsonString);
 
 			if (!lessonPlan.id) lessonPlan.id = `lesson-${language}-${Date.now()}`;
-
-			if (recognition) {
-				recognition.lang = getLangCode(language);
+			if (recognition) recognition.lang = getLangCode(language);
+			
+			// --- NEW PRE-FETCH LOGIC ---
+			if (lessonPlan.dialogue && lessonPlan.dialogue.length > 0) {
+				const firstTurn = lessonPlan.dialogue[0];
+				// Fetch the audio for the very first line of dialogue
+				preFetchedFirstAudioBlob = await fetchPartnerAudio(removeParentheses(firstTurn.line.display), firstTurn.party);
 			}
+			// --- END OF PRE-FETCH LOGIC ---
 
 			loadingSpinner.classList.add('hidden');
 			stopTopicRotations();
@@ -1436,11 +1467,11 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 			lessonScreen.classList.remove('hidden');
 			fetchAndDisplayIllustration(lessonPlan.illustration_prompt);
 
-			// --- THIS IS THE FIX ---
-			// Instead of starting the lesson, show the overlay that requires a click.
-			const startLessonOverlay = document.getElementById('start-lesson-overlay');
-			startLessonOverlay.classList.remove('hidden');
-			// --- END OF FIX ---
+			// Render the conversation UI immediately
+			startConversation();
+
+			// Now show the overlay, since the first audio clip is ready
+			document.getElementById('start-lesson-overlay').classList.remove('hidden');
 
 			saveState();
 
@@ -1529,21 +1560,13 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     }
 
     function startConversation() {
+		// This function's ONLY job now is to render the UI.
+		// Audio and turn advancement is handled by the overlay button click.
 		currentTurnIndex = 0;
 		restoreConversation();
 		addBackToLandingButton();
-		
-		if (!lessonPlan.isCompleted) {
-			micBtn.disabled = false;
-			micStatus.textContent = translateText('micStatus');
-			
-			// --- FIX #2: Defer the first turn to prevent a race condition ---
-			setTimeout(() => {
-				advanceTurn();
-			}, 100); // A 100ms delay gives the browser time to render UI changes
-		}
 	}
-
+	
     // Global audio state management
     let currentAudio = null;
     let audioDebounceTimer = null;
@@ -1696,45 +1719,80 @@ Now, provide the JSON array for the given text.
 		}
 	}
 
-    async function advanceTurn() {
+    async function advanceTurn(startIndex = 0) {
+		currentTurnIndex = startIndex; // Set the turn index to where we need to start
+
 		if (!lessonPlan || !lessonPlan.dialogue) {
 			console.error('Invalid lesson plan structure detected');
 			return;
 		}
 
-		const isActuallyCompleted = currentTurnIndex >= lessonPlan.dialogue.length;
-
-		if (isActuallyCompleted) {
+		// Check for lesson completion
+		if (currentTurnIndex >= lessonPlan.dialogue.length) {
 			micStatus.textContent = translateText('lessonComplete');
 			micBtn.disabled = true;
 			lessonPlan.isCompleted = true;
-			lessonPlan.completedAt = new Date().toISOString();
 			saveLessonToHistory(lessonPlan, languageSelect.value, topicInput.value);
-			setTimeout(() => {
-				showReviewModeUI(languageSelect.value);
-				saveState();
-			}, 500);
+			showReviewModeUI(languageSelect.value);
+			saveState();
 			return;
 		}
 
 		const currentTurnData = lessonPlan.dialogue[currentTurnIndex];
-		document.querySelectorAll('.dialogue-line.active, .sentence-span.active-sentence').forEach(el => el.classList.remove('active', 'active-sentence'));
 
+		// Highlight the current line
+		document.querySelectorAll('.dialogue-line.active').forEach(el => el.classList.remove('active'));
+		document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
 		const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
 		currentLineEl.classList.add('active');
 		currentLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
 		saveState();
 
+		// The rest of the function proceeds as normal, handling subsequent turns
 		if (currentTurnData.party === 'A') { // User's turn
 			const cleanText = removeParentheses(currentTurnData.line.display);
 			currentSentences = await splitIntoSentences(cleanText);
 			currentSentenceIndex = 0;
-			playAudioForTurn('A', cleanText);
+			micBtn.disabled = true;
+			micStatus.textContent = translateText('listenFirst');
+			try {
+				const audioBlob = await fetchPartnerAudio(cleanText, 'A');
+				const audioUrl = URL.createObjectURL(audioBlob);
+				const audio = new Audio(audioUrl);
+				audio.playbackRate = parseFloat(audioSpeedSelect.value);
+				audio.play();
+				audio.onended = () => {
+					URL.revokeObjectURL(audioUrl);
+					enableUserMicForSentence();
+				};
+			} catch (error) {
+				console.error("Failed to fetch user audio:", error);
+				enableUserMicForSentence();
+			}
 		} else { // Partner's turn
-			currentSentences = [];
-			currentSentenceIndex = 0;
-			playAudioForTurn('B', currentTurnData.line.display);
+			micBtn.disabled = true;
+			micStatus.textContent = translateText('partnerSpeaking');
+			try {
+				const cleanText = removeParentheses(currentTurnData.line.display);
+				const audioBlob = await fetchPartnerAudio(cleanText, 'B');
+				const audioUrl = URL.createObjectURL(audioBlob);
+				const audio = new Audio(audioUrl);
+				audio.playbackRate = parseFloat(audioSpeedSelect.value);
+				audio.play();
+				audio.onended = () => {
+					URL.revokeObjectURL(audioUrl);
+					micStatus.textContent = translateText('audioFinished');
+					setTimeout(() => {
+						advanceTurn(currentTurnIndex + 1);
+					}, 500);
+				};
+			} catch (error) {
+				console.error("Failed to fetch partner audio:", error);
+				micStatus.textContent = translateText('audioUnavailable');
+				setTimeout(() => {
+					advanceTurn(currentTurnIndex + 1);
+				}, 1500);
+			}
 		}
 	}
 	
