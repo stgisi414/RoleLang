@@ -1,0 +1,33 @@
+Instructions for You:
+Download the Logo: First, download one of the logo images generated for you.
+Upload to Replit: Upload the downloaded image file into a suitable folder in your Replit project. Common locations are an assets, public, static, or images folder. For this prompt, let's assume you place it at assets/logo.png.
+Copy and Paste the Prompt: Copy the prompt below and paste it into the Replit Assistant chat. Remember to change assets/logo.png if you placed your file somewhere else.
+Prompt for Replit Assistant
+Hello! Please help me integrate my new company logo into my project. I have uploaded the logo file to assets/logo.png.
+
+Here are the tasks:
+
+1. Update the Favicon:
+
+Find the main index.html file (it might be in the root directory, public/, or src/).
+In the <head> section, locate the <link rel="icon" ...> tag.
+Update its href attribute to point to /assets/logo.png.
+If the tag doesn't exist, please add <link rel="icon" href="/assets/logo.png"> to the <head>.
+2. Add Logo to the Welcome Banner:
+
+Identify the HTML element that serves as the main welcome banner or hero section. It is likely a <header> or a <div an id="welcome-banner"> or a <section class="hero">.
+Insert an <img> tag within this banner to display the logo. The HTML should look something like this: <img src="/assets/logo.png" alt="Company Logo" class="banner-logo">.
+In the corresponding CSS file, please add styling for the .banner-logo class to ensure it's displayed correctly. A good starting point would be:
+CSS
+
+.banner-logo {
+  height: 50px; /* or a suitable size */
+  width: auto;
+  margin-right: 15px; /* Adjust as needed */
+}
+3. Update Progressive Web App (PWA) Icons:
+
+Check for a manifest.json or manifest.webmanifest file in the project.
+If it exists, find the icons array inside it.
+Update the src path for each icon entry to point to /assets/logo.png. You can use the same path for all specified sizes for now.
+Please apply these changes. If you are uncertain about any of the file paths or element selectors, let me know.
