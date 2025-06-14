@@ -1,3 +1,4 @@
+This code adds `stopwords.js` to the HTML file to manage short stop words across different languages.
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    
+
     <!-- Primary Meta Tags -->
     <title>RoleLang | AI-Powered Language Learning Through Roleplay</title>
     <meta name="title" content="RoleLang | AI-Powered Language Learning Through Roleplay">
@@ -15,7 +16,7 @@
     <meta name="robots" content="index, follow">
     <meta name="language" content="en">
     <meta name="theme-color" content="#38bdf8">
-    
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://rolelang.xyz/">
@@ -27,7 +28,17 @@
     <meta property="og:image:alt" content="RoleLang Logo - AI Language Learning Platform">
     <meta property="og:site_name" content="RoleLang">
     <meta property="og:locale" content="en_US">
-    
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://rolelang.xyz/">
+    <meta property="twitter:title" content="RoleLang | AI-Powered Language Learning Through Roleplay">
+    <meta property="og:description" content="Master languages through immersive AI roleplay scenarios. Practice real conversations in 8+ languages with interactive lessons and voice recognition.">
+    <meta property="og:image" content="https://rolelang.xyz/assets/logo.png">
+    <meta property="og:image:alt" content="RoleLang Logo - AI Language Learning Platform">
+    <meta property="og:site_name" content="RoleLang">
+    <meta property="og:locale" content="en_US">
+
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://rolelang.xyz/">
@@ -37,13 +48,13 @@
     <meta property="twitter:image:alt" content="RoleLang Logo - AI Language Learning Platform">
     <meta property="twitter:creator" content="@langcampus">
     <meta property="twitter:site" content="@langcampus">
-    
+
     <!-- Additional Meta Tags -->
     <meta name="application-name" content="RoleLang">
     <meta name="format-detection" content="telephone=no">
     <meta name="msapplication-config" content="browserconfig.xml">
     <meta name="msapplication-tap-highlight" content="no">
-    
+
     <!-- Structured Data / JSON-LD -->
     <script type="application/ld+json">
     {
@@ -75,10 +86,10 @@
       "inLanguage": ["en", "es", "fr", "de", "it", "ja", "zh", "ko"]
     }
     </script>
-    
+
     <!-- Web App Manifest -->
     <link rel="manifest" href="manifest.json">
-    
+
     <!-- Favicon and Icons -->
     <link rel="icon" type="image/png" sizes="32x32" href="assets/logo.png">
     <link rel="icon" type="image/png" sizes="16x16" href="assets/logo.png">
@@ -94,7 +105,7 @@
     <link rel="apple-touch-icon" sizes="57x57" href="assets/logo.png">
     <link rel="mask-icon" href="assets/logo.png" color="#38bdf8">
     <link rel="shortcut icon" href="favicon.ico">
-    
+
     <!-- Additional PWA Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -104,33 +115,33 @@
     <meta name="msapplication-TileColor" content="#38bdf8">
     <meta name="msapplication-navbutton-color" content="#38bdf8">
     <meta name="msapplication-starturl" content="/">
-    
+
     <!-- Preconnect to external domains for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdn.tailwindcss.com">
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-    
+
     <!-- DNS Prefetch for external resources -->
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
     <link rel="dns-prefetch" href="//cdn.tailwindcss.com">
     <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
-    
+
     <!-- Canonical URL -->
     <link rel="canonical" href="https://rolelang.xyz/">
-    
+
     <!-- Security Headers -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; img-src 'self' https: data: blob:;">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
-    
+
     <!-- Resource Hints -->
     <link rel="prefetch" href="translations.js">
     <link rel="prefetch" href="names.js">
     <link rel="prefetch" href="script.js">
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome for Icons -->
@@ -141,6 +152,10 @@
     <script src="translations.js"></script>
     <!-- Character Names -->
     <script src="names.js"></script>
+    <!-- Stopwords -->
+    <script src="stopwords.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="script.js"></script>
 </head>
 <body class="grid-background min-h-screen flex items-center justify-center p-4">
 
@@ -437,7 +452,7 @@
                     <i class="fas fa-graduation-cap text-4xl text-cyan-400 mb-3"></i>
                     <h2 class="text-2xl font-bold text-cyan-300" data-translate="howItWorks">How RoleLang Works</h2>
                 </div>
-                
+
                 <div class="space-y-6">
                     <!-- Why Section -->
                     <div class="bg-purple-600/20 border border-purple-600/30 rounded-lg p-4">

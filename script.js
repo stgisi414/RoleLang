@@ -591,12 +591,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add review indicator with vocabulary quiz button
         const reviewIndicator = document.createElement('div');
         reviewIndicator.className = 'review-mode-indicator absolute top-16 left-4 bg-purple-600 text-white px-3 py-1 rounded-lg text-sm z-10 flex items-center space-x-2';
-        
+
         // Use currentTranslations directly to ensure we get the most up-to-date translations
         const reviewModeText = currentTranslations.reviewMode || translations.en.reviewMode;
         const lessonCompleteText = currentTranslations.lessonCompleteReview || translations.en.lessonCompleteReview;
         const vocabQuizText = currentTranslations.vocabQuiz || translations.en.vocabQuiz;
-        
+
         reviewIndicator.innerHTML = `
             <span><i class="fas fa-history mr-2"></i>${reviewModeText} - ${lessonCompleteText}</span>
             <button id="vocab-quiz-btn" class="bg-purple-700 hover:bg-purple-800 px-2 py-1 rounded text-xs transition-colors">
@@ -613,7 +613,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update mic status to show lesson is complete and review mode is active
         const lessonCompleteStatusText = currentTranslations.lessonComplete || translations.en.lessonComplete;
         const reviewModeActiveText = currentTranslations.reviewModeActive || translations.en.reviewModeActive;
-        
+
         micStatus.innerHTML = `
             <div class="text-center">
                 <div class="text-green-400 font-bold mb-2">
@@ -818,29 +818,29 @@ document.addEventListener('DOMContentLoaded', () => {
     function rotateSituations() {
         // All available situation categories
         const allSituations = ['realistic', 'futuristic', 'historical', 'drama', 'comedy', 'horror'];
-        
+
         // Hide all situation categories first
         const allSituationElements = document.querySelectorAll('.situation-category, .mb-4[data-category]');
         allSituationElements.forEach(category => {
             category.style.display = 'none';
         });
-        
+
         // Also hide the non-data-category situation containers
         const realisticEl = document.querySelector('.mb-4:has(#realistic-container)');
         const futuristicEl = document.querySelector('.mb-4:has(#futuristic-container)');
         if (realisticEl) realisticEl.style.display = 'none';
         if (futuristicEl) futuristicEl.style.display = 'none';
-        
+
         // Randomly select 3 categories to display
         const shuffledSituations = [...allSituations].sort(() => 0.5 - Math.random());
         const selectedSituations = shuffledSituations.slice(0, 3);
-        
+
         console.log('Selected situations:', selectedSituations); // Debug log
-        
+
         // Show selected categories and populate them
         selectedSituations.forEach((situation, index) => {
             let categoryElement;
-            
+
             // Handle the different ways categories are structured in HTML
             if (situation === 'realistic') {
                 categoryElement = document.querySelector('.mb-4:has(#realistic-container)') || 
@@ -849,126 +849,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 categoryElement = document.querySelector('.mb-4:has(#futuristic-container)') || 
                                  document.querySelector(`[data-category="${situation}"]`);
             } else {
-                categoryElement = document.querySelector(`[data-category="${situation}"]`);
-            }
-            
-            const container = document.getElementById(`${situation}-container`);
-            
-            if (categoryElement && container) {
-                categoryElement.style.display = 'block';
-                
-                // Stagger the start of each container's animation
-                setTimeout(() => {
-                    animateTopicsOut(container);
-
-                    setTimeout(() => {
-                        const newTopics = getRandomSituationTopics(situation, 4);
-                        animateTopicsIn(container, newTopics, situation);
-                    }, 500);
-                }, index * 150);
-            }
-        });
-    }
-
-    function getRandomSituationTopics(situation, count = 4) {
-        const topicPools = getTopicPools();
-        const pool = topicPools[situation] || [];
-        const shuffled = [...pool].sort(() => 0.5 - Math.random());
-        return shuffled.slice(0, count);
-    }
-
-    function startSituationsRotations() {
-        // Initial population with staggered start
-        setTimeout(() => {
-            rotateSituations();
-        }, 500); // Small delay for initial load
-
-        // Set up intervals for each situation (8 seconds for smoother experience)
-        topicRotationIntervals.push(setInterval(rotateSituations, 8000));
-    }
-
-    function stopTopicRotations() {
-        topicRotationIntervals.forEach(interval => clearInterval(interval));
-        topicRotationIntervals = [];
-    }
-
-    // --- Vocabulary Quiz Functions ---
-
-    function extractVocabularyFromDialogue() {
-        if (!lessonPlan || !lessonPlan.dialogue) return [];
-        
-        const vocabulary = [];
-        const seenWords = new Set();
-        
-        lessonPlan.dialogue.forEach(turn => {
-            if (turn.line && turn.line.display) {
-                const cleanText = removeParentheses(turn.line.display);
-                const translation = extractTranslation(turn.line.display);
-                
-                if (translation) {
-                    const word = cleanText.replace(/[.,!?;:"'`´''""。！？]/g, '').trim();
-                    const translationClean = translation.replace(/[()]/g, '').trim();
-                    
-                    if (word && translationClean && !seenWords.has(word.toLowerCase())) {
-                        vocabulary.push({
-                            word: word,
-                            translation: translationClean,
-                            context: turn.line.display
-                        });
-                        seenWords.add(word.toLowerCase());
-                    }
-                }
-            }
-        });
-        
-        return vocabulary.slice(0, 10); // Limit to 10 vocabulary items
-    }
-
-    function extractTranslation(text) {
-        const match = text.match(/\(([^)]+)\)/);
-        return match ? match[1] : null;
-    }
-
-    async function generateVocabularyTranslations(vocabulary, targetLanguage) {
-        const nativeLangCode = nativeLang || 'en';
-        const langCodeToName = {
-            'en': 'English',
-            'es': 'Spanish',
-            'fr': 'French',
-            'de': 'German',
-            'it': 'Italian',
-            'zh': 'Chinese',
-            'ja': 'Japanese',
-            'ko': 'Korean'
-        };
-        const nativeLangName = langCodeToName[nativeLangCode] || 'English';
-
-        // If native language is English, just return the original vocabulary
-        if (nativeLangName === 'English') {
-            return vocabulary;
-        }
-
-        try {
-            const vocabList = vocabulary.map(v => v.word).join(', ');
-            
-            const prompt = `
-You are a vocabulary translator. Your task is to translate words from ${targetLanguage} into ${nativeLangName}.
-
-Please translate each of the following words/phrases from ${targetLanguage} into ${nativeLangName}. 
-Return ONLY a JSON array with objects containing "word" (original word) and "translation" (translation in ${nativeLangName}).
-
-Words to translate: ${vocabList}
-
-Example format:
-[
-  {"word": "originalWord1", "translation": "translationInNativeLanguage1"},
-  {"word": "originalWord2", "translation": "translationInNativeLanguage2"}
-]
-
-IMPORTANT: Return ONLY the JSON array, no other text.`;
-
-            const data = await callGeminiAPI(prompt, { modelPreference: 'lite' });
-            const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+                categoryElement = document.querySelector(`[data-category="${json|```/g, '').trim();
             const translations = JSON.parse(jsonString);
 
             // Merge translations with original vocabulary
@@ -990,7 +871,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
     function startVocabularyQuiz(language) {
         const vocabulary = extractVocabularyFromDialogue();
-        
+
         if (vocabulary.length === 0) {
             alert(translateText('noVocabularyFound') || 'No vocabulary with translations found in this lesson.');
             return;
@@ -1004,10 +885,10 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
         const quizModal = document.createElement('div');
         quizModal.id = 'vocab-quiz-modal';
         quizModal.className = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4';
-        
+
         const quizContent = document.createElement('div');
         quizContent.className = 'bg-gray-800 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto glassmorphism';
-        
+
         // Show loading while generating translations
         quizContent.innerHTML = `
             <div class="text-center">
@@ -1015,7 +896,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                 <p class="text-white">Generating quiz questions...</p>
             </div>
         `;
-        
+
         // Shuffle vocabulary and create quiz questions
         const shuffledVocab = [...vocabulary].sort(() => 0.5 - Math.random());
         let currentQuestion = 0;
@@ -1061,7 +942,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                         </div>
                     </div>
                 `;
-                
+
                 document.getElementById('retry-quiz-btn').addEventListener('click', async () => {
                     currentQuestion = 0;
                     score = 0;
@@ -1074,7 +955,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                     }
                     updateQuizContent();
                 });
-                
+
                 document.getElementById('close-quiz-btn').addEventListener('click', () => {
                     document.body.removeChild(quizModal);
                 });
@@ -1134,12 +1015,12 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                 option.addEventListener('click', () => {
                     const selectedAnswer = option.dataset.answer;
                     const isCorrect = selectedAnswer === correctAnswer;
-                    
+
                     // Disable all options
                     options.forEach(opt => {
                         opt.classList.remove('hover:bg-gray-600');
                         opt.style.cursor = 'not-allowed';
-                        
+
                         if (opt.dataset.answer === correctAnswer) {
                             opt.classList.add('bg-green-600');
                         } else if (opt === option && !isCorrect) {
@@ -1168,7 +1049,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
         quizModal.appendChild(quizContent);
         document.body.appendChild(quizModal);
-        
+
         updateQuizContent();
 
         // Close modal when clicking outside
@@ -1180,7 +1061,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     }
 
     // --- Central Gemini API Function ---
-    
+
     async function callGeminiAPI(prompt, options = {}) {
         const { 
             modelPreference = 'pro',
@@ -1206,7 +1087,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
             if (!modelName) continue;
 
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
-            
+
             console.log(`Attempting to call Gemini API with model: ${modelName}`);
 
             for (let attempt = 1; attempt <= retryAttempts; attempt++) {
@@ -1226,7 +1107,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                     }
 
                     const data = await response.json();
-                    
+
                     if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
                         throw new Error('Invalid response structure from Gemini API');
                     }
@@ -1237,7 +1118,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                 } catch (error) {
                     console.warn(`Attempt ${attempt} failed for model ${modelName}:`, error.message);
                     lastError = error;
-                    
+
                     // Add exponential backoff for retries
                     if (attempt < retryAttempts) {
                         await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
@@ -1287,7 +1168,337 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
         try {
             const data = await callGeminiAPI(prompt, { modelPreference: 'pro' });
+
+            // Find the JSON part and parse it
+            const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|json|```/g, '').trim();
+            const translations = JSON.parse(jsonString);
+
+            // Merge translations with original vocabulary
+            const translatedVocabulary = vocabulary.map(vocabItem => {
+                const translationItem = translations.find(t => t.word === vocabItem.word);
+                return {
+                    ...vocabItem,
+                    nativeTranslation: translationItem ? translationItem.translation : vocabItem.translation
+                };
+            });
+
+            return translatedVocabulary;
+        } catch (error) {
+            console.error('Failed to generate native language translations:', error);
+            // Return original vocabulary as fallback
+            return vocabulary;
+        }
+    }
+
+    function startVocabularyQuiz(language) {
+        const vocabulary = extractVocabularyFromDialogue();
+
+        if (vocabulary.length === 0) {
+            alert(translateText('noVocabularyFound') || 'No vocabulary with translations found in this lesson.');
+            return;
+        }
+
+        createVocabularyQuizModal(vocabulary, language);
+    }
+
+    async function createVocabularyQuizModal(vocabulary, language) {
+        // Create quiz modal
+        const quizModal = document.createElement('div');
+        quizModal.id = 'vocab-quiz-modal';
+        quizModal.className = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4';
+
+        const quizContent = document.createElement('div');
+        quizContent.className = 'bg-gray-800 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto glassmorphism';
+
+        // Show loading while generating translations
+        quizContent.innerHTML = `
+            <div class="text-center">
+                <div class="loader mx-auto mb-4"></div>
+                <p class="text-white">Generating quiz questions...</p>
+            </div>
+        `;
+
+        // Shuffle vocabulary and create quiz questions
+        const shuffledVocab = [...vocabulary].sort(() => 0.5 - Math.random());
+        let currentQuestion = 0;
+        let score = 0;
+        let isQuizCompleted = false;
+        let vocabularyWithNativeTranslations = [];
+
+        // Generate translations for vocabulary using Gemini
+        try {
+            vocabularyWithNativeTranslations = await generateVocabularyTranslations(shuffledVocab, language);
+        } catch (error) {
+            console.error('Failed to generate vocabulary translations:', error);
+            // Fallback to English translations
+            vocabularyWithNativeTranslations = shuffledVocab;
+        }
+
+        function updateQuizContent() {
+            if (currentQuestion >= vocabularyWithNativeTranslations.length) {
+                // Quiz completed
+                isQuizCompleted = true;
+                const percentage = Math.round((score / vocabularyWithNativeTranslations.length) * 100);
+                quizContent.innerHTML = `
+                    
+
             
+                
+                    
+                        
+                            ${translateText('quizComplete') || 'Quiz Complete!'}
+                        
+                        
+                            ${percentage >= 80 ? '🎉' : percentage >= 60 ? '👏' : '📚'}
+                        
+                        
+                            ${translateText('yourScore') || 'Your Score'}: ${score}/${vocabularyWithNativeTranslations.length} (${percentage}%)
+                        
+                        
+                            ${percentage >= 80 ? (translateText('excellentWork') || 'Excellent work!') : 
+                              percentage >= 60 ? (translateText('goodJob') || 'Good job!') : 
+                              (translateText('keepPracticing') || 'Keep practicing!')}
+                        
+                        
+                            
+                                ${translateText('retryQuiz') || 'Retry Quiz'}
+                            
+                            
+                                ${translateText('close') || 'Close'}
+                            
+                        
+                    
+                `;
+
+                document.getElementById('retry-quiz-btn').addEventListener('click', async () => {
+                    currentQuestion = 0;
+                    score = 0;
+                    isQuizCompleted = false;
+                    // Regenerate translations
+                    try {
+                        vocabularyWithNativeTranslations = await generateVocabularyTranslations(shuffledVocab, language);
+                    } catch (error) {
+                        vocabularyWithNativeTranslations = shuffledVocab;
+                    }
+                    updateQuizContent();
+                });
+
+                document.getElementById('close-quiz-btn').addEventListener('click', () => {
+                    document.body.removeChild(quizModal);
+                });
+                return;
+            }
+
+            const currentVocab = vocabularyWithNativeTranslations[currentQuestion];
+            const allTranslations = vocabularyWithNativeTranslations.map(v => v.nativeTranslation || v.translation);
+            const wrongAnswers = allTranslations.filter(t => t !== (currentVocab.nativeTranslation || currentVocab.translation))
+                .sort(() => 0.5 - Math.random()).slice(0, 3);
+            const correctAnswer = currentVocab.nativeTranslation || currentVocab.translation;
+            const allOptions = [correctAnswer, ...wrongAnswers]
+                .sort(() => 0.5 - Math.random());
+
+            quizContent.innerHTML = `
+                
+                    
+                        
+                            ${translateText('vocabularyQuiz') || 'Vocabulary Quiz'}
+                        
+                        
+                            ${translateText('question') || 'Question'} ${currentQuestion + 1} ${translateText('of') || 'of'} ${vocabularyWithNativeTranslations.length}
+                        
+                        
+                            
+                        
+                    
+                    
+                        
+                            ${translateText('whatDoesThisMean') || 'What does this mean?'}
+                        
+                        
+                            ${currentVocab.word}
+                        
+                        
+                            "${currentVocab.context}"
+                        
+                    
+                    
+                        ${allOptions.map((option, index) => `
+                            
+                                ${String.fromCharCode(65 + index)}. ${option}
+                            
+                        `).join('')}
+                    
+                    
+                        
+                            ${translateText('score') || 'Score'}: ${score}/${currentQuestion}
+                        
+                        
+                            
+                        
+                    
+                
+            `;
+
+            // Add option click handlers
+            const options = quizContent.querySelectorAll('.quiz-option');
+            options.forEach(option => {
+                option.addEventListener('click', () => {
+                    const selectedAnswer = option.dataset.answer;
+                    const isCorrect = selectedAnswer === correctAnswer;
+
+                    // Disable all options
+                    options.forEach(opt => {
+                        opt.classList.remove('hover:bg-gray-600');
+                        opt.style.cursor = 'not-allowed';
+
+                        if (opt.dataset.answer === correctAnswer) {
+                            opt.classList.add('bg-green-600');
+                        } else if (opt === option && !isCorrect) {
+                            opt.classList.add('bg-red-600');
+                        } else {
+                            opt.classList.add('bg-gray-600');
+                        }
+                    });
+
+                    if (isCorrect) {
+                        score++;
+                    }
+
+                    // Move to next question after delay
+                    setTimeout(() => {
+                        currentQuestion++;
+                        updateQuizContent();
+                    }, 1500);
+                });
+            });
+
+            document.getElementById('close-quiz-btn').addEventListener('click', () => {
+                document.body.removeChild(quizModal);
+            });
+        }
+
+        quizModal.appendChild(quizContent);
+        document.body.appendChild(quizModal);
+
+        updateQuizContent();
+
+        // Close modal when clicking outside
+        quizModal.addEventListener('click', (e) => {
+            if (e.target === quizModal) {
+                document.body.removeChild(quizModal);
+            }
+        });
+    }
+
+    // --- Central Gemini API Function ---
+
+    async function callGeminiAPI(prompt, options = {}) {
+        const { 
+            modelPreference = 'pro',
+            retryAttempts = 3,
+            safetySettings = [
+                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+            ]
+        } = options;
+
+        // Model priority order for fallback
+        const modelPriority = [
+            modelPreference,
+            ...Object.keys(GEMINI_MODELS).filter(key => key !== modelPreference)
+        ];
+
+        let lastError = null;
+
+        for (const modelKey of modelPriority) {
+            const modelName = GEMINI_MODELS[modelKey];
+            if (!modelName) continue;
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
+
+            console.log(`Attempting to call Gemini API with model: ${modelName}`);
+
+            for (let attempt = 1; attempt <= retryAttempts; attempt++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            safetySettings: safetySettings
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(`API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`);
+                    }
+
+                    const data = await response.json();
+
+                    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                        throw new Error('Invalid response structure from Gemini API');
+                    }
+
+                    console.log(`Successfully called Gemini API with model: ${modelName}`);
+                    return data;
+
+                } catch (error) {
+                    console.warn(`Attempt ${attempt} failed for model ${modelName}:`, error.message);
+                    lastError = error;
+
+                    // Add exponential backoff for retries
+                    if (attempt < retryAttempts) {
+                        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+                    }
+                }
+            }
+        }
+
+        // If all models and retries failed
+        throw new Error(`All Gemini models failed. Last error: ${lastError?.message || 'Unknown error'}`);
+    }
+
+    // --- Core Functions ---
+
+    async function initializeLesson() {
+        const language = languageSelect.value;
+        const topic = topicInput.value;
+        const langKey = languageSelect.options[languageSelect.selectedIndex].getAttribute('data-translate');
+
+        if (!topic) {
+            alert(translateText('enterTopic'));
+            return;
+        }
+
+        if (GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
+            alert(translateText('apiKeyError'));
+            return;
+        }
+
+        // Clear previous state when starting new lesson
+        clearState();
+
+        // Remove any existing review indicators
+        const existingReviewIndicator = lessonScreen.querySelector('.absolute.top-16.left-4');
+        if (existingReviewIndicator) {
+            existingReviewIndicator.remove();
+        }
+
+        // Update UI
+        loadingSpinner.classList.remove('hidden');
+        conversationContainer.innerHTML = '';
+        illustrationImg.classList.add('hidden');
+        illustrationPlaceholder.classList.remove('hidden');
+        imageLoader.classList.add('hidden');
+
+        const prompt = createGeminiPrompt(language, topic);
+
+        try {
+            const data = await callGeminiAPI(prompt, { modelPreference: 'pro' });
+
             // Find the JSON part and parse it
             const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
             lessonPlan = JSON.parse(jsonString);
@@ -1342,28 +1553,25 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                 if (sentences.length > 1) {
                     // Multiple sentences - wrap each in a span with ID
                     sentences.forEach((sentence, sentenceIndex) => {
-                        lineContent += `<span class="sentence-span" id="turn-${index}-sentence-${sentenceIndex}">${sentence}</span>`;
-                        if (sentenceIndex < sentences.length - 1) {
-                            lineContent += ' ';
-                        }
+                        lineContent += `${sentence} `;
                     });
 
                     // Add the original line with translation in parentheses if it exists
                     const originalLine = turn.line.display;
                     if (originalLine.includes('(')) {
                         const translationPart = originalLine.substring(originalLine.indexOf('('));
-                        lineContent += ` <span class="translation-part text-gray-400">${translationPart}</span>`;
+                        lineContent += `  ${translationPart}`;
                     }
                 } else {
                     // Single sentence
-                    lineContent += `<span class="sentence-span" id="turn-${index}-sentence-0">${displayText}</span>`;
+                    lineContent += `${displayText}`;
                 }
             } else {
                 // Partner lines (B) - no sentence splitting needed
                 lineContent += turn.line.display;
             }
 
-            lineContent += ` <i class="fas fa-volume-up text-gray-400 ml-2 hover:text-sky-300"></i>`;
+            lineContent += ` `;
             lineDiv.innerHTML = lineContent;
 
             if (turn.party === 'A') {
@@ -1380,7 +1588,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
             // Add click listener for explanations
             if (turn.explanation) {
                 const explanationSpan = document.createElement('span');
-                explanationSpan.innerHTML = ` <i class="fas fa-info-circle text-sky-300 ml-6"></i>`;
+                explanationSpan.innerHTML = ` `;
                 explanationSpan.classList.add('explanation-link');
                 explanationSpan.onclick = (e) => {
                     e.stopPropagation(); // Prevent audio playback
@@ -1521,7 +1729,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                         sentences.push(cleanSentenceEnd(remaining));
                     }
 
-                    return sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())];
+                    
                 } else {
                     // For Chinese without clear punctuation, return as single sentence
                     return [cleanSentenceEnd(text.trim())];
@@ -1537,79 +1745,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
             for (let i = 0; i < text.length; i++) {
                 const char = text[i];
-                const nextChar = i < text.length - 1 ? text[i + 1] : '';
-                
-                currentSentence += char;
-
-                // Track quotation marks - handle different opening and closing quote types
-                if (!inQuotes) {
-                    if (char === '"' || char === '"') {
-                        inQuotes = true;
-                        quoteChar = '"'; // Both open and close with curly close quote
-                    } else if (char === "'" || char === "'") {
-                        inQuotes = true;
-                        quoteChar = "'"; // Both open and close with curly close quote
-                    } else if (char === '“') {
-                        
-                      inQuotes = true;
-
-                        quoteChar = '“';
-                } else if (char === '”') {
-                        
-                      inQuotes = true;
-
-                        quoteChar = '”';
-                    } else if (char === '‘') {
-                        
-                      inQuotes = true;
-
-                        quoteChar = '‘';
-                    } else if (char === '’') {
-                        
-                      inQuotes = true;
-
-                        quoteChar = '’';
-                    } else if (char === '「') {
-                        inQuotes = true;
-                        quoteChar = '」';
-                    } else if (char === '『') {
-                        inQuotes = true;
-                        quoteChar = '』';
-                    }
-                } else if (inQuotes) {
-                    // Check for closing quotes
-                    if ((quoteChar === '"' && (char === '"' || char === '"')) ||
-                        (quoteChar === "'" && (char === "'" || char === "'")) ||
-                        (char === quoteChar)) {
-                        inQuotes = false;
-                        quoteChar = '';
-                    }
-                }
-
-                // Check for sentence endings
-                if (/[。！？]/.test(char) && !inQuotes) {
-                    if (currentSentence.trim()) {
-                        // Clean the sentence but preserve the core content
-                        const cleanedSentence = cleanSentenceEnd(currentSentence.trim());
-                        if (cleanedSentence) {
-                            sentences.push(cleanedSentence);
-                        }
-                    }
-                    currentSentence = '';
-                    
-                    // Skip any trailing punctuation or quotes after the sentence ending
-                    let j = i + 1;
-                    while (j < text.length && /[""」』"'.,\s]/.test(text[j])) {
-                        j++;
-                    }
-                    i = j - 1;
-                }
-            }
-
-            // Add any remaining text
-            if (currentSentence.trim()) {
-                const cleanedSentence = cleanSentenceEnd(currentSentence.trim());
-                if (cleanedSentence) {
+                const nextChar = i  0) {
                     sentences.push(cleanedSentence);
                 }
             }
@@ -1621,7 +1757,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
         // First, protect ellipses by temporarily replacing them
         const ellipsisPlaceholder = '___ELLIPSIS___';
         const textWithProtectedEllipses = text.replace(/\.{2,}/g, ellipsisPlaceholder);
-        
+
         const sentenceEndings = /[.!?。！？]/;
 
         if (!sentenceEndings.test(textWithProtectedEllipses)) {
@@ -1632,263 +1768,29 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
         const sentences = [];
         let currentSentence = '';
 
-        for (let i = 0; i < textWithProtectedEllipses.length; i++) {
-            const char = textWithProtectedEllipses[i];
-            
-            // Check if we're at the start of an ellipsis placeholder
-            if (textWithProtectedEllipses.substring(i, i + ellipsisPlaceholder.length) === ellipsisPlaceholder) {
-                // Add the original ellipsis back
-                const originalEllipsis = text.substring(
-                    text.indexOf('...', currentSentence.replace(new RegExp(ellipsisPlaceholder, 'g'), '...').length),
-                    text.indexOf('...', currentSentence.replace(new RegExp(ellipsisPlaceholder, 'g'), '...').length) + 
-                    (text.match(/\.{2,}/g) || ['...'])[0].length
-                );
-                currentSentence += originalEllipsis || '...';
-                i += ellipsisPlaceholder.length - 1;
-                continue;
+        for (let i = 0; i  0) {
+                    sentences.push(cleanedSentence);
+                }
             }
+
             
-            currentSentence += char;
-
-            if (/[.!?。！？]/.test(char)) {
-                // Check for combined punctuation (like !?, ?!, !!, ??)
-                let j = i + 1;
-                while (j < textWithProtectedEllipses.length && /[.!?。！？]/.test(textWithProtectedEllipses[j])) {
-                    currentSentence += textWithProtectedEllipses[j];
-                    j++;
-                }
-
-                if (currentSentence.trim()) {
-                    // Restore any ellipses in the sentence and clean trailing punctuation
-                    const restoredSentence = currentSentence.replace(new RegExp(ellipsisPlaceholder, 'g'), '...');
-                    const cleanedSentence = cleanSentenceEnd(restoredSentence.trim());
-                    if (cleanedSentence) {
-                        sentences.push(cleanedSentence);
-                    }
-                }
-                currentSentence = '';
-                
-                // Skip any trailing punctuation or quotes after the sentence ending
-                while (j < textWithProtectedEllipses.length && /[""''""」』"'.,\s]/.test(textWithProtectedEllipses[j])) {
-                    j++;
-                }
-                i = j - 1;
-            }
         }
 
-        if (currentSentence.trim()) {
-            // Restore any ellipses in the remaining sentence and clean trailing punctuation
-            const restoredSentence = currentSentence.replace(new RegExp(ellipsisPlaceholder, 'g'), '...');
-            const cleanedSentence = cleanSentenceEnd(restoredSentence.trim());
-            if (cleanedSentence) {
-                sentences.push(cleanedSentence);
-            }
-        }
-
-        return sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())];
+        // Group stop words with following sentences for final result
+        const finalSentences = sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())];
+        return groupStopWordsWithNext(finalSentences, currentLanguage);
     }
 
-    async function advanceTurn() {
-        if (currentTurnIndex >= lessonPlan.dialogue.length) {
-            micStatus.textContent = translateText('lessonComplete');
-            micBtn.disabled = true;
+    // Function to group stop words with the next sentence
+    function groupStopWordsWithNext(sentences, language) {
+        const stopWords = getStopWords(language);
+        const groupedSentences = [];
+        let i = 0;
 
-            // Save completed lesson to history BEFORE clearing state
-            const selectedLanguage = languageSelect.value;
-            const originalTopic = topicInput.value;
-            
-            // Mark the lesson as completed in the lesson plan
-            lessonPlan.isCompleted = true;
-            lessonPlan.completedAt = new Date().toISOString();
-            
-            saveLessonToHistory(lessonPlan, selectedLanguage, originalTopic);
-
-            // Show review mode UI immediately after lesson completion
-            setTimeout(() => {
-                showReviewModeUI(selectedLanguage);
-                // Save state with completed lesson
-                saveState();
-            }, 500);
-
-            return;
-        }
-
-        const currentTurnData = lessonPlan.dialogue[currentTurnIndex];
-
-        // Clear all previous highlighting
-        document.querySelectorAll('.dialogue-line.active').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
-
-        const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
-        currentLineEl.classList.add('active');
-        currentLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-        // Save state after turn advance
-        saveState();
-
-        if (currentTurnData.party === 'A') { // User's turn
-            // Split the line into sentences for sentence-by-sentence recording
-            const currentLanguage = languageSelect.value;
-
-            // Always use original text for display and sentence splitting
-            const cleanText = removeParentheses(currentTurnData.line.display);
-            currentSentences = splitIntoSentences(cleanText);
-            currentSentenceIndex = 0;
-
-            micBtn.disabled = true;
-            micStatus.textContent = translateText('listenFirst');
-
-            try {
-                // Stop any currently playing audio before starting new one
-                if (currentAudio && isAudioPlaying) {
-                    currentAudio.pause();
-                    currentAudio.currentTime = 0;
-                    isAudioPlaying = false;
-                    currentAudio = null;
-                }
-
-                // Play user's line first for them to hear
-                const audioBlob = await fetchPartnerAudio(cleanText);
-                const audioUrl = URL.createObjectURL(audioBlob);
-                const audio = new Audio(audioUrl);
-
-                audio.addEventListener('loadeddata', () => {
-                    audio.playbackRate = parseFloat(audioSpeedSelect.value);
-                    audio.play().catch(error => {
-                        console.error("Audio play failed:", error);
-                        enableUserMicForSentence();
-                    });
-                });
-
-                audio.addEventListener('play', () => {
-                    isAudioPlaying = true;
-                    currentAudio = audio;
-                });
-
-                audio.addEventListener('ended', () => {
-                    isAudioPlaying = false;
-                    currentAudio = null;
-                    URL.revokeObjectURL(audioUrl);
-                    enableUserMicForSentence();
-                });
-
-                audio.addEventListener('error', (e) => {
-                    console.error("Audio error:", e);
-                    isAudioPlaying = false;
-                    currentAudio = null;
-                    URL.revokeObjectURL(audioUrl);
-                    enableUserMicForSentence();
-                });
-
-            } catch (error) {
-                console.error("Failed to fetch user audio:", error);
-                enableUserMicForSentence();
-            }
-        } else { // Partner's turn
-            // Reset sentence tracking for partner turns
-            currentSentences = [];
-            currentSentenceIndex = 0;
-
-            micBtn.disabled = true;
-            micStatus.textContent = translateText('partnerSpeaking');
-            try {
-                const cleanText = removeParentheses(currentTurnData.line.display);
-                // Stop any currently playing audio before starting new one
-                if (currentAudio && isAudioPlaying) {
-                    currentAudio.pause();
-                    currentAudio.currentTime = 0;
-                    isAudioPlaying = false;
-                    currentAudio = null;
-                }
-
-                const audioBlob = await fetchPartnerAudio(cleanText);
-                const audioUrl = URL.createObjectURL(audioBlob);
-                const audio = new Audio(audioUrl);
-
-                // Ensure audio loads before playing
-                audio.addEventListener('loadeddata', () => {
-                    audio.playbackRate = parseFloat(audioSpeedSelect.value);
-                    audio.play().catch(error => {
-                        console.error("Audio play failed:", error);
-                        // Continue to next turn even if audio fails
-                        setTimeout(() => {
-                            currentTurnIndex++;
-                            advanceTurn();
-                        }, 2000);
-                    });
-                });
-
-                audio.addEventListener('play', () => {
-                    isAudioPlaying = true;
-                    currentAudio = audio;
-                });
-
-                audio.addEventListener('ended', () => {
-                    isAudioPlaying = false;
-                    currentAudio = null;
-                    URL.revokeObjectURL(audioUrl);
-                    micStatus.textContent = translateText('audioFinished');
-                    setTimeout(() => {
-                        currentTurnIndex++;
-                        advanceTurn();
-                    }, 500);
-                });
-
-                audio.addEventListener('error', (e) => {
-                    console.error("Audio error:", e);
-                    isAudioPlaying = false;
-                    currentAudio = null;
-                    URL.revokeObjectURL(audioUrl);
-                    micStatus.textContent = translateText('audioError');
-                    setTimeout(async () => {
-                        currentTurnIndex++;
-                        advanceTurn();
-                    }, 1000);
-                });
-
-            } catch (error) {
-                console.error("Failed to fetch partner audio:", error);
-                micStatus.textContent = translateText('audioUnavailable');
-                setTimeout(() => {
-                    currentTurnIndex++;
-                    advanceTurn();
-                }, 1500);
-            }
-        }
-    }
-
-    function enableUserMicForSentence() {
-        micBtn.disabled = false;
-
-        // Clear previous sentence highlighting
-        document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
-
-        if (currentSentences.length > 1) {
-            // Highlight the current sentence
-            const currentSentenceEl = document.getElementById(`turn-${currentTurnIndex}-sentence-${currentSentenceIndex}`);
-            if (currentSentenceEl) {
-                currentSentenceEl.classList.add('active-sentence');
-            }
-
-            // Show the sentence as it appears in the UI (original text)
-            const displaySentence = currentSentenceEl ? currentSentenceEl.textContent : currentSentences[currentSentenceIndex];
-            const recordSentenceText = currentTranslations.recordSentence || translations.en.recordSentence || 'Record sentence';
-            micStatus.innerHTML = `<strong>${recordSentenceText} ${currentSentenceIndex + 1}/${currentSentences.length}:</strong><br><span style="color: #38bdf8; font-weight: bold; text-decoration: underline;">"${displaySentence}"</span>`;
-        } else {
-            // Single sentence - highlight the entire sentence
-            const singleSentenceEl = document.getElementById(`turn-${currentTurnIndex}-sentence-0`);
-            if (singleSentenceEl) {
-                singleSentenceEl.classList.add('active-sentence');
-            }
-
-            const yourTurnText = currentTranslations.yourTurn || translations.en.yourTurn || 'Your turn';
-            micStatus.innerHTML = `<strong>${yourTurnText}</strong><br><span style="color: #38bdf8; font-style: italic;">Look for the highlighted sentence above</span>`;
-        }
-    }
-
-    function enableUserMic() {
-        micBtn.disabled = false;
-        if (currentSentences.length > 1) {
+        while (i < sentences.length) {
+            if (stopWords.has(sentences[i].toLowerCase())) {
+                // If current sentence is a stop word, combine it with the next sentence
+                if (i + 1  1) {
             enableUserMicForSentence();
         } else {
             micStatus.textContent = translateText('yourTurn');
@@ -1980,7 +1882,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                     // Use the localized feedback from Gemini, with a localized fallback.
                     const feedback = result.feedback || translateText('tryAgain');
                     micStatus.innerHTML = feedback;
-                    
+
                     // Add skip button for Chinese after 3 attempts
                     if (currentLanguage === 'Chinese' && speechAttempts >= 3) {
                         const skipBtn = document.createElement('button');
@@ -1994,7 +1896,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                         micStatus.appendChild(document.createElement('br'));
                         micStatus.appendChild(skipBtn);
                     }
-                    
+
                     const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
                     currentLineEl.classList.remove('active');
                     void currentLineEl.offsetWidth;
@@ -2146,7 +2048,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     async function fetchPartnerAudio(text) {
         const currentLanguage = languageSelect.value;
         const voiceConfig = getVoiceConfig(currentLanguage);
-        
+
         // Strip parentheses and content before sending to TTS
         const cleanText = removeParentheses(text);
 
@@ -2238,17 +2140,19 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     function showFallbackIllustration() {
         imageLoader.classList.add('hidden');
         illustrationPlaceholder.innerHTML = `
-          <div class="text-center text-gray-400">
-              <i class="fas fa-comments text-6xl mb-4"></i>
-              <p class="text-lg">${translateText('roleplayScenario')}</p>
-              <p class="text-sm mt-2">${translateText('imageUnavailable')}</p>
-          </div>
+          
+              
+                  
+                  ${translateText('roleplayScenario')}
+                  ${translateText('imageUnavailable')}
+              
+          
       `;
         illustrationPlaceholder.classList.remove('hidden');
     }
 
     function showExplanation(content) {
-        modalBody.innerHTML = `<h3 class="text-xl font-bold mb-2 text-cyan-300">${content.title}</h3><p class="text-gray-300">${content.body}</p>`;
+        modalBody.innerHTML = `${content.title}${content.body}`;
         modal.classList.remove('hidden');
     }
 
@@ -2422,7 +2326,9 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
     4.  **Character Names:** You MUST use realistic, culturally-appropriate names for the characters. Here are some good examples for ${language}: ${nameExamples}. Choose from these or similar culturally appropriate names for ${language}. Use both first and last names.
 
-    5.  **NO PLACEHOLDERS:** This is a critical rule. Under no circumstances should you use placeholders like "[USER NAME]", "(YOUR NAME)", "<NAME>", or any similar variants. You must use the culturally appropriate names as specified in RULE 4.
+    5.  **NO PLACEHOLDERS:** This is a critical rule. Under no circumstances should you use placeholders like "[USER NAME]", "(YOUR NAME)", "4.  **Character Names:** You MUST use realistic, culturally-appropriate names for the characters. Here are some good examples for ${language}: ${nameExamples}. Choose from these or similar culturally appropriate names for ${language}. Use both first and last names.
+
+    5.  **NO PLACEHOLDERS:** This is a critical rule. Under no circumstances should you use placeholders like "[USER NAME]", "(YOUR NAME)", "", or any similar variants. You must use the culturally appropriate names as specified in RULE 4.
 
     6.  **EXPLANATION LANGUAGE:** All explanations (title and body) must be written in ${nativeLangName}, not English.
 
@@ -2505,19 +2411,19 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
         const backBtn = document.createElement('button');
         backBtn.id = 'back-to-landing-btn';
         backBtn.className = 'absolute top-4 left-4 bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-colors text-sm';
-        backBtn.innerHTML = `<i class="fas fa-arrow-left mr-2"></i>${translateText('back')}`;
+        backBtn.innerHTML = `${translateText('back')}`;
         backBtn.onclick = () => {
             // Clear lesson state and return to landing
             clearState();
             lessonPlan = null;
             currentTurnIndex = 0;
-            
+
             // Remove any review indicators
             const existingReviewIndicator = lessonScreen.querySelector('.absolute.top-16.left-4');
             if (existingReviewIndicator) {
                 existingReviewIndicator.remove();
             }
-            
+
             landingScreen.classList.remove('hidden');
             lessonScreen.classList.add('hidden');
             startTopicRotations();
@@ -2530,7 +2436,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     function updateBackButton() {
         const backBtn = document.getElementById('back-to-landing-btn');
         if (backBtn) {
-            backBtn.innerHTML = `<i class="fas fa-arrow-left mr-2"></i>${translateText('back')}`;
+            backBtn.innerHTML = `${translateText('back')}`;
         }
     }
 
@@ -2547,5 +2453,20 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
         }
     } else {
         startTopicRotations();
+    }
+
+    // Define the stop words for various languages
+    function getStopWords(language) {
+        const stopWordsMap = {
+            'English': new Set(['oh', 'ah', 'wow', 'hm', 'um', 'er']),
+            'Spanish': new Set(['oh', 'ah', 'wow', 'hm', 'um', 'er']),
+            'French': new Set(['oh', 'ah', 'wow', 'hm', 'um', 'er', 'euh']),
+            'German': new Set(['oh', 'ah', 'wow', 'hm', 'um', 'er']),
+            'Italian': new Set(['oh', 'ah', 'wow', 'hm', 'um', 'er']),
+            'Japanese': new Set(['え', 'あ', 'う', 'あの', 'うん']),
+            'Chinese': new Set(['哦', '啊', '哇', '嗯', '呃']),
+            'Korean': new Set(['오', '아', '와', '음', '어'])
+        };
+        return stopWordsMap[language] || new Set();
     }
 });
