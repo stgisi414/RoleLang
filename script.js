@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedLanguage: languageSelect.value,
             topicInput: topicInput.value,
             nativeLang: nativeLang,
-            lessonsVisible: !lessonsContainer.classList.contains('hidden'),
+            lessonsVisible: lessonsContainer && (lessonsContainer.style.display !== 'none' && !lessonsContainer.classList.contains('hidden')),
             audioSpeed: audioSpeedSelect ? audioSpeedSelect.value : '1',
             lastSaved: Date.now()
         };
@@ -148,11 +148,16 @@ document.addEventListener('DOMContentLoaded', () => {
             topicInput.value = state.topicInput;
         }
 
-        // Restore lessons visibility
-        if (state.lessonsVisible) {
+        // Restore lessons visibility with force
+        if (state.lessonsVisible && lessonsContainer) {
+            lessonsContainer.style.display = 'block';
             lessonsContainer.classList.remove('hidden');
-            const chevronIcon = toggleLessonsBtn.querySelector('i');
-            chevronIcon.style.transform = 'rotate(180deg)';
+            lessonsContainer.style.visibility = 'visible';
+            lessonsContainer.style.opacity = '1';
+            const chevronIcon = toggleLessonsBtn ? toggleLessonsBtn.querySelector('i') : null;
+            if (chevronIcon) {
+                chevronIcon.style.transform = 'rotate(180deg)';
+            }
         }
 
         // Restore audio speed
@@ -345,23 +350,91 @@ document.addEventListener('DOMContentLoaded', () => {
     startLessonBtn.addEventListener('click', initializeLesson);
     micBtn.addEventListener('click', toggleSpeechRecognition);
     
-    // Ensure toggle buttons exist and add event listeners
-    if (toggleLessonsBtn) {
-        toggleLessonsBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Toggle lessons button clicked');
-            toggleLessonsVisibility();
+    // Completely new toggle system - direct DOM manipulation
+    if (toggleLessonsBtn && lessonsContainer) {
+        toggleLessonsBtn.addEventListener('click', function() {
+            console.log('LESSONS TOGGLE CLICKED - FORCE TOGGLE');
+            const isCurrentlyHidden = lessonsContainer.style.display === 'none' || lessonsContainer.classList.contains('hidden');
+            console.log('Current state hidden:', isCurrentlyHidden);
+            
+            if (isCurrentlyHidden) {
+                // Force show
+                lessonsContainer.style.display = 'block';
+                lessonsContainer.classList.remove('hidden');
+                lessonsContainer.style.visibility = 'visible';
+                lessonsContainer.style.opacity = '1';
+                console.log('FORCED LESSONS VISIBLE');
+                
+                // Update chevron
+                const chevron = this.querySelector('i');
+                if (chevron) {
+                    chevron.style.transform = 'rotate(180deg)';
+                }
+                
+                // Start rotations if not already running
+                if (topicRotationIntervals.length === 0) {
+                    startTopicRotations();
+                }
+            } else {
+                // Force hide
+                lessonsContainer.style.display = 'none';
+                lessonsContainer.classList.add('hidden');
+                lessonsContainer.style.visibility = 'hidden';
+                lessonsContainer.style.opacity = '0';
+                console.log('FORCED LESSONS HIDDEN');
+                
+                // Update chevron
+                const chevron = this.querySelector('i');
+                if (chevron) {
+                    chevron.style.transform = 'rotate(0deg)';
+                }
+                
+                // Stop rotations
+                stopTopicRotations();
+            }
+            
+            saveState();
         });
     }
     
     const toggleHistoryBtn = document.getElementById('toggle-history-btn');
-    if (toggleHistoryBtn) {
-        toggleHistoryBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Toggle history button clicked');
-            toggleHistoryVisibility();
+    const historyContainer = document.getElementById('history-container');
+    if (toggleHistoryBtn && historyContainer) {
+        toggleHistoryBtn.addEventListener('click', function() {
+            console.log('HISTORY TOGGLE CLICKED - FORCE TOGGLE');
+            const isCurrentlyHidden = historyContainer.style.display === 'none' || historyContainer.classList.contains('hidden');
+            console.log('Current state hidden:', isCurrentlyHidden);
+            
+            if (isCurrentlyHidden) {
+                // Force show
+                historyContainer.style.display = 'block';
+                historyContainer.classList.remove('hidden');
+                historyContainer.style.visibility = 'visible';
+                historyContainer.style.opacity = '1';
+                console.log('FORCED HISTORY VISIBLE');
+                
+                // Update chevron
+                const chevron = this.querySelector('i');
+                if (chevron) {
+                    chevron.style.transform = 'rotate(180deg)';
+                }
+                
+                // Load history
+                displayLessonHistory();
+            } else {
+                // Force hide
+                historyContainer.style.display = 'none';
+                historyContainer.classList.add('hidden');
+                historyContainer.style.visibility = 'hidden';
+                historyContainer.style.opacity = '0';
+                console.log('FORCED HISTORY HIDDEN');
+                
+                // Update chevron
+                const chevron = this.querySelector('i');
+                if (chevron) {
+                    chevron.style.transform = 'rotate(0deg)';
+                }
+            }
         });
     }
     difficultyTab.addEventListener('click', () => switchTab('difficulty'));
@@ -706,101 +779,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Toggle Functions ---
-
-    function toggleLessonsVisibility() {
-        console.log('toggleLessonsVisibility called');
-        console.log('lessonsContainer:', lessonsContainer ? 'exists' : 'null');
-        console.log('toggleLessonsBtn:', toggleLessonsBtn ? 'exists' : 'null');
-        
-        if (!lessonsContainer) {
-            console.error('Lessons container not found');
-            return;
-        }
-        
-        if (!toggleLessonsBtn) {
-            console.error('Toggle lessons button not found');
-            return;
-        }
-        
-        const isHidden = lessonsContainer.classList.contains('hidden');
-        const chevronIcon = toggleLessonsBtn.querySelector('i');
-
-        console.log('Toggling lessons visibility. Currently hidden:', isHidden);
-        console.log('Chevron icon found:', chevronIcon ? 'yes' : 'no');
-
-        if (isHidden) {
-            lessonsContainer.classList.remove('hidden');
-            lessonsContainer.style.display = 'block';
-            if (chevronIcon) {
-                chevronIcon.style.transform = 'rotate(180deg)';
-                chevronIcon.style.transition = 'transform 0.3s ease';
-            }
-            // Restart topic rotations when showing lessons
-            if (topicRotationIntervals.length === 0) {
-                startTopicRotations();
-            }
-            console.log('Lessons container shown');
-        } else {
-            lessonsContainer.classList.add('hidden');
-            lessonsContainer.style.display = 'none';
-            if (chevronIcon) {
-                chevronIcon.style.transform = 'rotate(0deg)';
-                chevronIcon.style.transition = 'transform 0.3s ease';
-            }
-            // Stop topic rotations when hiding lessons
-            stopTopicRotations();
-            console.log('Lessons container hidden');
-        }
-
-        // Save state when lessons visibility changes
-        saveState();
-    }
-
-    function toggleHistoryVisibility() {
-        console.log('toggleHistoryVisibility called');
-        
-        const historyContainer = document.getElementById('history-container');
-        const toggleHistoryBtn = document.getElementById('toggle-history-btn');
-        
-        console.log('historyContainer:', historyContainer ? 'exists' : 'null');
-        console.log('toggleHistoryBtn:', toggleHistoryBtn ? 'exists' : 'null');
-        
-        if (!historyContainer) {
-            console.error('History container not found');
-            return;
-        }
-        
-        if (!toggleHistoryBtn) {
-            console.error('Toggle history button not found');
-            return;
-        }
-        
-        const isHidden = historyContainer.classList.contains('hidden');
-        const chevronIcon = toggleHistoryBtn.querySelector('i');
-
-        console.log('Toggling history visibility. Currently hidden:', isHidden);
-        console.log('Chevron icon found:', chevronIcon ? 'yes' : 'no');
-
-        if (isHidden) {
-            historyContainer.classList.remove('hidden');
-            historyContainer.style.display = 'block';
-            if (chevronIcon) {
-                chevronIcon.style.transform = 'rotate(180deg)';
-                chevronIcon.style.transition = 'transform 0.3s ease';
-            }
-            displayLessonHistory();
-            console.log('History container shown');
-        } else {
-            historyContainer.classList.add('hidden');
-            historyContainer.style.display = 'none';
-            if (chevronIcon) {
-                chevronIcon.style.transform = 'rotate(0deg)';
-                chevronIcon.style.transition = 'transform 0.3s ease';
-            }
-            console.log('History container hidden');
-        }
-    }
+    // --- Direct Toggle System (Rebuilt) ---
+    // No separate toggle functions - everything handled directly in event listeners above
 
     // --- Topic Rotation Functions ---
 
