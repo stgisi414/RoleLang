@@ -1477,6 +1477,25 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     let currentSentenceIndex = 0;
     let speechAttempts = 0;
 
+    // Skip words that should be grouped with the next sentence for better speech recognition
+    const skipWords = {
+        'English': ['oh', 'ah', 'um', 'uh', 'eh', 'mm', 'hmm', 'wow', 'hey', 'hi', 'yo', 'ok', 'so', 'no', 'yes', 'well', 'but', 'and', 'or'],
+        'Spanish': ['oh', 'ah', 'eh', 'mm', 'hmm', 'ay', 'uy', 'ey', 'sí', 'no', 'ya', 'que', 'pues', 'bueno', 'vale', 'oye', 'hola', 'y', 'o', 'pero'],
+        'French': ['oh', 'ah', 'eh', 'mm', 'hmm', 'hé', 'euh', 'oui', 'non', 'bon', 'ben', 'et', 'ou', 'mais', 'alors', 'voilà', 'tiens', 'dis', 'quoi', 'hein'],
+        'German': ['oh', 'ah', 'eh', 'mm', 'hmm', 'ach', 'na', 'ja', 'nein', 'so', 'nun', 'gut', 'und', 'oder', 'aber', 'doch', 'hey', 'hallo', 'tja'],
+        'Italian': ['oh', 'ah', 'eh', 'mm', 'hmm', 'eh', 'beh', 'sì', 'no', 'ma', 'e', 'o', 'però', 'dai', 'va', 'bene', 'ecco', 'allora', 'ciao', 'hey'],
+        'Japanese': ['あ', 'え', 'お', 'う', 'ん', 'はい', 'いえ', 'でも', 'それで', 'じゃ', 'まあ', 'そう', 'ええ', 'うん', 'あの', 'その', 'この', 'はあ', 'へえ'],
+        'Chinese': ['啊', '呃', '嗯', '哦', '哎', '唉', '嘿', '喂', '对', '不', '是', '好', '那', '这', '就', '还', '也', '都', '会', '要'],
+        'Korean': ['아', '어', '오', '음', '응', '네', '예', '아니', '그래', '뭐', '좀', '잠깐', '근데', '그런데', '하지만', '그리고', '아무튼', '어쨌든', '야', '이']
+    };
+
+    // Helper function to check if a sentence is a skip word
+    function isSkipWord(sentence, language) {
+        const skipWordList = skipWords[language] || skipWords['English'];
+        const cleanSentence = sentence.toLowerCase().trim().replace(/[.,!?;:"'`´''""。！？]/g, '');
+        return skipWordList.includes(cleanSentence);
+    }
+
     // Helper function to split text into sentences
     function splitIntoSentences(text) {
         const currentLanguage = languageSelect.value;
@@ -1614,7 +1633,30 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                 }
             }
 
-            return sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())];
+            // Group skip words with the next sentence
+            const groupedSentences = [];
+            let i = 0;
+            while (i < sentences.length) {
+                let currentSentence = sentences[i];
+                
+                // Check if next sentences are skip words and group them
+                let j = i + 1;
+                while (j < sentences.length && isSkipWord(sentences[j], currentLanguage)) {
+                    currentSentence += ' ' + sentences[j];
+                    j++;
+                }
+                
+                // If there's a sentence after skip words, group it too
+                if (j < sentences.length && j > i + 1) {
+                    currentSentence += ' ' + sentences[j];
+                    j++;
+                }
+                
+                groupedSentences.push(currentSentence);
+                i = j;
+            }
+            
+            return groupedSentences.length > 0 ? groupedSentences : [cleanSentenceEnd(text.trim())];
         }
 
         // For other languages, handle ellipses and sentence endings properly
@@ -1685,7 +1727,30 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
             }
         }
 
-        return sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())];
+        // Group skip words with the next sentence for all languages
+        const groupedSentences = [];
+        let i = 0;
+        while (i < sentences.length) {
+            let currentSentence = sentences[i];
+            
+            // Check if next sentences are skip words and group them
+            let j = i + 1;
+            while (j < sentences.length && isSkipWord(sentences[j], currentLanguage)) {
+                currentSentence += ' ' + sentences[j];
+                j++;
+            }
+            
+            // If there's a sentence after skip words, group it too
+            if (j < sentences.length && j > i + 1) {
+                currentSentence += ' ' + sentences[j];
+                j++;
+            }
+            
+            groupedSentences.push(currentSentence);
+            i = j;
+        }
+        
+        return groupedSentences.length > 0 ? groupedSentences : [cleanSentenceEnd(text.trim())];
     }
 
     async function advanceTurn() {
