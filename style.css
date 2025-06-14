@@ -54,14 +54,7 @@ body {
 
 /* Header logo specific styling */
 header img[alt="RoleLang Logo"] {
-    object-fit: none;
-    object-position: center center;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    overflow: hidden;
-    transform: scale(2.5);
-    image-rendering: crisp-edges;
+    
 }
 
 /* Custom Scrollbar for the conversation container */
