@@ -897,7 +897,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
 
                 <div class="text-center mb-6">
-                    <p class="text-gray-300 text-sm mb-2">${translateText('whatDoesThisMean') || 'What does this mean in English?'}</p>
+                    <p class="text-gray-300 text-sm mb-2">${translateText('whatDoesThisMean') || 'What does this mean?'}</p>
                     <div class="text-3xl font-bold text-white mb-2">${currentVocab.word}</div>
                     <div class="text-sm text-gray-400 italic">"${currentVocab.context}"</div>
                 </div>
@@ -1357,13 +1357,15 @@ document.addEventListener('DOMContentLoaded', () => {
             micStatus.textContent = translateText('lessonComplete');
             micBtn.disabled = true;
 
-            // Save completed lesson to history
+            // Save completed lesson to history BEFORE clearing state
             const selectedLanguage = languageSelect.value;
             const originalTopic = topicInput.value;
             saveLessonToHistory(lessonPlan, selectedLanguage, originalTopic);
 
-            // Clear state when lesson is complete
-            clearState();
+            // Clear state when lesson is complete (after saving to history)
+            setTimeout(() => {
+                clearState();
+            }, 1000); // Give time for the save operation to complete
             return;
         }
 

@@ -548,7 +548,7 @@ const translations = {
       ],
       historical: [
         "Tea party dell'era vittoriana", "Assedio di un castello medievale", "Addestramento di gladiatori nell'antica Roma", "Incontro in un saloon del selvaggio west",
-        "Festa in uno speakeasy degli anni '20", "Medicina sul campo di battaglia della guerra civile", "Commissione d'arte rinascimentale", "Esplorazione di una tomba dell'Antico Egitto"
+        "Festa in uno speakeasy degli anni '20", "Medicina sul campo di battaglia della guerra civile", "Commissione d'arte rinascimentale","Esplorazione di una tomba dell'Antico Egitto"
       ],
       drama: [
         "Confronto familiare per eredità", "Tradimento lavorativo da migliore amico", "Scoprire relazione segreta del partner", "Conversazione su diagnosi terminale",
@@ -852,7 +852,7 @@ const translations = {
     close: "닫기",
     question: "질문",
     of: "의",
-    whatDoesThisMean: "이것은 한국어로 무엇을 의미하나요?",
+    whatDoesThisMean: "이것은 무엇을 의미하나요？",
     score: "점수",
     noVocabularyFound: "이 레슨에서 번역이 포함된 어휘를 찾을 수 없습니다.",
     topics: {
