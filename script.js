@@ -1614,9 +1614,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                 }
             }
 
-            // Group skip words with following sentences before returning
-            const groupedSentences = groupSkipWords(sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())], currentLanguage);
-            return groupedSentences;
+            return sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())];
         }
 
         // For other languages, handle ellipses and sentence endings properly
@@ -1687,9 +1685,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
             }
         }
 
-        // Group skip words with following sentences for all languages
-        const finalSentences = sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())];
-        return groupSkipWords(finalSentences, currentLanguage);
+        return sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())];
     }
 
     async function advanceTurn() {
