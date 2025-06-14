@@ -967,36 +967,86 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Vocabulary Quiz Functions ---
 
-    function extractVocabularyFromDialogue() {
-        if (!lessonPlan || !lessonPlan.dialogue) return [];
+    async function extractVocabularyFromDialogue() {
+		const language = languageSelect.value;
 
-        const vocabulary = [];
-        const seenWords = new Set();
+		// New logic for English lessons: Use AI to extract vocab
+		if (language === 'English') {
+			if (!lessonPlan || !lessonPlan.dialogue) return [];
 
-        lessonPlan.dialogue.forEach(turn => {
-            if (turn.line && turn.line.display) {
-                const cleanText = removeParentheses(turn.line.display);
-                const translation = extractTranslation(turn.line.display);
+			const dialogueText = lessonPlan.dialogue.map(turn => turn.line.display).join('\n');
 
-                if (translation) {
-                    const word = cleanText.replace(/[.,!?;:"'`´''""。！？]/g, '').trim();
-                    const translationClean = translation.replace(/[()]/g, '').trim();
+			const prompt = `
+	You are a vocabulary extraction tool for an English language learner. From the following dialogue, identify 5-10 key vocabulary words or phrases that would be useful for a learner.
 
-                    if (word && translationClean && !seenWords.has(word.toLowerCase())) {
-                        vocabulary.push({
-                            word: word,
-                            translation: translationClean,
-                            context: turn.line.display
-                        });
-                        seenWords.add(word.toLowerCase());
-                    }
-                }
-            }
-        });
+	For each item, provide the word/phrase and a simple definition or synonym in English.
 
-        return vocabulary.slice(0, 10); // Limit to 10 vocabulary items
-    }
+	Your response MUST be a valid JSON array of objects, with each object having a "word" key and a "translation" key (where "translation" is the definition/synonym).
 
+	Example:
+	[
+	  {"word": "hectic", "translation": "very busy and full of activity"},
+	  {"word": "grab a bite", "translation": "to get something to eat"}
+	]
+
+	Dialogue:
+	---
+	${dialogueText}
+	---
+
+	Now, provide the JSON array.`;
+
+			try {
+				const data = await callGeminiAPI(prompt, { modelPreference: 'lite' });
+				const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+				const vocabulary = JSON.parse(jsonString);
+
+				// Add context to each vocabulary item
+				return vocabulary.map(vocabItem => {
+					const contextTurn = lessonPlan.dialogue.find(turn =>
+						turn.line && turn.line.display && turn.line.display.toLowerCase().includes(vocabItem.word.toLowerCase())
+					);
+					return {
+						...vocabItem,
+						context: contextTurn ? contextTurn.line.display : vocabItem.word
+					};
+				});
+			} catch (error) {
+				console.error("Failed to extract vocabulary for English lesson:", error);
+				return [];
+			}
+		} else {
+			// Original logic for all other languages (parsing parentheses)
+			if (!lessonPlan || !lessonPlan.dialogue) return [];
+
+			const vocabulary = [];
+			const seenWords = new Set();
+
+			lessonPlan.dialogue.forEach(turn => {
+				if (turn.line && turn.line.display) {
+					const cleanText = removeParentheses(turn.line.display);
+					const translation = extractTranslation(turn.line.display);
+
+					if (translation) {
+						const word = cleanText.replace(/[.,!?;:"'`´''""。！？]/g, '').trim();
+						const translationClean = translation.replace(/[()]/g, '').trim();
+
+						if (word && translationClean && !seenWords.has(word.toLowerCase())) {
+							vocabulary.push({
+								word: word,
+								translation: translationClean,
+								context: turn.line.display
+							});
+							seenWords.add(word.toLowerCase());
+						}
+					}
+				}
+			});
+
+			return vocabulary.slice(0, 10);
+		}
+	}
+	
     function extractTranslation(text) {
         const match = text.match(/\(([^)]+)\)/);
         return match ? match[1] : null;
@@ -1061,16 +1111,16 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
         }
     }
 
-    function startVocabularyQuiz(language) {
-        const vocabulary = extractVocabularyFromDialogue();
+    async function startVocabularyQuiz(language) {
+		const vocabulary = await extractVocabularyFromDialogue();
 
-        if (vocabulary.length === 0) {
-            alert(translateText('noVocabularyFound') || 'No vocabulary with translations found in this lesson.');
-            return;
-        }
+		if (vocabulary.length === 0) {
+			alert(translateText('noVocabularyFound') || 'No vocabulary with translations found in this lesson.');
+			return;
+		}
 
-        createVocabularyQuizModal(vocabulary, language);
-    }
+		createVocabularyQuizModal(vocabulary, language);
+	}
 
     async function createVocabularyQuizModal(vocabulary, language) {
         // Create quiz modal
@@ -1326,83 +1376,80 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     // --- Core Functions ---
 
     async function initializeLesson() {
-        const language = languageSelect.value;
-        const topic = topicInput.value;
-        const langKey = languageSelect.options[languageSelect.selectedIndex].getAttribute('data-translate');
+		const language = languageSelect.value;
+		const topic = topicInput.value;
+		const langKey = languageSelect.options[languageSelect.selectedIndex].getAttribute('data-translate');
 
-        if (!topic) {
-            alert(translateText('enterTopic'));
-            return;
-        }
+		if (!topic) {
+			alert(translateText('enterTopic'));
+			return;
+		}
 
-        if (GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
-            alert(translateText('apiKeyError'));
-            return;
-        }
+		if (GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
+			alert(translateText('apiKeyError'));
+			return;
+		}
 
-        // Clear previous state when starting new lesson
-        clearState();
+		// Clear previous state when starting new lesson
+		clearState();
 
-        // Remove any existing review indicators
-        const existingReviewIndicator = lessonScreen.querySelector('.absolute.top-16.left-4');
-        if (existingReviewIndicator) {
-            existingReviewIndicator.remove();
-        }
+		// Remove any existing review indicators
+		const existingReviewIndicator = lessonScreen.querySelector('.absolute.top-16.left-4');
+		if (existingReviewIndicator) {
+			existingReviewIndicator.remove();
+		}
 
-        // Update UI
-        loadingSpinner.classList.remove('hidden');
-        conversationContainer.innerHTML = '';
-        illustrationImg.classList.add('hidden');
-        illustrationPlaceholder.classList.remove('hidden');
-        imageLoader.classList.add('hidden');
+		// Update UI
+		loadingSpinner.classList.remove('hidden');
+		conversationContainer.innerHTML = '';
+		illustrationImg.classList.add('hidden');
+		illustrationPlaceholder.classList.remove('hidden');
+		imageLoader.classList.add('hidden');
 
-        const prompt = createGeminiPrompt(language, topic);
+		const prompt = createGeminiPrompt(language, topic);
 
-        try {
-            const data = await callGeminiAPI(prompt, { modelPreference: 'pro' });
+		try {
+			const data = await callGeminiAPI(prompt, { modelPreference: 'pro' });
 
-            // Find the JSON part and parse it
-            const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
-            lessonPlan = JSON.parse(jsonString);
+			// Find the JSON part and parse it
+			const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+			lessonPlan = JSON.parse(jsonString);
 
-            // Add a unique ID to the lesson plan itself if it doesn't have one
-            if (!lessonPlan.id) {
-                lessonPlan.id = `lesson-${language}-${Date.now()}`;
-            }
+			if (!lessonPlan.id) {
+				lessonPlan.id = `lesson-${language}-${Date.now()}`;
+			}
 
-            // Set speech recognition language
-            if (recognition) {
-                const langCode = getLangCode(language);
-                recognition.lang = langCode;
+			if (recognition) {
+				const langCode = getLangCode(language);
+				recognition.lang = langCode;
+				if (language === 'Japanese') {
+					console.warn('Japanese speech recognition may have limited accuracy. Consider using the visual verification.');
+				}
+			}
 
-                // Special handling for Japanese - add warning if speech recognition may not work well
-                if (language === 'Japanese') {
-                    console.warn('Japanese speech recognition may have limited accuracy. Consider using the visual verification.');
-                }
-            }
+			// --- FIX: Hide spinner BEFORE starting conversation ---
+			loadingSpinner.classList.add('hidden');
+			
+			stopTopicRotations();
 
-            // Stop topic rotations when lesson starts
-            stopTopicRotations();
+			landingScreen.classList.add('hidden');
+			lessonScreen.classList.remove('hidden');
 
-            landingScreen.classList.add('hidden');
-            lessonScreen.classList.remove('hidden');
+			fetchAndDisplayIllustration(lessonPlan.illustration_prompt);
+			startConversation();
 
-            fetchAndDisplayIllustration(lessonPlan.illustration_prompt);
-            startConversation();
+			saveState();
 
-            // Save initial state
-            saveState();
-
-        } catch (error) {
-            console.error("Failed to initialize lesson:", error);
-            alert(`${translateText('errorLoading')} ${error.message}`);
-            landingScreen.classList.remove('hidden');
-            lessonScreen.classList.add('hidden');
-        } finally {
-            loadingSpinner.classList.add('hidden');
-        }
-    }
-
+		} catch (error) {
+			console.error("Failed to initialize lesson:", error);
+			alert(`${translateText('errorLoading')} ${error.message}`);
+			landingScreen.classList.remove('hidden');
+			lessonScreen.classList.add('hidden');
+			// Ensure spinner is hidden on error as well
+			loadingSpinner.classList.add('hidden');
+		}
+	}
+	
     async function restoreConversation() {
         conversationContainer.innerHTML = ''; // Clear previous conversation
         for (const [index, turn] of lessonPlan.dialogue.entries()) {

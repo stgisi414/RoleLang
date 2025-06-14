@@ -68,7 +68,7 @@ const translations = {
     close: "Close",
     question: "Question",
     of: "of",
-    whatDoesThisMean: "What does this mean in English?",
+    whatDoesThisMean: "What does this mean?",
     score: "Score",
     noVocabularyFound: "No vocabulary with translations found in this lesson.",
     reviewMode: "Review Mode",
