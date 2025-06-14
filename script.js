@@ -1,21 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Import stop word functions with fallback
-    function safeIsStopWord(word, language) {
-        if (typeof isStopWord !== 'undefined') {
-            return isStopWord(word, language);
-        }
-        console.warn('Stop word function not available, returning false');
-        return false;
-    }
-    
-    function safeGetStopWords(language) {
-        if (typeof getStopWords !== 'undefined') {
-            return getStopWords(language);
-        }
-        console.warn('Stop word function not available, returning empty array');
-        return [];
-    }
-
     // --- DOM Elements ---
     const landingScreen = document.getElementById('landing-screen');
     const lessonScreen = document.getElementById('lesson-screen');
@@ -101,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedLanguage: languageSelect.value,
             topicInput: topicInput.value,
             nativeLang: nativeLang,
-            lessonsVisible: lessonsContainer && (lessonsContainer.style.display !== 'none' && !lessonsContainer.classList.contains('hidden')),
+            lessonsVisible: !lessonsContainer.classList.contains('hidden'),
             audioSpeed: audioSpeedSelect ? audioSpeedSelect.value : '1',
             lastSaved: Date.now()
         };
@@ -148,18 +131,11 @@ document.addEventListener('DOMContentLoaded', () => {
             topicInput.value = state.topicInput;
         }
 
-        // Restore lessons visibility with force
-        if (state.lessonsVisible && lessonsContainer) {
-            lessonsContainer.style.display = 'block';
+        // Restore lessons visibility
+        if (state.lessonsVisible) {
             lessonsContainer.classList.remove('hidden');
-            const chevronIcon = toggleLessonsBtn ? toggleLessonsBtn.querySelector('i') : null;
-            if (chevronIcon) {
-                chevronIcon.style.transform = 'rotate(180deg)';
-            }
-            // Force populate on restore
-            setTimeout(() => {
-                forcePoppulateLessonTopics();
-            }, 500);
+            const chevronIcon = toggleLessonsBtn.querySelector('i');
+            chevronIcon.style.transform = 'rotate(180deg)';
         }
 
         // Restore audio speed
@@ -351,89 +327,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Event Listeners ---
     startLessonBtn.addEventListener('click', initializeLesson);
     micBtn.addEventListener('click', toggleSpeechRecognition);
-    
-    // Completely rewritten toggle system with forced content population
-    if (toggleLessonsBtn && lessonsContainer) {
-        toggleLessonsBtn.addEventListener('click', function() {
-            console.log('LESSONS TOGGLE CLICKED - NEW SYSTEM');
-            const isHidden = lessonsContainer.classList.contains('hidden');
-            console.log('Currently hidden:', isHidden);
-            
-            if (isHidden) {
-                // Show lessons
-                lessonsContainer.classList.remove('hidden');
-                lessonsContainer.style.display = 'block';
-                
-                // Update chevron
-                const chevron = this.querySelector('i');
-                if (chevron) {
-                    chevron.style.transform = 'rotate(180deg)';
-                    chevron.style.transition = 'transform 0.3s ease';
-                }
-                
-                // Force populate lesson topics immediately
-                forcePoppulateLessonTopics();
-                console.log('LESSONS SHOWN AND POPULATED');
-            } else {
-                // Hide lessons
-                lessonsContainer.classList.add('hidden');
-                lessonsContainer.style.display = 'none';
-                
-                // Update chevron
-                const chevron = this.querySelector('i');
-                if (chevron) {
-                    chevron.style.transform = 'rotate(0deg)';
-                    chevron.style.transition = 'transform 0.3s ease';
-                }
-                
-                // Stop rotations
-                stopTopicRotations();
-                console.log('LESSONS HIDDEN');
-            }
-            
-            saveState();
-        });
-    }
-    
-    const toggleHistoryBtn = document.getElementById('toggle-history-btn');
-    const historyContainer = document.getElementById('history-container');
-    if (toggleHistoryBtn && historyContainer) {
-        toggleHistoryBtn.addEventListener('click', function() {
-            console.log('HISTORY TOGGLE CLICKED - NEW SYSTEM');
-            const isHidden = historyContainer.classList.contains('hidden');
-            console.log('Currently hidden:', isHidden);
-            
-            if (isHidden) {
-                // Show history
-                historyContainer.classList.remove('hidden');
-                historyContainer.style.display = 'block';
-                
-                // Update chevron
-                const chevron = this.querySelector('i');
-                if (chevron) {
-                    chevron.style.transform = 'rotate(180deg)';
-                    chevron.style.transition = 'transform 0.3s ease';
-                }
-                
-                // Force populate history immediately
-                forcePopulateHistory();
-                console.log('HISTORY SHOWN AND POPULATED');
-            } else {
-                // Hide history
-                historyContainer.classList.add('hidden');
-                historyContainer.style.display = 'none';
-                
-                // Update chevron
-                const chevron = this.querySelector('i');
-                if (chevron) {
-                    chevron.style.transform = 'rotate(0deg)';
-                    chevron.style.transition = 'transform 0.3s ease';
-                }
-                
-                console.log('HISTORY HIDDEN');
-            }
-        });
-    }
+    toggleLessonsBtn.addEventListener('click', toggleLessonsVisibility);
+    document.getElementById('toggle-history-btn').addEventListener('click', toggleHistoryVisibility);
     difficultyTab.addEventListener('click', () => switchTab('difficulty'));
     situationsTab.addEventListener('click', () => switchTab('situations'));
     resetLessonBtn.addEventListener('click', resetLesson);
@@ -441,28 +336,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add event listeners for lesson buttons
     document.addEventListener('click', (event) => {
         if (event.target.classList.contains('lesson-btn')) {
-            console.log('Lesson button clicked:', event.target.textContent);
             const topic = event.target.getAttribute('data-topic');
-            if (topic) {
-                topicInput.value = topic;
-                console.log('Topic set to:', topic);
-                // Save state when topic changes
-                saveState();
-                // Visual feedback
-                event.target.style.transform = 'scale(0.95)';
-                setTimeout(() => {
-                    event.target.style.transform = '';
-                }, 150);
-                
-                // Scroll topic input into view
-                topicInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                
-                // Brief highlight of the input field
-                topicInput.style.borderColor = '#38bdf8';
-                setTimeout(() => {
-                    topicInput.style.borderColor = '';
-                }, 1000);
-            }
+            topicInput.value = topic;
+            // Save state when topic changes
+            saveState();
+            // Visual feedback
+            event.target.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                event.target.style.transform = '';
+            }, 150);
         }
     });
 
@@ -649,9 +531,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="text-gray-400 text-xs">${lesson.completedAt}</div>
       `;
 
-            lessonCard.addEventListener('click', (e) => {
-                e.preventDefault();
-                console.log('History lesson clicked:', lesson.topic);
+            lessonCard.addEventListener('click', () => {
                 reviewLesson(lesson);
             });
 
@@ -776,8 +656,44 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Direct Toggle System (Rebuilt) ---
-    // No separate toggle functions - everything handled directly in event listeners above
+    // --- Toggle Functions ---
+
+    function toggleLessonsVisibility() {
+        const isHidden = lessonsContainer.classList.contains('hidden');
+        const chevronIcon = toggleLessonsBtn.querySelector('i');
+
+        if (isHidden) {
+            lessonsContainer.classList.remove('hidden');
+            chevronIcon.style.transform = 'rotate(180deg)';
+            // Restart topic rotations when showing lessons
+            if (topicRotationIntervals.length === 0) {
+                startTopicRotations();
+            }
+        } else {
+            lessonsContainer.classList.add('hidden');
+            chevronIcon.style.transform = 'rotate(0deg)';
+            // Stop topic rotations when hiding lessons
+            stopTopicRotations();
+        }
+
+        // Save state when lessons visibility changes
+        saveState();
+    }
+
+    function toggleHistoryVisibility() {
+        const historyContainer = document.getElementById('history-container');
+        const isHidden = historyContainer.classList.contains('hidden');
+        const chevronIcon = document.getElementById('toggle-history-btn').querySelector('i');
+
+        if (isHidden) {
+            historyContainer.classList.remove('hidden');
+            chevronIcon.style.transform = 'rotate(180deg)';
+            displayLessonHistory();
+        } else {
+            historyContainer.classList.add('hidden');
+            chevronIcon.style.transform = 'rotate(0deg)';
+        }
+    }
 
     // --- Topic Rotation Functions ---
 
@@ -786,98 +702,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const pool = topicPools[level] || [];
         const shuffled = [...pool].sort(() => 0.5 - Math.random());
         return shuffled.slice(0, count);
-    }
-
-    // Force populate lesson topics immediately
-    function forcePoppulateLessonTopics() {
-        console.log('Force populating lesson topics...');
-        
-        // Stop any existing rotations first
-        stopTopicRotations();
-        
-        // Clear all existing content
-        const containers = ['beginner', 'intermediate', 'advanced'];
-        containers.forEach(level => {
-            const container = document.getElementById(`${level}-container`);
-            if (container) {
-                container.innerHTML = '';
-            }
-        });
-        
-        // Force populate each difficulty level immediately
-        containers.forEach((level, index) => {
-            const container = document.getElementById(`${level}-container`);
-            if (container) {
-                setTimeout(() => {
-                    const topics = getRandomTopics(level, 4);
-                    console.log(`Populating ${level} with topics:`, topics);
-                    
-                    topics.forEach((topic, topicIndex) => {
-                        const button = createTopicButton(topic, level);
-                        button.style.opacity = '1'; // Force visible
-                        button.style.animation = 'none'; // No animation delays
-                        container.appendChild(button);
-                    });
-                }, index * 100);
-            }
-        });
-        
-        // Start normal rotations after initial population
-        setTimeout(() => {
-            startTopicRotations();
-        }, 1000);
-    }
-
-    // Force populate history immediately
-    function forcePopulateHistory() {
-        console.log('Force populating history...');
-        const historyContainer = document.getElementById('history-lessons-container');
-        const history = getLessonHistory();
-
-        if (!historyContainer) {
-            console.error('History container not found');
-            return;
-        }
-
-        if (history.length === 0) {
-            historyContainer.innerHTML = `
-                <div class="col-span-2 flex flex-col items-center justify-center py-8 text-gray-400">
-                    <i class="fas fa-history text-3xl mb-2"></i>
-                    <p>${translateText('noCompletedLessons') || 'No completed lessons yet'}</p>
-                </div>
-            `;
-            return;
-        }
-
-        historyContainer.innerHTML = '';
-
-        // Display up to 6 most recent lessons
-        const recentLessons = history.slice(0, 6);
-        console.log('Populating history with lessons:', recentLessons.length);
-        
-        recentLessons.forEach((lesson, index) => {
-            const lessonCard = document.createElement('div');
-            lessonCard.className = 'bg-purple-600/20 hover:bg-purple-600/30 border border-purple-600/30 rounded-lg p-3 cursor-pointer transition-all history-card';
-            lessonCard.innerHTML = `
-                <div class="text-purple-300 text-xs mb-1">${lesson.language}</div>
-                <div class="text-white text-sm font-medium mb-1 line-clamp-2">${lesson.topic}</div>
-                <div class="text-gray-400 text-xs">${lesson.completedAt}</div>
-            `;
-
-            lessonCard.addEventListener('click', (e) => {
-                e.preventDefault();
-                console.log('History lesson clicked:', lesson.topic);
-                reviewLesson(lesson);
-            });
-
-            // Force visible immediately
-            lessonCard.style.opacity = '1';
-            lessonCard.style.animation = 'none';
-            
-            historyContainer.appendChild(lessonCard);
-        });
-        
-        console.log('History populated with', recentLessons.length, 'lessons');
     }
 
     function createTopicButton(topic, level) {
@@ -1663,37 +1487,6 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
             return sentence.replace(/[""''""」』"'.,\s]+$/, '').trim();
         }
 
-        // Helper function to group stop words with following sentences
-        function groupStopWords(sentences, language) {
-            if (!sentences || sentences.length <= 1) return sentences;
-            
-            const grouped = [];
-            let i = 0;
-            
-            while (i < sentences.length) {
-                let currentSentence = sentences[i];
-                
-                // Check if current sentence is a stop word
-                if (safeIsStopWord(currentSentence, language)) {
-                    // Group with next sentence if available
-                    if (i + 1 < sentences.length) {
-                        currentSentence = currentSentence + ' ' + sentences[i + 1];
-                        i += 2; // Skip next sentence since we combined it
-                    } else {
-                        // Last sentence is a stop word, keep it as is
-                        grouped.push(currentSentence);
-                        i++;
-                    }
-                } else {
-                    i++;
-                }
-                
-                grouped.push(currentSentence);
-            }
-            
-            return grouped;
-        }
-
         // For Japanese and Chinese, use improved splitting logic
         if (currentLanguage === 'Japanese' || currentLanguage === 'Chinese') {
             // CJK sentence endings: 。！？
@@ -1821,8 +1614,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                 }
             }
 
-            const groupedSentences = groupStopWords(sentences, currentLanguage);
-            return groupedSentences.length > 0 ? groupedSentences : [cleanSentenceEnd(text.trim())];
+            return sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())];
         }
 
         // For other languages, handle ellipses and sentence endings properly
@@ -1893,8 +1685,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
             }
         }
 
-        const groupedSentences = groupStopWords(sentences, currentLanguage);
-        return groupedSentences.length > 0 ? groupedSentences : [cleanSentenceEnd(text.trim())];
+        return sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())];
     }
 
     async function advanceTurn() {
@@ -2136,12 +1927,6 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                     expectedLine = currentSentences[currentSentenceIndex];
                 } else {
                     expectedLine = currentTurnData.line.clean_text;
-                }
-
-                // For stop word verification, be more lenient with matching
-                const isStopWordSentence = expectedLine.split(' ').some(word => safeIsStopWord(word, currentLanguage));
-                if (isStopWordSentence) {
-                    console.log('Expected sentence contains stop words, using more lenient verification');
                 }
 
                 console.log(`Verifying ${currentLanguage} speech with AI method...`);
@@ -2641,7 +2426,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
     6.  **EXPLANATION LANGUAGE:** All explanations (title and body) must be written in ${nativeLangName}, not English.
 
-    7.  **ILLUSTRATION PROMPT:** The "illustration_prompt" should be a brief, descriptive text in English to generate an appropriate illustration for the scenario. The style should be highly detailed, anime-like and stylish. The image should have absolutely no text or labels, only the visual representation of the scenario.
+    7.  **ILLUSTRATION PROMPT:** The "illustration_prompt" should be a brief, descriptive text in English to generate an appropriate illustration for the scenario. The style should be highly detailed, anime-like and stylish.
 
     Now, generate the complete JSON lesson plan.`;
     }
@@ -2753,17 +2538,6 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     initializeNativeLanguage();
     updateTranslations(); // Initial translation update
 
-    // Ensure toggle buttons are properly initialized
-    const toggleLessonsIcon = toggleLessonsBtn.querySelector('i');
-    const toggleHistoryIcon = document.getElementById('toggle-history-btn').querySelector('i');
-    
-    if (toggleLessonsIcon) {
-        toggleLessonsIcon.style.transition = 'transform 0.3s ease';
-    }
-    if (toggleHistoryIcon) {
-        toggleHistoryIcon.style.transition = 'transform 0.3s ease';
-    }
-
     // Load saved state
     const savedState = loadState();
     if (savedState) {
@@ -2772,29 +2546,6 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
             addBackToLandingButton();
         }
     } else {
-        // On initial load, don't start rotations - let user toggle to see content
-        console.log('Initial page load - topics will populate when user toggles');
+        startTopicRotations();
     }
-    
-    // Double-check that buttons are working
-    setTimeout(() => {
-        console.log('=== TOGGLE BUTTON DEBUG ===');
-        console.log('Toggle lessons button:', toggleLessonsBtn ? 'found' : 'not found');
-        console.log('Toggle history button:', document.getElementById('toggle-history-btn') ? 'found' : 'not found');
-        console.log('Lessons container:', lessonsContainer ? 'found' : 'not found');
-        console.log('History container:', document.getElementById('history-container') ? 'found' : 'not found');
-        
-        // Test click handlers
-        if (toggleLessonsBtn) {
-            console.log('Testing lessons toggle click...');
-            // toggleLessonsBtn.click(); // Uncomment to test auto-click
-        }
-        
-        const histBtn = document.getElementById('toggle-history-btn');
-        if (histBtn) {
-            console.log('Testing history toggle click...');
-            // histBtn.click(); // Uncomment to test auto-click
-        }
-        console.log('=== END DEBUG ===');
-    }, 100);
 });
