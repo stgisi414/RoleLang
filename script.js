@@ -1492,6 +1492,26 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                     } else if (char === "'" || char === "'") {
                         inQuotes = true;
                         quoteChar = "'"; // Both open and close with curly close quote
+                    } else if (char === '“') {
+                        
+                      inQuotes = true;
+
+                        quoteChar = '“';
+                } else if (char === '”') {
+                        
+                      inQuotes = true;
+
+                        quoteChar = '”';
+                    } else if (char === '‘') {
+                        
+                      inQuotes = true;
+
+                        quoteChar = '‘';
+                    } else if (char === '’') {
+                        
+                      inQuotes = true;
+
+                        quoteChar = '’';
                     } else if (char === '「') {
                         inQuotes = true;
                         quoteChar = '」';
