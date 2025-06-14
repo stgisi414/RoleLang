@@ -1424,6 +1424,12 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     function splitIntoSentences(text) {
         const currentLanguage = languageSelect.value;
 
+        // Helper function to clean trailing non-alphanumeric characters from sentences
+        function cleanSentenceEnd(sentence) {
+            // Remove trailing punctuation, quotes, and whitespace, but preserve sentence-ending punctuation
+            return sentence.replace(/[""''""」』"'.,\s]+$/, '').trim();
+        }
+
         // For Japanese and Chinese, use improved splitting logic
         if (currentLanguage === 'Japanese' || currentLanguage === 'Chinese') {
             // CJK sentence endings: 。！？
@@ -1442,7 +1448,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                         const endIndex = match.index + match[0].length;
                         const sentence = text.substring(lastIndex, endIndex).trim();
                         if (sentence) {
-                            sentences.push(sentence);
+                            sentences.push(cleanSentenceEnd(sentence));
                         }
                         lastIndex = endIndex;
 
@@ -1455,13 +1461,13 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                     // Add remaining text
                     const remaining = text.substring(lastIndex).trim();
                     if (remaining) {
-                        sentences.push(remaining);
+                        sentences.push(cleanSentenceEnd(remaining));
                     }
 
-                    return sentences.length > 0 ? sentences : [text.trim()];
+                    return sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())];
                 } else {
                     // For Chinese without clear punctuation, return as single sentence
-                    return [text.trim()];
+                    return [cleanSentenceEnd(text.trim())];
                 }
             }
 
@@ -1489,27 +1495,33 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
                 // Check for sentence endings
                 if (/[。！？]/.test(char) && !inQuotes) {
-                    // Look ahead to include any trailing punctuation or quotes
-                    let j = i + 1;
-                    while (j < text.length && /[""」』"'.,\s]/.test(text[j])) {
-                        currentSentence += text[j];
-                        j++;
-                    }
-                    
                     if (currentSentence.trim()) {
-                        sentences.push(currentSentence.trim());
+                        // Clean the sentence but preserve the core content
+                        const cleanedSentence = cleanSentenceEnd(currentSentence.trim());
+                        if (cleanedSentence) {
+                            sentences.push(cleanedSentence);
+                        }
                     }
                     currentSentence = '';
-                    i = j - 1; // Skip the characters we've already processed
+                    
+                    // Skip any trailing punctuation or quotes after the sentence ending
+                    let j = i + 1;
+                    while (j < text.length && /[""」』"'.,\s]/.test(text[j])) {
+                        j++;
+                    }
+                    i = j - 1;
                 }
             }
 
             // Add any remaining text
             if (currentSentence.trim()) {
-                sentences.push(currentSentence.trim());
+                const cleanedSentence = cleanSentenceEnd(currentSentence.trim());
+                if (cleanedSentence) {
+                    sentences.push(cleanedSentence);
+                }
             }
 
-            return sentences.length > 0 ? sentences : [text.trim()];
+            return sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())];
         }
 
         // For other languages, handle ellipses and sentence endings properly
@@ -1521,7 +1533,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
         if (!sentenceEndings.test(textWithProtectedEllipses)) {
             // Restore ellipses and return as single sentence
-            return [text.trim()];
+            return [cleanSentenceEnd(text.trim())];
         }
 
         const sentences = [];
@@ -1552,30 +1564,35 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                     currentSentence += textWithProtectedEllipses[j];
                     j++;
                 }
-                
-                // Skip whitespace after punctuation
-                while (j < textWithProtectedEllipses.length && /\s/.test(textWithProtectedEllipses[j])) {
-                    currentSentence += textWithProtectedEllipses[j];
-                    j++;
-                }
 
                 if (currentSentence.trim()) {
-                    // Restore any ellipses in the sentence
+                    // Restore any ellipses in the sentence and clean trailing punctuation
                     const restoredSentence = currentSentence.replace(new RegExp(ellipsisPlaceholder, 'g'), '...');
-                    sentences.push(restoredSentence.trim());
+                    const cleanedSentence = cleanSentenceEnd(restoredSentence.trim());
+                    if (cleanedSentence) {
+                        sentences.push(cleanedSentence);
+                    }
                 }
                 currentSentence = '';
+                
+                // Skip any trailing punctuation or quotes after the sentence ending
+                while (j < textWithProtectedEllipses.length && /[""''""」』"'.,\s]/.test(textWithProtectedEllipses[j])) {
+                    j++;
+                }
                 i = j - 1;
             }
         }
 
         if (currentSentence.trim()) {
-            // Restore any ellipses in the remaining sentence
+            // Restore any ellipses in the remaining sentence and clean trailing punctuation
             const restoredSentence = currentSentence.replace(new RegExp(ellipsisPlaceholder, 'g'), '...');
-            sentences.push(restoredSentence.trim());
+            const cleanedSentence = cleanSentenceEnd(restoredSentence.trim());
+            if (cleanedSentence) {
+                sentences.push(cleanedSentence);
+            }
         }
 
-        return sentences.length > 0 ? sentences : [text.trim()];
+        return sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())];
     }
 
     async function advanceTurn() {
