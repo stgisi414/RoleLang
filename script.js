@@ -1492,12 +1492,12 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                     } else if (char === '"') {
                         inQuotes = true;
                         quoteChar = '"';
-                    } else if (char === ''') {
+                    } else if (char === "'") {
                         inQuotes = true;
-                        quoteChar = ''';
-                    } else if (char === ''') {
+                        quoteChar = "'";
+                    } else if (char === "'") {
                         inQuotes = true;
-                        quoteChar = ''';
+                        quoteChar = "'";
                     } else if (char === '「') {
                         inQuotes = true;
                         quoteChar = '」';
