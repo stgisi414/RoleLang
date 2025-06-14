@@ -105,6 +105,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 			audioPlayer.pause();
 		}
 	}, { once: true });
+	
+	const startLessonOverlay = document.getElementById('start-lesson-overlay');
+    const confirmStartLessonBtn = document.getElementById('confirm-start-lesson-btn');
+
+    // Event listener for the new overlay button
+    confirmStartLessonBtn.addEventListener('click', () => {
+        startLessonOverlay.classList.add('hidden');
+        startConversation(); // This now starts the lesson with a guaranteed user click
+    });
 
     function loadState() {
         try {
@@ -1386,14 +1395,6 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     // --- Core Functions ---
 
 	async function initializeLesson() {
-		// Force reset of the audio player
-		audioPlayer.pause();
-		if (audioPlayer.src) {
-			URL.revokeObjectURL(audioPlayer.src);
-		}
-		audioPlayer.src = "";
-		isAudioPlaying = false;
-
 		const language = languageSelect.value;
 		const topic = topicInput.value;
 
@@ -1434,7 +1435,13 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 			landingScreen.classList.add('hidden');
 			lessonScreen.classList.remove('hidden');
 			fetchAndDisplayIllustration(lessonPlan.illustration_prompt);
-			startConversation();
+
+			// --- THIS IS THE FIX ---
+			// Instead of starting the lesson, show the overlay that requires a click.
+			const startLessonOverlay = document.getElementById('start-lesson-overlay');
+			startLessonOverlay.classList.remove('hidden');
+			// --- END OF FIX ---
+
 			saveState();
 
 		} catch (error) {
@@ -1445,7 +1452,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 			loadingSpinner.classList.add('hidden');
 		}
 	}
-   
+	
     async function restoreConversation() {
         conversationContainer.innerHTML = ''; // Clear previous conversation
         for (const [index, turn] of lessonPlan.dialogue.entries()) {
