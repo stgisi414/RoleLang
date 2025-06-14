@@ -1424,57 +1424,92 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     function splitIntoSentences(text) {
         const currentLanguage = languageSelect.value;
 
-        // For Japanese, use a simpler approach that works better with hiragana
-        if (currentLanguage === 'Japanese') {
-            // Japanese sentence endings: 。！？です ます た だ
-            // Split on major punctuation and common sentence endings
-            const japaneseEndings = /[。！？]/;
+        // For Japanese and Chinese, use improved splitting logic
+        if (currentLanguage === 'Japanese' || currentLanguage === 'Chinese') {
+            // CJK sentence endings: 。！？
+            const cjkEndings = /[。！？]/;
 
-            if (!japaneseEndings.test(text)) {
-                // No clear sentence endings, try splitting on common patterns
-                // Look for です、ます、た、だ followed by space or end
-                const patterns = /(です|ます|した|だった|たい|ない)(?=[。\s]|$)/g;
-                const sentences = [];
-                let lastIndex = 0;
-                let match;
+            if (!cjkEndings.test(text)) {
+                if (currentLanguage === 'Japanese') {
+                    // No clear sentence endings, try splitting on common patterns for Japanese
+                    // Look for です、ます、た、だ followed by space or end
+                    const patterns = /(です|ます|した|だった|たい|ない)(?=[。\s]|$)/g;
+                    const sentences = [];
+                    let lastIndex = 0;
+                    let match;
 
-                while ((match = patterns.exec(text)) !== null) {
-                    const endIndex = match.index + match[0].length;
-                    const sentence = text.substring(lastIndex, endIndex).trim();
-                    if (sentence) {
-                        sentences.push(sentence);
+                    while ((match = patterns.exec(text)) !== null) {
+                        const endIndex = match.index + match[0].length;
+                        const sentence = text.substring(lastIndex, endIndex).trim();
+                        if (sentence) {
+                            sentences.push(sentence);
+                        }
+                        lastIndex = endIndex;
+
+                        // Skip any whitespace after the match
+                        while (lastIndex < text.length && /\s/.test(text[lastIndex])) {
+                            lastIndex++;
+                        }
                     }
-                    lastIndex = endIndex;
 
-                    // Skip any whitespace after the match
-                    while (lastIndex < text.length && /\s/.test(text[lastIndex])) {
-                        lastIndex++;
+                    // Add remaining text
+                    const remaining = text.substring(lastIndex).trim();
+                    if (remaining) {
+                        sentences.push(remaining);
                     }
-                }
 
-                // Add remaining text
-                const remaining = text.substring(lastIndex).trim();
-                if (remaining) {
-                    sentences.push(remaining);
-                }
-
-                return sentences.length > 0 ? sentences : [text.trim()];
-            }
-
-            // Split on punctuation for Japanese
-            const parts = text.split(/([。！？])/);
-            const result = [];
-
-            for (let i = 0; i < parts.length; i += 2) {
-                const sentence = parts[i];
-                const punctuation = parts[i + 1] || '';
-                const fullSentence = sentence + punctuation;
-                if (fullSentence.trim()) {
-                    result.push(fullSentence.trim());
+                    return sentences.length > 0 ? sentences : [text.trim()];
+                } else {
+                    // For Chinese without clear punctuation, return as single sentence
+                    return [text.trim()];
                 }
             }
 
-            return result.length > 0 ? result : [text.trim()];
+            // Split on punctuation for both Japanese and Chinese
+            // Use a more sophisticated approach that handles quotation marks and other punctuation
+            const sentences = [];
+            let currentSentence = '';
+            let inQuotes = false;
+            let quoteChar = '';
+
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const nextChar = i < text.length - 1 ? text[i + 1] : '';
+                
+                currentSentence += char;
+
+                // Track quotation marks
+                if ((char === '"' || char === '"' || char === '"' || char === '「' || char === '『') && !inQuotes) {
+                    inQuotes = true;
+                    quoteChar = char === '"' ? '"' : char === '"' ? '"' : char === '「' ? '」' : '』';
+                } else if ((char === '"' || char === '"' || char === '」' || char === '』') && inQuotes && char === quoteChar) {
+                    inQuotes = false;
+                    quoteChar = '';
+                }
+
+                // Check for sentence endings
+                if (/[。！？]/.test(char) && !inQuotes) {
+                    // Look ahead to include any trailing punctuation or quotes
+                    let j = i + 1;
+                    while (j < text.length && /[""」』"'.,\s]/.test(text[j])) {
+                        currentSentence += text[j];
+                        j++;
+                    }
+                    
+                    if (currentSentence.trim()) {
+                        sentences.push(currentSentence.trim());
+                    }
+                    currentSentence = '';
+                    i = j - 1; // Skip the characters we've already processed
+                }
+            }
+
+            // Add any remaining text
+            if (currentSentence.trim()) {
+                sentences.push(currentSentence.trim());
+            }
+
+            return sentences.length > 0 ? sentences : [text.trim()];
         }
 
         // For other languages, handle ellipses and sentence endings properly
