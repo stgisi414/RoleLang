@@ -67,10 +67,10 @@ const translations = {
     whatDoesThisMean: "What does this mean in English?",
     score: "Score",
     noVocabularyFound: "No vocabulary with translations found in this lesson.",
-    resetLesson: "Reset",
-    recordSentence: "Record sentence",
-    sentenceCorrect: "Correct! Next sentence...",
-    allSentencesCorrect: "All sentences correct! Well done.",
+    reviewMode: "Review Mode",
+    lessonCompleteReview: "Lesson Complete!",
+    vocabQuiz: "Vocab Quiz", 
+    reviewModeActive: "Review mode is now active! Use the vocab quiz button above.",
     topics: {
       beginner: [
         "Introducing yourself", "Ordering food at a restaurant", "Asking for directions", "Shopping for clothes",
@@ -194,6 +194,10 @@ const translations = {
     whatDoesThisMean: "¿Qué significa esto en español?",
     score: "Puntaje",
     noVocabularyFound: "No se encontró vocabulario con traducciones en esta lección.",
+    reviewMode: "Review Mode",
+    lessonCompleteReview: "Lesson Complete!",
+    vocabQuiz: "Vocab Quiz", 
+    reviewModeActive: "Review mode is now active! Use the vocab quiz button above.",
     topics: {
       beginner: [
         "Presentándote", "Pidiendo comida en un restaurante", "Pidiendo direcciones", "Comprando ropa",
@@ -302,9 +306,10 @@ const translations = {
     whatDoesThisMean: "Que signifie ceci en français?",
     score: "Score",
     noVocabularyFound: "Aucun vocabulaire avec traductions trouvé dans cette leçon.",
-    recordSentence: "Enregistrer phrase",
-    sentenceCorrect: "Correct! Phrase suivante...",
-    allSentencesCorrect: "Toutes les phrases correctes! Bien joué.",
+    reviewMode: "Mode de Révision",
+    lessonCompleteReview: "Leçon Terminée!",
+    vocabQuiz: "Quiz de Vocabulaire",
+    reviewModeActive: "Le mode de révision est maintenant actif! Utilisez le bouton de quiz de vocabulaire ci-dessus.",
     topics: {
       beginner: [
         "Se présenter", "Commander de la nourriture au restaurant", "Demander son chemin", "Acheter des vêtements",
@@ -410,11 +415,10 @@ const translations = {
     whatDoesThisMean: "Was bedeutet das auf Deutsch?",
     score: "Punkte",
     noVocabularyFound: "Kein Vokabular mit Übersetzungen in dieser Lektion gefunden.",
-    reviewLessons: "Vorherige Lektionen Wiederholen:",
-    noCompletedLessons: "Noch keine abgeschlossenen Lektionen",
-    recordSentence: "Satz aufnehmen",
-    sentenceCorrect: "Richtig! Nächster Satz...",
-    allSentencesCorrect: "Alle Sätze richtig! Gut gemacht.",
+    reviewMode: "Wiederholungsmodus",
+    lessonCompleteReview: "Lektion Abgeschlossen!",
+    vocabQuiz: "Vokabelquiz",
+    reviewModeActive: "Der Wiederholungsmodus ist jetzt aktiv! Verwenden Sie die Vokabelquiz-Schaltfläche oben.",
     topics: {
       beginner: [
         "Sich vorstellen", "Essen im Restaurant bestellen", "Nach dem Weg fragen", "Kleidung einkaufen",
@@ -525,6 +529,10 @@ const translations = {
     whatDoesThisMean: "Cosa significa questo in italiano?",
     score: "Punteggio",
     noVocabularyFound: "Nessun vocabolario con traduzioni trovato in questa lezione.",
+    reviewMode: "Review Mode",
+    lessonCompleteReview: "Lesson Complete!",
+    vocabQuiz: "Vocab Quiz", 
+    reviewModeActive: "Review mode is now active! Use the vocab quiz button above.",
     topics: {
       beginner: [
         "Presentarsi", "Ordinare cibo al ristorante", "Chiedere indicazioni", "Comprare vestiti",
@@ -544,7 +552,7 @@ const translations = {
       ],
       futuristic: [
         "Vita quotidiana in una colonia spaziale", "Malfunzionamento dell'assistente AI", "Educazione in realtà virtuale", "Collaborazione con un collega robot",
-        "Prenotazione di una vacanza con viaggio nel tempo", "Conferenza olografica", "Costruzione di un habitat su Marte", "Consulto per un impianto neurale"
+        "Prenotazione di una vacanza con viaggio nel tempo", "Conferenza olografica", "Costruzione di un habitat suMarte", "Consulto per un impianto neurale"
       ],
       historical: [
         "Tea party dell'era vittoriana", "Assedio di un castello medievale", "Addestramento di gladiatori nell'antica Roma", "Incontro in un saloon del selvaggio west",
@@ -635,6 +643,10 @@ const translations = {
     whatDoesThisMean: "这在中文里是什么意思？",
     score: "分数",
     noVocabularyFound: "本课程中没有找到带翻译的词汇。",
+    reviewMode: "Review Mode",
+    lessonCompleteReview: "Lesson Complete!",
+    vocabQuiz: "Vocab Quiz", 
+    reviewModeActive: "Review mode is now active! Use the vocab quiz button above.",
     topics: {
       beginner: [
         "自我介绍", "在餐厅点餐", "问路", "买衣服",
@@ -745,6 +757,10 @@ const translations = {
     whatDoesThisMean: "これは日本語で何という意味ですか？",
     score: "スコア",
     noVocabularyFound: "このレッスンで翻訳付きの語彙が見つかりませんでした。",
+    reviewMode: "Review Mode",
+    lessonCompleteReview: "Lesson Complete!",
+    vocabQuiz: "Vocab Quiz", 
+    reviewModeActive: "Review mode is now active! Use the vocab quiz button above.",
     topics: {
       beginner: [
         "自己紹介", "レストランで食事を注文", "道を尋ねる", "服を買う",
@@ -855,6 +871,10 @@ const translations = {
     whatDoesThisMean: "이것은 무엇을 의미하나요？",
     score: "점수",
     noVocabularyFound: "이 레슨에서 번역이 포함된 어휘를 찾을 수 없습니다.",
+    reviewMode: "Review Mode",
+    lessonCompleteReview: "Lesson Complete!",
+    vocabQuiz: "Vocab Quiz", 
+    reviewModeActive: "Review mode is now active! Use the vocab quiz button above.",
     topics: {
       beginner: [
         "자기소개하기", "식당에서 음식 주문하기", "길 묻기", "옷 쇼핑하기",

@@ -512,9 +512,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const reviewIndicator = document.createElement('div');
         reviewIndicator.className = 'review-mode-indicator absolute top-16 left-4 bg-purple-600 text-white px-3 py-1 rounded-lg text-sm z-10 flex items-center space-x-2';
         reviewIndicator.innerHTML = `
-            <span><i class="fas fa-history mr-2"></i>Review Mode - Lesson Complete!</span>
+            <span><i class="fas fa-history mr-2"></i>${translateText('reviewMode')} - ${translateText('lessonCompleteReview')}</span>
             <button id="vocab-quiz-btn" class="bg-purple-700 hover:bg-purple-800 px-2 py-1 rounded text-xs transition-colors">
-                <i class="fas fa-brain mr-1"></i>Vocab Quiz
+                <i class="fas fa-brain mr-1"></i>${translateText('vocabQuiz')}
             </button>
         `;
         lessonScreen.appendChild(reviewIndicator);
@@ -531,7 +531,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <i class="fas fa-check-circle mr-2"></i>${translateText('lessonComplete')}
                 </div>
                 <div class="text-purple-300 text-sm">
-                    <i class="fas fa-history mr-1"></i>Review mode is now active! Use the vocab quiz button above.
+                    <i class="fas fa-history mr-1"></i>${translateText('reviewModeActive')}
                 </div>
             </div>
         `;
