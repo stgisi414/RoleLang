@@ -2426,7 +2426,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
     6.  **EXPLANATION LANGUAGE:** All explanations (title and body) must be written in ${nativeLangName}, not English.
 
-    7.  **ILLUSTRATION PROMPT:** The "illustration_prompt" should be a brief, descriptive text in English to generate an appropriate illustration for the scenario. The style should be highly detailed, anime-like and stylish.
+    7.  **ILLUSTRATION PROMPT:** The "illustration_prompt" should be a brief, descriptive text in English to generate an appropriate illustration for the scenario. The style should be highly detailed, anime-like and stylish. The image should have absolutely no text or labels, only the visual representation of the scenario.
 
     Now, generate the complete JSON lesson plan.`;
     }
