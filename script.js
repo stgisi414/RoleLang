@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // --- DOM Elements ---
     const landingScreen = document.getElementById('landing-screen');
     const lessonScreen = document.getElementById('lesson-screen');
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- API & State ---
     // IMPORTANT: Replace with your actual Gemini API Key.
     // It's highly recommended to use a backend proxy to protect this key in a real application.
-    const GEMINI_API_KEY = 'AIzaSyDIFeql6HUpkZ8JJlr_kuN0WDFHUyOhijA';
+    const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY_HERE';
     const GEMINI_MODELS = {
         'ultra': 'gemini-2.5-flash-preview-05-20',
         'super': 'gemini-2.0-flash',
@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem(STATE_KEY);
     }
 
-    function restoreState(state) {
+    async function restoreState(state) {
         // Restore form values
         if (state.selectedLanguage) {
             languageSelect.value = state.selectedLanguage;
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
             lessonScreen.classList.remove('hidden');
 
             // Restore conversation
-            restoreConversation();
+            await restoreConversation();
 
             // Restore illustration
             if (lessonPlan.illustration_url) {
@@ -591,12 +591,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add review indicator with vocabulary quiz button
         const reviewIndicator = document.createElement('div');
         reviewIndicator.className = 'review-mode-indicator absolute top-16 left-4 bg-purple-600 text-white px-3 py-1 rounded-lg text-sm z-10 flex items-center space-x-2';
-        
+
         // Use currentTranslations directly to ensure we get the most up-to-date translations
         const reviewModeText = currentTranslations.reviewMode || translations.en.reviewMode;
         const lessonCompleteText = currentTranslations.lessonCompleteReview || translations.en.lessonCompleteReview;
         const vocabQuizText = currentTranslations.vocabQuiz || translations.en.vocabQuiz;
-        
+
         reviewIndicator.innerHTML = `
             <span><i class="fas fa-history mr-2"></i>${reviewModeText} - ${lessonCompleteText}</span>
             <button id="vocab-quiz-btn" class="bg-purple-700 hover:bg-purple-800 px-2 py-1 rounded text-xs transition-colors">
@@ -613,7 +613,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update mic status to show lesson is complete and review mode is active
         const lessonCompleteStatusText = currentTranslations.lessonComplete || translations.en.lessonComplete;
         const reviewModeActiveText = currentTranslations.reviewModeActive || translations.en.reviewModeActive;
-        
+
         micStatus.innerHTML = `
             <div class="text-center">
                 <div class="text-green-400 font-bold mb-2">
@@ -818,29 +818,29 @@ document.addEventListener('DOMContentLoaded', () => {
     function rotateSituations() {
         // All available situation categories
         const allSituations = ['realistic', 'futuristic', 'historical', 'drama', 'comedy', 'horror'];
-        
+
         // Hide all situation categories first
         const allSituationElements = document.querySelectorAll('.situation-category, .mb-4[data-category]');
         allSituationElements.forEach(category => {
             category.style.display = 'none';
         });
-        
+
         // Also hide the non-data-category situation containers
         const realisticEl = document.querySelector('.mb-4:has(#realistic-container)');
         const futuristicEl = document.querySelector('.mb-4:has(#futuristic-container)');
         if (realisticEl) realisticEl.style.display = 'none';
         if (futuristicEl) futuristicEl.style.display = 'none';
-        
+
         // Randomly select 3 categories to display
         const shuffledSituations = [...allSituations].sort(() => 0.5 - Math.random());
         const selectedSituations = shuffledSituations.slice(0, 3);
-        
+
         console.log('Selected situations:', selectedSituations); // Debug log
-        
+
         // Show selected categories and populate them
         selectedSituations.forEach((situation, index) => {
             let categoryElement;
-            
+
             // Handle the different ways categories are structured in HTML
             if (situation === 'realistic') {
                 categoryElement = document.querySelector('.mb-4:has(#realistic-container)') || 
@@ -851,12 +851,12 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 categoryElement = document.querySelector(`[data-category="${situation}"]`);
             }
-            
+
             const container = document.getElementById(`${situation}-container`);
-            
+
             if (categoryElement && container) {
                 categoryElement.style.display = 'block';
-                
+
                 // Stagger the start of each container's animation
                 setTimeout(() => {
                     animateTopicsOut(container);
@@ -896,19 +896,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function extractVocabularyFromDialogue() {
         if (!lessonPlan || !lessonPlan.dialogue) return [];
-        
+
         const vocabulary = [];
         const seenWords = new Set();
-        
+
         lessonPlan.dialogue.forEach(turn => {
             if (turn.line && turn.line.display) {
                 const cleanText = removeParentheses(turn.line.display);
                 const translation = extractTranslation(turn.line.display);
-                
+
                 if (translation) {
                     const word = cleanText.replace(/[.,!?;:"'`´''""。！？]/g, '').trim();
                     const translationClean = translation.replace(/[()]/g, '').trim();
-                    
+
                     if (word && translationClean && !seenWords.has(word.toLowerCase())) {
                         vocabulary.push({
                             word: word,
@@ -920,7 +920,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
-        
+
         return vocabulary.slice(0, 10); // Limit to 10 vocabulary items
     }
 
@@ -950,7 +950,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const vocabList = vocabulary.map(v => v.word).join(', ');
-            
+
             const prompt = `
 You are a vocabulary translator. Your task is to translate words from ${targetLanguage} into ${nativeLangName}.
 
@@ -990,7 +990,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
     function startVocabularyQuiz(language) {
         const vocabulary = extractVocabularyFromDialogue();
-        
+
         if (vocabulary.length === 0) {
             alert(translateText('noVocabularyFound') || 'No vocabulary with translations found in this lesson.');
             return;
@@ -1004,10 +1004,10 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
         const quizModal = document.createElement('div');
         quizModal.id = 'vocab-quiz-modal';
         quizModal.className = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4';
-        
+
         const quizContent = document.createElement('div');
         quizContent.className = 'bg-gray-800 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto glassmorphism';
-        
+
         // Show loading while generating translations
         quizContent.innerHTML = `
             <div class="text-center">
@@ -1015,7 +1015,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                 <p class="text-white">Generating quiz questions...</p>
             </div>
         `;
-        
+
         // Shuffle vocabulary and create quiz questions
         const shuffledVocab = [...vocabulary].sort(() => 0.5 - Math.random());
         let currentQuestion = 0;
@@ -1061,7 +1061,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                         </div>
                     </div>
                 `;
-                
+
                 document.getElementById('retry-quiz-btn').addEventListener('click', async () => {
                     currentQuestion = 0;
                     score = 0;
@@ -1074,7 +1074,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                     }
                     updateQuizContent();
                 });
-                
+
                 document.getElementById('close-quiz-btn').addEventListener('click', () => {
                     document.body.removeChild(quizModal);
                 });
@@ -1134,12 +1134,12 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                 option.addEventListener('click', () => {
                     const selectedAnswer = option.dataset.answer;
                     const isCorrect = selectedAnswer === correctAnswer;
-                    
+
                     // Disable all options
                     options.forEach(opt => {
                         opt.classList.remove('hover:bg-gray-600');
                         opt.style.cursor = 'not-allowed';
-                        
+
                         if (opt.dataset.answer === correctAnswer) {
                             opt.classList.add('bg-green-600');
                         } else if (opt === option && !isCorrect) {
@@ -1168,7 +1168,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
         quizModal.appendChild(quizContent);
         document.body.appendChild(quizModal);
-        
+
         updateQuizContent();
 
         // Close modal when clicking outside
@@ -1180,7 +1180,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     }
 
     // --- Central Gemini API Function ---
-    
+
     async function callGeminiAPI(prompt, options = {}) {
         const { 
             modelPreference = 'pro',
@@ -1206,7 +1206,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
             if (!modelName) continue;
 
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
-            
+
             console.log(`Attempting to call Gemini API with model: ${modelName}`);
 
             for (let attempt = 1; attempt <= retryAttempts; attempt++) {
@@ -1226,7 +1226,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                     }
 
                     const data = await response.json();
-                    
+
                     if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
                         throw new Error('Invalid response structure from Gemini API');
                     }
@@ -1237,7 +1237,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                 } catch (error) {
                     console.warn(`Attempt ${attempt} failed for model ${modelName}:`, error.message);
                     lastError = error;
-                    
+
                     // Add exponential backoff for retries
                     if (attempt < retryAttempts) {
                         await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
@@ -1287,7 +1287,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
         try {
             const data = await callGeminiAPI(prompt, { modelPreference: 'pro' });
-            
+
             // Find the JSON part and parse it
             const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
             lessonPlan = JSON.parse(jsonString);
@@ -1325,9 +1325,9 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
         }
     }
 
-    function restoreConversation() {
+    async function restoreConversation() {
         conversationContainer.innerHTML = ''; // Clear previous conversation
-        lessonPlan.dialogue.forEach((turn, index) => {
+        for (const [index, turn] of lessonPlan.dialogue.entries()) {
             const lineDiv = document.createElement('div');
             lineDiv.classList.add('dialogue-line', 'text-white', 'cursor-pointer');
             lineDiv.id = `turn-${index}`;
@@ -1337,7 +1337,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
             if (turn.party === 'A') {
                 const displayText = removeParentheses(turn.line.display); // Use line.display
-                const sentences = splitIntoSentences(displayText);
+                const sentences = await splitIntoSentences(displayText);
 
                 if (sentences.length > 1) {
                     // Multiple sentences - wrap each in a span with ID
@@ -1390,7 +1390,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
             }
 
             conversationContainer.appendChild(lineDiv);
-        });
+        };
     }
 
     function restoreIllustration(imageUrl) {
@@ -1477,353 +1477,55 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     let currentSentenceIndex = 0;
     let speechAttempts = 0;
 
-    // Skip words that should be grouped with the next sentence for better speech recognition
-    const skipWords = {
-        'English': ['oh', 'ah', 'um', 'uh', 'eh', 'mm', 'hmm', 'wow', 'hey', 'hi', 'yo', 'ok', 'so', 'no', 'yes', 'well', 'but', 'and', 'or'],
-        'Spanish': ['oh', 'ah', 'eh', 'mm', 'hmm', 'ay', 'uy', 'ey', 'sí', 'no', 'ya', 'que', 'pues', 'bueno', 'vale', 'oye', 'hola', 'y', 'o', 'pero'],
-        'French': ['oh', 'ah', 'eh', 'mm', 'hmm', 'hé', 'euh', 'oui', 'non', 'bon', 'ben', 'et', 'ou', 'mais', 'alors', 'voilà', 'tiens', 'dis', 'quoi', 'hein'],
-        'German': ['oh', 'ah', 'eh', 'mm', 'hmm', 'ach', 'na', 'ja', 'nein', 'so', 'nun', 'gut', 'und', 'oder', 'aber', 'doch', 'hey', 'hallo', 'tja'],
-        'Italian': ['oh', 'ah', 'eh', 'mm', 'hmm', 'eh', 'beh', 'sì', 'no', 'ma', 'e', 'o', 'però', 'dai', 'va', 'bene', 'ecco', 'allora', 'ciao', 'hey'],
-        'Japanese': ['あ', 'え', 'お', 'う', 'ん', 'はい', 'いえ', 'でも', 'それで', 'じゃ', 'まあ', 'そう', 'ええ', 'うん', 'あの', 'その', 'この', 'はあ', 'へえ'],
-        'Chinese': ['啊', '呃', '嗯', '哦', '哎', '唉', '嘿', '喂', '对', '不', '是', '好', '那', '这', '就', '还', '也', '都', '会', '要'],
-        'Korean': ['아', '어', '오', '음', '응', '네', '예', '아니', '그래', '뭐', '좀', '잠깐', '근데', '그런데', '하지만', '그리고', '아무튼', '어쨌든', '야', '이']
-    };
-
-    // Helper function to check if a sentence is a skip word
-    function isSkipWord(sentence, language) {
-        const skipWordList = skipWords[language] || skipWords['English'];
-        const cleanSentence = sentence.toLowerCase().trim().replace(/[.,!?;:"'`´''""。！？]/g, '');
-        return skipWordList.includes(cleanSentence);
-    }
-
-    // Helper function to split text into sentences
-    function splitIntoSentences(text) {
+    // Helper function to split text into sentences using Gemini AI
+    async function splitIntoSentences(text) {
         const currentLanguage = languageSelect.value;
+        const cleanText = text.trim();
 
-        // Helper function to clean trailing non-alphanumeric characters from sentences
-        function cleanSentenceEnd(sentence) {
-            // Remove trailing punctuation, quotes, and whitespace, but preserve sentence-ending punctuation
-            return sentence.replace(/[""''""」』"'.,\s]+$/, '').trim();
+        // 1. Handle very short texts immediately
+        const words = cleanText.split(/\s+/);
+        if (words.length <= 3) {
+            return [cleanText];
         }
 
-        // For Japanese, Chinese, and Korean, use improved splitting logic
-        if (currentLanguage === 'Japanese' || currentLanguage === 'Chinese' || currentLanguage === 'Korean') {
-            // CJK sentence endings: 。！？ (and Korean endings)
-            const cjkEndings = /[。！？]/;
+        // 2. Construct the Gemini prompt
+        const prompt = `
+You are an expert linguist specializing in splitting text for language learners to practice speaking. Your task is to split the following text into natural, speakable chunks.
 
-            if (!cjkEndings.test(text)) {
-                if (currentLanguage === 'Japanese') {
-                    // No clear sentence endings, try splitting on common patterns for Japanese
-                    // Look for です、ます、た、だ followed by space or end
-                    const patterns = /(です|ます|した|だった|たい|ない)(?=[。\s]|$)/g;
-                    const sentences = [];
-                    let lastIndex = 0;
-                    let match;
+**Instructions:**
+1.  **Natural Chunks:** Break the text into short, complete sentences or meaningful phrases that someone would naturally pause between when speaking.
+2.  **Group Interjections:** If you see interjections (e.g., "Oh,", "Well,", "Ah,"), group them with the sentence that follows. For example, "Oh, I see" should be one chunk.
+3.  **Output Format:** Your response MUST be a valid JSON array of strings, where each string is a sentence or chunk.
+4.  **No Empty Strings:** Do not include empty strings in the array.
+5.  **Language:** The text is in **${currentLanguage}**.
 
-                    while ((match = patterns.exec(text)) !== null) {
-                        const endIndex = match.index + match[0].length;
-                        const sentence = text.substring(lastIndex, endIndex).trim();
-                        if (sentence) {
-                            sentences.push(cleanSentenceEnd(sentence));
-                        }
-                        lastIndex = endIndex;
+**Text to Split:**
+"${cleanText}"
 
-                        // Skip any whitespace after the match
-                        while (lastIndex < text.length && /\s/.test(text[lastIndex])) {
-                            lastIndex++;
-                        }
-                    }
+**Example Response:**
+["First sentence or chunk.", "Second sentence or chunk.", "And the third one."]
 
-                    // Add remaining text
-                    const remaining = text.substring(lastIndex).trim();
-                    if (remaining) {
-                        sentences.push(cleanSentenceEnd(remaining));
-                    }
+Now, provide the JSON array for the given text.
+`;
 
-                    return sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())];
-                } else if (currentLanguage === 'Korean') {
-                    // For Korean, split on sentence-ending patterns and punctuation
-                    // Common Korean sentence endings: 다, 요, 해요, 습니다, 니다, 세요, 죠, 네 followed by punctuation, space or end
-                    const patterns = /(다|요|해요|습니다|니다|세요|죠|네|요\.|다\.|니다\.)(?=[\s,.!?]|$)/g;
-                    const sentences = [];
-                    let lastIndex = 0;
-                    let match;
+        try {
+            // 3. Call the Gemini API
+            const data = await callGeminiAPI(prompt, { modelPreference: 'lite' });
+            const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+            const sentences = JSON.parse(jsonString);
 
-                    while ((match = patterns.exec(text)) !== null) {
-                        const endIndex = match.index + match[0].length;
-                        let sentence = text.substring(lastIndex, endIndex).trim();
-                        
-                        // Include any following punctuation
-                        let nextIndex = endIndex;
-                        while (nextIndex < text.length && /[,.!?]/.test(text[nextIndex])) {
-                            sentence += text[nextIndex];
-                            nextIndex++;
-                        }
-                        
-                        if (sentence) {
-                            sentences.push(cleanSentenceEnd(sentence));
-                        }
-                        lastIndex = nextIndex;
-
-                        // Skip any whitespace after the match
-                        while (lastIndex < text.length && /\s/.test(text[lastIndex])) {
-                            lastIndex++;
-                        }
-                    }
-
-                    // Add remaining text
-                    const remaining = text.substring(lastIndex).trim();
-                    if (remaining) {
-                        sentences.push(cleanSentenceEnd(remaining));
-                    }
-
-                    return sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())];
-                } else {
-                    // For Chinese without clear punctuation, return as single sentence
-                    return [cleanSentenceEnd(text.trim())];
-                }
-            }
-
-            // Split on punctuation for both Japanese and Chinese
-            // Use a more sophisticated approach that handles quotation marks and other punctuation
-            const sentences = [];
-            let currentSentence = '';
-            let inQuotes = false;
-            let quoteChar = '';
-
-            for (let i = 0; i < text.length; i++) {
-                const char = text[i];
-                const nextChar = i < text.length - 1 ? text[i + 1] : '';
-                
-                currentSentence += char;
-
-                // Track quotation marks - handle different opening and closing quote types
-                if (!inQuotes) {
-                    if (char === '"' || char === '"') {
-                        inQuotes = true;
-                        quoteChar = '"'; // Both open and close with curly close quote
-                    } else if (char === "'" || char === "'") {
-                        inQuotes = true;
-                        quoteChar = "'"; // Both open and close with curly close quote
-                    } else if (char === '“') {
-                        
-                      inQuotes = true;
-
-                        quoteChar = '“';
-                } else if (char === '”') {
-                        
-                      inQuotes = true;
-
-                        quoteChar = '”';
-                    } else if (char === '‘') {
-                        
-                      inQuotes = true;
-
-                        quoteChar = '‘';
-                    } else if (char === '’') {
-                        
-                      inQuotes = true;
-
-                        quoteChar = '’';
-                    } else if (char === '「') {
-                        inQuotes = true;
-                        quoteChar = '」';
-                    } else if (char === '『') {
-                        inQuotes = true;
-                        quoteChar = '』';
-                    }
-                } else if (inQuotes) {
-                    // Check for closing quotes
-                    if ((quoteChar === '"' && (char === '"' || char === '"')) ||
-                        (quoteChar === "'" && (char === "'" || char === "'")) ||
-                        (char === quoteChar)) {
-                        inQuotes = false;
-                        quoteChar = '';
-                    }
-                }
-
-                // Check for sentence endings
-                if (/[。！？]/.test(char) && !inQuotes) {
-                    if (currentSentence.trim()) {
-                        // Clean the sentence but preserve the core content
-                        const cleanedSentence = cleanSentenceEnd(currentSentence.trim());
-                        if (cleanedSentence) {
-                            sentences.push(cleanedSentence);
-                        }
-                    }
-                    currentSentence = '';
-                    
-                    // Skip any trailing punctuation or quotes after the sentence ending
-                    let j = i + 1;
-                    while (j < text.length && /[""」』"'.,\s]/.test(text[j])) {
-                        j++;
-                    }
-                    i = j - 1;
-                }
-            }
-
-            // Add any remaining text
-            if (currentSentence.trim()) {
-                const cleanedSentence = cleanSentenceEnd(currentSentence.trim());
-                if (cleanedSentence) {
-                    sentences.push(cleanedSentence);
-                }
-            }
-
-            // Group skip words with the next sentence
-            const groupedSentences = [];
-            let i = 0;
-            while (i < sentences.length) {
-                let currentSentence = sentences[i];
-                
-                // If current sentence is a skip word, group it with next non-skip sentence
-                if (isSkipWord(currentSentence, currentLanguage)) {
-                    let j = i + 1;
-                    // Keep adding skip words
-                    while (j < sentences.length && isSkipWord(sentences[j], currentLanguage)) {
-                        currentSentence += ' ' + sentences[j];
-                        j++;
-                    }
-                    // Add the first non-skip word sentence if it exists
-                    if (j < sentences.length) {
-                        currentSentence += ' ' + sentences[j];
-                        j++;
-                    }
-                    groupedSentences.push(currentSentence);
-                    i = j;
-                } else {
-                    // Current sentence is not a skip word
-                    // Check if next sentences are skip words and group them
-                    let j = i + 1;
-                    while (j < sentences.length && isSkipWord(sentences[j], currentLanguage)) {
-                        currentSentence += ' ' + sentences[j];
-                        j++;
-                    }
-                    
-                    // If there's a sentence after skip words, group it too
-                    if (j < sentences.length && j > i + 1) {
-                        currentSentence += ' ' + sentences[j];
-                        j++;
-                    }
-                    
-                    groupedSentences.push(currentSentence);
-                    i = j;
-                }
-            }
-            
-            return groupedSentences.length > 0 ? groupedSentences : [cleanSentenceEnd(text.trim())];
-        }
-
-        // For other languages, handle ellipses and sentence endings properly
-        // First, protect ellipses by temporarily replacing them
-        const ellipsisPlaceholder = '___ELLIPSIS___';
-        const textWithProtectedEllipses = text.replace(/\.{2,}/g, ellipsisPlaceholder);
-        
-        const sentenceEndings = /[.!?。！？]/;
-
-        if (!sentenceEndings.test(textWithProtectedEllipses)) {
-            // Restore ellipses and return as single sentence
-            return [cleanSentenceEnd(text.trim())];
-        }
-
-        const sentences = [];
-        let currentSentence = '';
-
-        for (let i = 0; i < textWithProtectedEllipses.length; i++) {
-            const char = textWithProtectedEllipses[i];
-            
-            // Check if we're at the start of an ellipsis placeholder
-            if (textWithProtectedEllipses.substring(i, i + ellipsisPlaceholder.length) === ellipsisPlaceholder) {
-                // Add the original ellipsis back
-                const originalEllipsis = text.substring(
-                    text.indexOf('...', currentSentence.replace(new RegExp(ellipsisPlaceholder, 'g'), '...').length),
-                    text.indexOf('...', currentSentence.replace(new RegExp(ellipsisPlaceholder, 'g'), '...').length) + 
-                    (text.match(/\.{2,}/g) || ['...'])[0].length
-                );
-                currentSentence += originalEllipsis || '...';
-                i += ellipsisPlaceholder.length - 1;
-                continue;
-            }
-            
-            currentSentence += char;
-
-            if (/[.!?。！？]/.test(char)) {
-                // Check for combined punctuation (like !?, ?!, !!, ??)
-                let j = i + 1;
-                while (j < textWithProtectedEllipses.length && /[.!?。！？]/.test(textWithProtectedEllipses[j])) {
-                    currentSentence += textWithProtectedEllipses[j];
-                    j++;
-                }
-
-                if (currentSentence.trim()) {
-                    // Restore any ellipses in the sentence and clean trailing punctuation
-                    const restoredSentence = currentSentence.replace(new RegExp(ellipsisPlaceholder, 'g'), '...');
-                    const cleanedSentence = cleanSentenceEnd(restoredSentence.trim());
-                    if (cleanedSentence) {
-                        sentences.push(cleanedSentence);
-                    }
-                }
-                currentSentence = '';
-                
-                // Skip any trailing punctuation or quotes after the sentence ending
-                while (j < textWithProtectedEllipses.length && /[""''""」』"'.,\s]/.test(textWithProtectedEllipses[j])) {
-                    j++;
-                }
-                i = j - 1;
-            }
-        }
-
-        if (currentSentence.trim()) {
-            // Restore any ellipses in the remaining sentence and clean trailing punctuation
-            const restoredSentence = currentSentence.replace(new RegExp(ellipsisPlaceholder, 'g'), '...');
-            const cleanedSentence = cleanSentenceEnd(restoredSentence.trim());
-            if (cleanedSentence) {
-                sentences.push(cleanedSentence);
-            }
-        }
-
-        // Group skip words with the next sentence for all languages
-        const groupedSentences = [];
-        let i = 0;
-        while (i < sentences.length) {
-            let currentSentence = sentences[i];
-            
-            // If current sentence is a skip word, group it with next non-skip sentence
-            if (isSkipWord(currentSentence, currentLanguage)) {
-                let j = i + 1;
-                // Keep adding skip words
-                while (j < sentences.length && isSkipWord(sentences[j], currentLanguage)) {
-                    currentSentence += ' ' + sentences[j];
-                    j++;
-                }
-                // Add the first non-skip word sentence if it exists
-                if (j < sentences.length) {
-                    currentSentence += ' ' + sentences[j];
-                    j++;
-                }
-                groupedSentences.push(currentSentence);
-                i = j;
+            // Validate the output
+            if (Array.isArray(sentences) && sentences.every(s => typeof s === 'string')) {
+                return sentences;
             } else {
-                // Current sentence is not a skip word
-                // Check if next sentences are skip words and group them
-                let j = i + 1;
-                while (j < sentences.length && isSkipWord(sentences[j], currentLanguage)) {
-                    currentSentence += ' ' + sentences[j];
-                    j++;
-                }
-                
-                // If there's a sentence after skip words, group it too
-                if (j < sentences.length && j > i + 1) {
-                    currentSentence += ' ' + sentences[j];
-                    j++;
-                }
-                
-                groupedSentences.push(currentSentence);
-                i = j;
+                console.warn('Gemini response for sentence splitting was not a valid string array. Falling back.');
+                return [cleanText]; // Fallback for invalid format
             }
+        } catch (error) {
+            // 4. Fallback in case of API error
+            console.error("Gemini sentence splitting failed, falling back to original text.", error);
+            return [cleanText];
         }
-        
-        return groupedSentences.length > 0 ? groupedSentences : [cleanSentenceEnd(text.trim())];
     }
 
     async function advanceTurn() {
@@ -1834,11 +1536,11 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
             // Save completed lesson to history BEFORE clearing state
             const selectedLanguage = languageSelect.value;
             const originalTopic = topicInput.value;
-            
+
             // Mark the lesson as completed in the lesson plan
             lessonPlan.isCompleted = true;
             lessonPlan.completedAt = new Date().toISOString();
-            
+
             saveLessonToHistory(lessonPlan, selectedLanguage, originalTopic);
 
             // Show review mode UI immediately after lesson completion
@@ -1870,7 +1572,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
             // Always use original text for display and sentence splitting
             const cleanText = removeParentheses(currentTurnData.line.display);
-            currentSentences = splitIntoSentences(cleanText);
+            currentSentences = await splitIntoSentences(cleanText);
             currentSentenceIndex = 0;
 
             micBtn.disabled = true;
@@ -2118,7 +1820,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                     // Use the localized feedback from Gemini, with a localized fallback.
                     const feedback = result.feedback || translateText('tryAgain');
                     micStatus.innerHTML = feedback;
-                    
+
                     // Add skip button for Chinese after 3 attempts
                     if (currentLanguage === 'Chinese' && speechAttempts >= 3) {
                         const skipBtn = document.createElement('button');
@@ -2132,7 +1834,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                         micStatus.appendChild(document.createElement('br'));
                         micStatus.appendChild(skipBtn);
                     }
-                    
+
                     const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
                     currentLineEl.classList.remove('active');
                     void currentLineEl.offsetWidth;
@@ -2284,7 +1986,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     async function fetchPartnerAudio(text) {
         const currentLanguage = languageSelect.value;
         const voiceConfig = getVoiceConfig(currentLanguage);
-        
+
         // Strip parentheses and content before sending to TTS
         const cleanText = removeParentheses(text);
 
@@ -2292,7 +1994,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer wsec_81c54a71adb28dff26425889f84fbdfee3b446707529b33bd0e2a54eb3a43944',
+                'Authorization': 'Bearer YOUR_ELEVENLABS_API_KEY', // IMPORTANT: Replace with your actual key
                 'Origin': 'https://rolelang.xyz'
             },
             body: JSON.stringify({
@@ -2403,7 +2105,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer wsec_81c54a71adb28dff26425889f84fbdfee3b446707529b33bd0e2a54eb3a43944',
+                    'Authorization': 'Bearer YOUR_ELEVENLABS_API_KEY', // IMPORTANT: Replace with your actual key
                     'Origin': 'https://rolelang.xyz'
                 },
                 body: JSON.stringify({
@@ -2649,13 +2351,13 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
             clearState();
             lessonPlan = null;
             currentTurnIndex = 0;
-            
+
             // Remove any review indicators
             const existingReviewIndicator = lessonScreen.querySelector('.absolute.top-16.left-4');
             if (existingReviewIndicator) {
                 existingReviewIndicator.remove();
             }
-            
+
             landingScreen.classList.remove('hidden');
             lessonScreen.classList.add('hidden');
             startTopicRotations();
@@ -2679,7 +2381,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     // Load saved state
     const savedState = loadState();
     if (savedState) {
-        restoreState(savedState);
+        await restoreState(savedState);
         if (savedState.currentScreen === 'lesson') {
             addBackToLandingButton();
         }
