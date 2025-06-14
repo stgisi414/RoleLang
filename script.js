@@ -209,10 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (reviewIndicator) {
             const selectedLanguage = languageSelect.value;
             reviewIndicator.remove();
-            // Use setTimeout to ensure currentTranslations is fully updated
-            setTimeout(() => {
-                showReviewModeUI(selectedLanguage);
-            }, 10);
+            showReviewModeUI(selectedLanguage);
         }
 
         // Update back button text
@@ -555,16 +552,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add review indicator with vocabulary quiz button
         const reviewIndicator = document.createElement('div');
         reviewIndicator.className = 'review-mode-indicator absolute top-16 left-4 bg-purple-600 text-white px-3 py-1 rounded-lg text-sm z-10 flex items-center space-x-2';
-        
-        // Use current translations directly to ensure they're up to date
-        const reviewModeText = currentTranslations['reviewMode'] || translations.en['reviewMode'] || 'Review Mode';
-        const lessonCompleteText = currentTranslations['lessonCompleteReview'] || translations.en['lessonCompleteReview'] || 'Lesson Complete!';
-        const vocabQuizText = currentTranslations['vocabQuiz'] || translations.en['vocabQuiz'] || 'Vocab Quiz';
-        
         reviewIndicator.innerHTML = `
-            <span><i class="fas fa-history mr-2"></i>${reviewModeText} - ${lessonCompleteText}</span>
+            <span><i class="fas fa-history mr-2"></i>${translateText('reviewMode')} - ${translateText('lessonCompleteReview')}</span>
             <button id="vocab-quiz-btn" class="bg-purple-700 hover:bg-purple-800 px-2 py-1 rounded text-xs transition-colors">
-                <i class="fas fa-brain mr-1"></i>${vocabQuizText}
+                <i class="fas fa-brain mr-1"></i>${translateText('vocabQuiz')}
             </button>
         `;
         lessonScreen.appendChild(reviewIndicator);
@@ -575,16 +566,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Update mic status to show lesson is complete and review mode is active
-        const lessonCompleteText = currentTranslations['lessonComplete'] || translations.en['lessonComplete'] || 'Lesson complete! 🎉';
-        const reviewModeActiveText = currentTranslations['reviewModeActive'] || translations.en['reviewModeActive'] || 'Review mode is now active!';
-        
         micStatus.innerHTML = `
             <div class="text-center">
                 <div class="text-green-400 font-bold mb-2">
-                    <i class="fas fa-check-circle mr-2"></i>${lessonCompleteText}
+                    <i class="fas fa-check-circle mr-2"></i>${translateText('lessonComplete')}
                 </div>
                 <div class="text-purple-300 text-sm">
-                    <i class="fas fa-history mr-1"></i>${reviewModeActiveText}
+                    <i class="fas fa-history mr-1"></i>${translateText('reviewModeActive')}
                 </div>
             </div>
         `;
