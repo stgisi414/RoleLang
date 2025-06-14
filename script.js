@@ -52,16 +52,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const TTS_API_URL = 'https://langcamp.us/elevenlbs-exchange-audio/exchange-audio';
     const IMAGE_API_URL = 'https://ainovel.site/api/generate-image';
 
-    // ADD THIS NEW OBJECT
-    const langKeyToCode = {
-        'langEnglish': 'en-US',
-        'langSpanish': 'es-ES',
-        'langFrench': 'fr-FR',
-        'langGerman': 'de-DE',
-        'langItalian': 'it-IT',
-        'langJapanese': 'ja-JP',
-        'langChinese': 'zh-CN',
-        'langKorean': 'ko-KR'
+    // Language value to speech recognition code mapping
+    const langValueToCode = {
+        'English': 'en-US',
+        'Spanish': 'es-ES', 
+        'French': 'fr-FR',
+        'German': 'de-DE',
+        'Italian': 'it-IT',
+        'Japanese': 'ja-JP',
+        'Chinese': 'zh-CN',
+        'Korean': 'ko-KR'
     };
 
     let lessonPlan = null;
@@ -157,8 +157,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Set speech recognition language
             if (recognition) {
-                const langKey = languageSelect.options[languageSelect.selectedIndex].getAttribute('data-translate');
-                recognition.lang = getLangCode(langKey);
+                const selectedLanguage = languageSelect.value;
+                recognition.lang = getLangCode(selectedLanguage);
             }
 
             // Switch to lesson screen
@@ -1371,7 +1371,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
             // Set speech recognition language
             if (recognition) {
-                const langCode = getLangCode(langKey); // USE THE NEW langKey
+                const langCode = getLangCode(language);
                 recognition.lang = langCode;
 
                 // Special handling for Japanese - add warning if speech recognition may not work well
@@ -2055,11 +2055,8 @@ Now, provide the JSON array for the given text.
         } else {
             // Always set the correct language right before starting recognition.
             try {
-                // REPLACE these two lines
-                const selectedOption = languageSelect.options[languageSelect.selectedIndex];
-                const langKey = selectedOption.getAttribute('data-translate');
-
-                const langCode = getLangCode(langKey); // This now works correctly
+                const selectedLanguage = languageSelect.value;
+                const langCode = getLangCode(selectedLanguage);
                 recognition.lang = langCode; 
                 console.log(`Setting speech recognition language to: ${langCode}`);
                 recognition.start(); 
@@ -2182,8 +2179,8 @@ Now, provide the JSON array for the given text.
 
     // --- Helper Functions ---
 
-    function getLangCode(langKey) {
-        return langKeyToCode[langKey] || 'en-US';
+    function getLangCode(languageValue) {
+        return langValueToCode[languageValue] || 'en-US';
     }
 
     // Function to test voice IDs
