@@ -1542,20 +1542,28 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
                     return sentences.length > 0 ? sentences : [cleanSentenceEnd(text.trim())];
                 } else if (currentLanguage === 'Korean') {
-                    // For Korean without clear punctuation, try splitting on common patterns
-                    // Look for 다、요、해요、습니다 followed by space or end
-                    const patterns = /(다|요|해요|습니다|이다|었다|았다|려고|니다)(?=[。\s]|$)/g;
+                    // For Korean, split on sentence-ending patterns and punctuation
+                    // Common Korean sentence endings: 다, 요, 해요, 습니다, 니다, 세요, 죠, 네 followed by punctuation, space or end
+                    const patterns = /(다|요|해요|습니다|니다|세요|죠|네|요\.|다\.|니다\.)(?=[\s,.!?]|$)/g;
                     const sentences = [];
                     let lastIndex = 0;
                     let match;
 
                     while ((match = patterns.exec(text)) !== null) {
                         const endIndex = match.index + match[0].length;
-                        const sentence = text.substring(lastIndex, endIndex).trim();
+                        let sentence = text.substring(lastIndex, endIndex).trim();
+                        
+                        // Include any following punctuation
+                        let nextIndex = endIndex;
+                        while (nextIndex < text.length && /[,.!?]/.test(text[nextIndex])) {
+                            sentence += text[nextIndex];
+                            nextIndex++;
+                        }
+                        
                         if (sentence) {
                             sentences.push(cleanSentenceEnd(sentence));
                         }
-                        lastIndex = endIndex;
+                        lastIndex = nextIndex;
 
                         // Skip any whitespace after the match
                         while (lastIndex < text.length && /\s/.test(text[lastIndex])) {
