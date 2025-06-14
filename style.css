@@ -1,7 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&display=swap');
 
 body {
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     padding-bottom: 50px; /* Add space for sticky footer */
@@ -114,20 +114,6 @@ header img[alt="RoleLang Logo"] {
 /* Class to hide elements */
 .hidden {
   display: none;
-}
-
-/* Stylish font classes */
-.font-heading {
-    font-family: 'Playfair Display', serif;
-    font-weight: 700;
-}
-
-.font-mono {
-    font-family: 'JetBrains Mono', monospace;
-}
-
-.font-body {
-    font-family: 'Poppins', sans-serif;
 }
 
 /* Main heading flash and shimmer animations */
