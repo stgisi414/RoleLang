@@ -1484,11 +1484,28 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                 
                 currentSentence += char;
 
-                // Track quotation marks
-                if ((char === '"' || char === '"' || char === '"' || char === '「' || char === '『') && !inQuotes) {
-                    inQuotes = true;
-                    quoteChar = char === '"' ? '"' : char === '"' ? '"' : char === '「' ? '」' : '』';
-                } else if ((char === '"' || char === '"' || char === '」' || char === '』') && inQuotes && char === quoteChar) {
+                // Track quotation marks - handle different opening and closing quote types
+                if (!inQuotes) {
+                    if (char === '"') {
+                        inQuotes = true;
+                        quoteChar = '"';
+                    } else if (char === '"') {
+                        inQuotes = true;
+                        quoteChar = '"';
+                    } else if (char === ''') {
+                        inQuotes = true;
+                        quoteChar = ''';
+                    } else if (char === ''') {
+                        inQuotes = true;
+                        quoteChar = ''';
+                    } else if (char === '「') {
+                        inQuotes = true;
+                        quoteChar = '」';
+                    } else if (char === '『') {
+                        inQuotes = true;
+                        quoteChar = '』';
+                    }
+                } else if (inQuotes && char === quoteChar) {
                     inQuotes = false;
                     quoteChar = '';
                 }
