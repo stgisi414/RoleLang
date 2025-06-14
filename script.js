@@ -37,7 +37,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // IMPORTANT: Replace with your actual Gemini API Key.
     // It's highly recommended to use a backend proxy to protect this key in a real application.
     const GEMINI_API_KEY = 'AIzaSyDIFeql6HUpkZ8JJlr_kuN0WDFHUyOhijA';
-    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-thinking-exp-01-21:generateContent?key=${GEMINI_API_KEY}`;
+    const GEMINI_MODELS = {
+        'ultra': 'gemini-2.5-flash-preview-05-20',
+        'super': 'gemini-2.0-flash',
+        'pro': 'gemini-2.0-flash-thinking-exp-01-21',
+        'lite': 'gemini-2.0-flash-lite'
+    };
     const TTS_API_URL = 'https://langcamp.us/elevenlbs-exchange-audio/exchange-audio';
     const IMAGE_API_URL = 'https://ainovel.site/api/generate-image';
 
@@ -933,25 +938,7 @@ Example format:
 
 IMPORTANT: Return ONLY the JSON array, no other text.`;
 
-            const response = await fetch(GEMINI_API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    safetySettings: [
-                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-                    ]
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error(`Translation API error: ${response.statusText}`);
-            }
-
-            const data = await response.json();
+            const data = await callGeminiAPI(prompt, { modelPreference: 'lite' });
             const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
             const translations = JSON.parse(jsonString);
 
@@ -1163,6 +1150,77 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
         });
     }
 
+    // --- Central Gemini API Function ---
+    
+    async function callGeminiAPI(prompt, options = {}) {
+        const { 
+            modelPreference = 'pro',
+            retryAttempts = 3,
+            safetySettings = [
+                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+            ]
+        } = options;
+
+        // Model priority order for fallback
+        const modelPriority = [
+            modelPreference,
+            ...Object.keys(GEMINI_MODELS).filter(key => key !== modelPreference)
+        ];
+
+        let lastError = null;
+
+        for (const modelKey of modelPriority) {
+            const modelName = GEMINI_MODELS[modelKey];
+            if (!modelName) continue;
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
+            
+            console.log(`Attempting to call Gemini API with model: ${modelName}`);
+
+            for (let attempt = 1; attempt <= retryAttempts; attempt++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            safetySettings: safetySettings
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(`API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`);
+                    }
+
+                    const data = await response.json();
+                    
+                    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                        throw new Error('Invalid response structure from Gemini API');
+                    }
+
+                    console.log(`Successfully called Gemini API with model: ${modelName}`);
+                    return data;
+
+                } catch (error) {
+                    console.warn(`Attempt ${attempt} failed for model ${modelName}:`, error.message);
+                    lastError = error;
+                    
+                    // Add exponential backoff for retries
+                    if (attempt < retryAttempts) {
+                        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+                    }
+                }
+            }
+        }
+
+        // If all models and retries failed
+        throw new Error(`All Gemini models failed. Last error: ${lastError?.message || 'Unknown error'}`);
+    }
+
     // --- Core Functions ---
 
     async function initializeLesson() {
@@ -1199,38 +1257,8 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
         const prompt = createGeminiPrompt(language, topic);
 
         try {
-            const response = await fetch(GEMINI_API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    safetySettings: [
-                        {
-                            category: "HARM_CATEGORY_HARASSMENT",
-                            threshold: "BLOCK_NONE"
-                        },
-                        {
-                            category: "HARM_CATEGORY_HATE_SPEECH",
-                            threshold: "BLOCK_NONE"
-                        },
-                        {
-                            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                            threshold: "BLOCK_NONE"
-                        },
-                        {
-                            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-                            threshold: "BLOCK_NONE"
-                        }
-                    ]
-                }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(`Gemini API error: ${response.statusText} - ${JSON.stringify(errorData)}`);
-            }
-
-            const data = await response.json();
+            const data = await callGeminiAPI(prompt, { modelPreference: 'pro' });
+            
             // Find the JSON part and parse it
             const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
             lessonPlan = JSON.parse(jsonString);
@@ -1910,25 +1938,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
     Now, provide the JSON response.`;
 
-                const response = await fetch(GEMINI_API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: verificationPrompt }] }],
-                        safetySettings: [
-                            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-                        ]
-                    }),
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Gemini verification API error: ${response.statusText}`);
-                }
-
-                const data = await response.json();
+                const data = await callGeminiAPI(verificationPrompt, { modelPreference: 'super' });
                 const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
                 const result = JSON.parse(jsonString);
 
