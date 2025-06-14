@@ -152,12 +152,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (state.lessonsVisible && lessonsContainer) {
             lessonsContainer.style.display = 'block';
             lessonsContainer.classList.remove('hidden');
-            lessonsContainer.style.visibility = 'visible';
-            lessonsContainer.style.opacity = '1';
             const chevronIcon = toggleLessonsBtn ? toggleLessonsBtn.querySelector('i') : null;
             if (chevronIcon) {
                 chevronIcon.style.transform = 'rotate(180deg)';
             }
+            // Force populate on restore
+            setTimeout(() => {
+                forcePoppulateLessonTopics();
+            }, 500);
         }
 
         // Restore audio speed
@@ -350,47 +352,43 @@ document.addEventListener('DOMContentLoaded', () => {
     startLessonBtn.addEventListener('click', initializeLesson);
     micBtn.addEventListener('click', toggleSpeechRecognition);
     
-    // Completely new toggle system - direct DOM manipulation
+    // Completely rewritten toggle system with forced content population
     if (toggleLessonsBtn && lessonsContainer) {
         toggleLessonsBtn.addEventListener('click', function() {
-            console.log('LESSONS TOGGLE CLICKED - FORCE TOGGLE');
-            const isCurrentlyHidden = lessonsContainer.style.display === 'none' || lessonsContainer.classList.contains('hidden');
-            console.log('Current state hidden:', isCurrentlyHidden);
+            console.log('LESSONS TOGGLE CLICKED - NEW SYSTEM');
+            const isHidden = lessonsContainer.classList.contains('hidden');
+            console.log('Currently hidden:', isHidden);
             
-            if (isCurrentlyHidden) {
-                // Force show
-                lessonsContainer.style.display = 'block';
+            if (isHidden) {
+                // Show lessons
                 lessonsContainer.classList.remove('hidden');
-                lessonsContainer.style.visibility = 'visible';
-                lessonsContainer.style.opacity = '1';
-                console.log('FORCED LESSONS VISIBLE');
+                lessonsContainer.style.display = 'block';
                 
                 // Update chevron
                 const chevron = this.querySelector('i');
                 if (chevron) {
                     chevron.style.transform = 'rotate(180deg)';
+                    chevron.style.transition = 'transform 0.3s ease';
                 }
                 
-                // Start rotations if not already running
-                if (topicRotationIntervals.length === 0) {
-                    startTopicRotations();
-                }
+                // Force populate lesson topics immediately
+                forcePoppulateLessonTopics();
+                console.log('LESSONS SHOWN AND POPULATED');
             } else {
-                // Force hide
-                lessonsContainer.style.display = 'none';
+                // Hide lessons
                 lessonsContainer.classList.add('hidden');
-                lessonsContainer.style.visibility = 'hidden';
-                lessonsContainer.style.opacity = '0';
-                console.log('FORCED LESSONS HIDDEN');
+                lessonsContainer.style.display = 'none';
                 
                 // Update chevron
                 const chevron = this.querySelector('i');
                 if (chevron) {
                     chevron.style.transform = 'rotate(0deg)';
+                    chevron.style.transition = 'transform 0.3s ease';
                 }
                 
                 // Stop rotations
                 stopTopicRotations();
+                console.log('LESSONS HIDDEN');
             }
             
             saveState();
@@ -401,39 +399,38 @@ document.addEventListener('DOMContentLoaded', () => {
     const historyContainer = document.getElementById('history-container');
     if (toggleHistoryBtn && historyContainer) {
         toggleHistoryBtn.addEventListener('click', function() {
-            console.log('HISTORY TOGGLE CLICKED - FORCE TOGGLE');
-            const isCurrentlyHidden = historyContainer.style.display === 'none' || historyContainer.classList.contains('hidden');
-            console.log('Current state hidden:', isCurrentlyHidden);
+            console.log('HISTORY TOGGLE CLICKED - NEW SYSTEM');
+            const isHidden = historyContainer.classList.contains('hidden');
+            console.log('Currently hidden:', isHidden);
             
-            if (isCurrentlyHidden) {
-                // Force show
-                historyContainer.style.display = 'block';
+            if (isHidden) {
+                // Show history
                 historyContainer.classList.remove('hidden');
-                historyContainer.style.visibility = 'visible';
-                historyContainer.style.opacity = '1';
-                console.log('FORCED HISTORY VISIBLE');
+                historyContainer.style.display = 'block';
                 
                 // Update chevron
                 const chevron = this.querySelector('i');
                 if (chevron) {
                     chevron.style.transform = 'rotate(180deg)';
+                    chevron.style.transition = 'transform 0.3s ease';
                 }
                 
-                // Load history
-                displayLessonHistory();
+                // Force populate history immediately
+                forcePopulateHistory();
+                console.log('HISTORY SHOWN AND POPULATED');
             } else {
-                // Force hide
-                historyContainer.style.display = 'none';
+                // Hide history
                 historyContainer.classList.add('hidden');
-                historyContainer.style.visibility = 'hidden';
-                historyContainer.style.opacity = '0';
-                console.log('FORCED HISTORY HIDDEN');
+                historyContainer.style.display = 'none';
                 
                 // Update chevron
                 const chevron = this.querySelector('i');
                 if (chevron) {
                     chevron.style.transform = 'rotate(0deg)';
+                    chevron.style.transition = 'transform 0.3s ease';
                 }
+                
+                console.log('HISTORY HIDDEN');
             }
         });
     }
@@ -789,6 +786,98 @@ document.addEventListener('DOMContentLoaded', () => {
         const pool = topicPools[level] || [];
         const shuffled = [...pool].sort(() => 0.5 - Math.random());
         return shuffled.slice(0, count);
+    }
+
+    // Force populate lesson topics immediately
+    function forcePoppulateLessonTopics() {
+        console.log('Force populating lesson topics...');
+        
+        // Stop any existing rotations first
+        stopTopicRotations();
+        
+        // Clear all existing content
+        const containers = ['beginner', 'intermediate', 'advanced'];
+        containers.forEach(level => {
+            const container = document.getElementById(`${level}-container`);
+            if (container) {
+                container.innerHTML = '';
+            }
+        });
+        
+        // Force populate each difficulty level immediately
+        containers.forEach((level, index) => {
+            const container = document.getElementById(`${level}-container`);
+            if (container) {
+                setTimeout(() => {
+                    const topics = getRandomTopics(level, 4);
+                    console.log(`Populating ${level} with topics:`, topics);
+                    
+                    topics.forEach((topic, topicIndex) => {
+                        const button = createTopicButton(topic, level);
+                        button.style.opacity = '1'; // Force visible
+                        button.style.animation = 'none'; // No animation delays
+                        container.appendChild(button);
+                    });
+                }, index * 100);
+            }
+        });
+        
+        // Start normal rotations after initial population
+        setTimeout(() => {
+            startTopicRotations();
+        }, 1000);
+    }
+
+    // Force populate history immediately
+    function forcePopulateHistory() {
+        console.log('Force populating history...');
+        const historyContainer = document.getElementById('history-lessons-container');
+        const history = getLessonHistory();
+
+        if (!historyContainer) {
+            console.error('History container not found');
+            return;
+        }
+
+        if (history.length === 0) {
+            historyContainer.innerHTML = `
+                <div class="col-span-2 flex flex-col items-center justify-center py-8 text-gray-400">
+                    <i class="fas fa-history text-3xl mb-2"></i>
+                    <p>${translateText('noCompletedLessons') || 'No completed lessons yet'}</p>
+                </div>
+            `;
+            return;
+        }
+
+        historyContainer.innerHTML = '';
+
+        // Display up to 6 most recent lessons
+        const recentLessons = history.slice(0, 6);
+        console.log('Populating history with lessons:', recentLessons.length);
+        
+        recentLessons.forEach((lesson, index) => {
+            const lessonCard = document.createElement('div');
+            lessonCard.className = 'bg-purple-600/20 hover:bg-purple-600/30 border border-purple-600/30 rounded-lg p-3 cursor-pointer transition-all history-card';
+            lessonCard.innerHTML = `
+                <div class="text-purple-300 text-xs mb-1">${lesson.language}</div>
+                <div class="text-white text-sm font-medium mb-1 line-clamp-2">${lesson.topic}</div>
+                <div class="text-gray-400 text-xs">${lesson.completedAt}</div>
+            `;
+
+            lessonCard.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('History lesson clicked:', lesson.topic);
+                reviewLesson(lesson);
+            });
+
+            // Force visible immediately
+            lessonCard.style.opacity = '1';
+            lessonCard.style.animation = 'none';
+            
+            historyContainer.appendChild(lessonCard);
+        });
+        
+        console.log('History populated with', recentLessons.length, 'lessons');
     }
 
     function createTopicButton(topic, level) {
@@ -2683,7 +2772,8 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
             addBackToLandingButton();
         }
     } else {
-        startTopicRotations();
+        // On initial load, don't start rotations - let user toggle to see content
+        console.log('Initial page load - topics will populate when user toggles');
     }
     
     // Double-check that buttons are working
