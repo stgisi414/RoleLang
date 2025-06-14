@@ -194,10 +194,10 @@ const translations = {
     whatDoesThisMean: "¿Qué significa esto en español?",
     score: "Puntaje",
     noVocabularyFound: "No se encontró vocabulario con traducciones en esta lección.",
-    reviewMode: "Review Mode",
-    lessonCompleteReview: "Lesson Complete!",
-    vocabQuiz: "Vocab Quiz", 
-    reviewModeActive: "Review mode is now active! Use the vocab quiz button above.",
+    reviewMode: "Modo de Revisión",
+    lessonCompleteReview: "¡Lección Completa!",
+    vocabQuiz: "Quiz de Vocabulario",
+    reviewModeActive: "¡El modo de revisión está ahora activo! Usa el botón de quiz de vocabulario arriba.",
     topics: {
       beginner: [
         "Presentándote", "Pidiendo comida en un restaurante", "Pidiendo direcciones", "Comprando ropa",
@@ -529,10 +529,10 @@ const translations = {
     whatDoesThisMean: "Cosa significa questo in italiano?",
     score: "Punteggio",
     noVocabularyFound: "Nessun vocabolario con traduzioni trovato in questa lezione.",
-    reviewMode: "Review Mode",
-    lessonCompleteReview: "Lesson Complete!",
-    vocabQuiz: "Vocab Quiz", 
-    reviewModeActive: "Review mode is now active! Use the vocab quiz button above.",
+    reviewMode: "Modalità Revisione",
+    lessonCompleteReview: "Lezione Completata!",
+    vocabQuiz: "Quiz di Vocabolario",
+    reviewModeActive: "La modalità revisione è ora attiva! Usa il pulsante del quiz di vocabolario sopra.",
     topics: {
       beginner: [
         "Presentarsi", "Ordinare cibo al ristorante", "Chiedere indicazioni", "Comprare vestiti",
@@ -643,10 +643,10 @@ const translations = {
     whatDoesThisMean: "这在中文里是什么意思？",
     score: "分数",
     noVocabularyFound: "本课程中没有找到带翻译的词汇。",
-    reviewMode: "Review Mode",
-    lessonCompleteReview: "Lesson Complete!",
-    vocabQuiz: "Vocab Quiz", 
-    reviewModeActive: "Review mode is now active! Use the vocab quiz button above.",
+    reviewMode: "复习模式",
+    lessonCompleteReview: "课程完成！",
+    vocabQuiz: "词汇测验",
+    reviewModeActive: "复习模式现已激活！请使用上方的词汇测验按钮。",
     topics: {
       beginner: [
         "自我介绍", "在餐厅点餐", "问路", "买衣服",
@@ -757,10 +757,10 @@ const translations = {
     whatDoesThisMean: "これは日本語で何という意味ですか？",
     score: "スコア",
     noVocabularyFound: "このレッスンで翻訳付きの語彙が見つかりませんでした。",
-    reviewMode: "Review Mode",
-    lessonCompleteReview: "Lesson Complete!",
-    vocabQuiz: "Vocab Quiz", 
-    reviewModeActive: "Review mode is now active! Use the vocab quiz button above.",
+    reviewMode: "復習モード",
+    lessonCompleteReview: "レッスン完了！",
+    vocabQuiz: "語彙クイズ",
+    reviewModeActive: "復習モードが有効になりました！上の語彙クイズボタンをご利用ください。",
     topics: {
       beginner: [
         "自己紹介", "レストランで食事を注文", "道を尋ねる", "服を買う",
@@ -871,10 +871,10 @@ const translations = {
     whatDoesThisMean: "이것은 무엇을 의미하나요？",
     score: "점수",
     noVocabularyFound: "이 레슨에서 번역이 포함된 어휘를 찾을 수 없습니다.",
-    reviewMode: "Review Mode",
-    lessonCompleteReview: "Lesson Complete!",
-    vocabQuiz: "Vocab Quiz", 
-    reviewModeActive: "Review mode is now active! Use the vocab quiz button above.",
+    reviewMode: "복습 모드",
+    lessonCompleteReview: "레슨 완료!",
+    vocabQuiz: "어휘 퀴즈",
+    reviewModeActive: "복습 모드가 활성화되었습니다! 위의 어휘 퀴즈 버튼을 사용하세요.",
     topics: {
       beginner: [
         "자기소개하기", "식당에서 음식 주문하기", "길 묻기", "옷 쇼핑하기",
