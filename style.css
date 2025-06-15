@@ -4,7 +4,8 @@ body {
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    padding-bottom: 50px; /* Add space for sticky footer */
+    padding-bottom: 50px;
+    /* Add space for sticky footer */
 }
 
 /* Review mode banner styling */
@@ -14,8 +15,15 @@ body {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .fade-in-element {
@@ -23,24 +31,35 @@ body {
 }
 
 /* Animation delays for staggered effect */
-.delay-1 { animation-delay: 0.2s; }
-.delay-2 { animation-delay: 0.4s; }
-.delay-3 { animation-delay: 0.6s; }
+.delay-1 {
+    animation-delay: 0.2s;
+}
+
+.delay-2 {
+    animation-delay: 0.4s;
+}
+
+.delay-3 {
+    animation-delay: 0.6s;
+}
 
 /* A "glassmorphism" style for main containers */
 .glassmorphism {
-    background: rgba(31, 41, 55, 0.85); /* Upped the opacity to compensate for no blur */
-    /* backdrop-filter: blur(12px); */ /* This was causing the child elements to be blurry */
+    background: rgba(31, 41, 55, 0.85);
+    /* Upped the opacity to compensate for no blur */
+    /* backdrop-filter: blur(12px); */
+    /* This was causing the child elements to be blurry */
     /* -webkit-backdrop-filter: blur(12px); */
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* A subtle grid background for the body */
 .grid-background {
-    background-color: #111827; /* bg-gray-900 */
+    background-color: #111827;
+    /* bg-gray-900 */
     background-image:
-        linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
+        linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
     background-size: 40px 40px;
 }
 
@@ -71,14 +90,17 @@ header img[alt="RoleLang Logo"] {
 #conversation-container::-webkit-scrollbar {
     width: 8px;
 }
+
 #conversation-container::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 10px;
 }
+
 #conversation-container::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.2);
     border-radius: 10px;
 }
+
 #conversation-container::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.3);
 }
@@ -87,14 +109,17 @@ header img[alt="RoleLang Logo"] {
 #history-lessons-container::-webkit-scrollbar {
     width: 6px;
 }
+
 #history-lessons-container::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 10px;
 }
+
 #history-lessons-container::-webkit-scrollbar-thumb {
     background: rgba(147, 51, 234, 0.3);
     border-radius: 10px;
 }
+
 #history-lessons-container::-webkit-scrollbar-thumb:hover {
     background: rgba(147, 51, 234, 0.5);
 }
@@ -120,8 +145,10 @@ header img[alt="RoleLang Logo"] {
 
 /* Loading spinner animation */
 .loader {
-    border: 4px solid #374151; /* gray-700 */
-    border-top: 4px solid #38bdf8; /* sky-400 */
+    border: 4px solid #374151;
+    /* gray-700 */
+    border-top: 4px solid #38bdf8;
+    /* sky-400 */
     border-radius: 50%;
     width: 40px;
     height: 40px;
@@ -129,36 +156,52 @@ header img[alt="RoleLang Logo"] {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* Class to hide elements */
 .hidden {
-  display: none;
+    display: none;
 }
 
 /* Main heading flash and shimmer animations */
 @keyframes flash {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
 }
 
 @keyframes shimmer {
-    0% { background-position: -200% center; }
-    100% { background-position: 200% center; }
+    0% {
+        background-position: -200% center;
+    }
+
+    100% {
+        background-position: 200% center;
+    }
 }
 
 .main-heading-animated {
-    color: #38bdf8 !important; /* sky-400 light blue */
-    background: linear-gradient(
-        90deg,
-        #38bdf8,
-        #87ceeb,
-        #ffffff,
-        #87ceeb,
-        #38bdf8
-    );
+    color: #38bdf8 !important;
+    /* sky-400 light blue */
+    background: linear-gradient(90deg,
+            #38bdf8,
+            #87ceeb,
+            #ffffff,
+            #87ceeb,
+            #38bdf8);
     background-size: 200% 100%;
     background-clip: text;
     -webkit-background-clip: text;
@@ -177,7 +220,8 @@ header img[alt="RoleLang Logo"] {
 .dialogue-line.active {
     opacity: 1;
     transform: scale(1.02);
-    box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); /* shadow-sky-400/30 */
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+    /* shadow-sky-400/30 */
     background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(59, 130, 246, 0.15)) !important;
     border: 2px solid #38bdf8 !important;
     text-decoration: underline;
@@ -203,11 +247,14 @@ header img[alt="RoleLang Logo"] {
 }
 
 @keyframes sentence-pulse {
-    0%, 100% { 
+
+    0%,
+    100% {
         box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
         transform: scale(1);
     }
-    50% { 
+
+    50% {
         box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
         transform: scale(1.02);
     }
@@ -220,20 +267,25 @@ header img[alt="RoleLang Logo"] {
 
 /* Specific styling for user vs partner lines */
 .dialogue-line.user-line {
-    background-color: rgba(56, 189, 248, 0.1); /* bg-sky-400/10 */
-    border-left: 3px solid #38bdf8; /* border-sky-400 */
+    background-color: rgba(56, 189, 248, 0.1);
+    /* bg-sky-400/10 */
+    border-left: 3px solid #38bdf8;
+    /* border-sky-400 */
 }
 
 .dialogue-line.partner-line {
-    background-color: rgba(74, 85, 104, 0.2); /* bg-gray-600/20 */
-    border-left: 3px solid #9ca3af; /* border-gray-400 */
+    background-color: rgba(74, 85, 104, 0.2);
+    /* bg-gray-600/20 */
+    border-left: 3px solid #9ca3af;
+    /* border-gray-400 */
 }
 
 /* Speaker emoji styling */
 .dialogue-line strong {
     font-size: 1.1em;
     margin-right: 0.5rem;
-    background-color: #c0c0c0; /* Silver background */
+    background-color: #c0c0c0;
+    /* Silver background */
     padding: 0.3rem 0.5rem;
     border-radius: 5%;
     display: inline-block;
@@ -241,12 +293,14 @@ header img[alt="RoleLang Logo"] {
 
 /* User emoji styling (👤) - Blue border */
 .dialogue-line.user-line strong {
-    border: 2px solid #3b82f6; /* Blue border */
+    border: 2px solid #3b82f6;
+    /* Blue border */
 }
 
 /* Partner emoji styling (🤖) - Purple border */
 .dialogue-line.partner-line strong {
-    border: 2px solid #8b5cf6; /* Purple border */
+    border: 2px solid #8b5cf6;
+    /* Purple border */
 }
 
 /* Explanation link styling */
@@ -254,148 +308,168 @@ header img[alt="RoleLang Logo"] {
     cursor: pointer;
     text-decoration: underline;
     text-decoration-style: dotted;
-    color: #93c5fd; /* text-blue-300 */
+    color: #93c5fd;
+    /* text-blue-300 */
 }
+
 .explanation-link:hover {
-    color: #e0f2fe; /* text-blue-100 */
+    color: #e0f2fe;
+    /* text-blue-100 */
 }
 
 /* Topic button animations - Smooth and gentle */
 @keyframes gentleSlideInLeft {
-    from { 
-        opacity: 0; 
-        transform: translateX(-20px); 
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
     }
-    to { 
-        opacity: 1; 
-        transform: translateX(0); 
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
     }
 }
 
 @keyframes gentleSlideInRight {
-    from { 
-        opacity: 0; 
-        transform: translateX(20px); 
+    from {
+        opacity: 0;
+        transform: translateX(20px);
     }
-    to { 
-        opacity: 1; 
-        transform: translateX(0); 
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
     }
 }
 
 @keyframes gentleSlideInUp {
-    from { 
-        opacity: 0; 
-        transform: translateY(20px); 
+    from {
+        opacity: 0;
+        transform: translateY(20px);
     }
-    to { 
-        opacity: 1; 
-        transform: translateY(0); 
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
 
 @keyframes gentleSlideInDown {
-    from { 
-        opacity: 0; 
-        transform: translateY(-20px); 
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
     }
-    to { 
-        opacity: 1; 
-        transform: translateY(0); 
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
 
 @keyframes gentleScaleIn {
-    from { 
-        opacity: 0; 
-        transform: scale(0.9); 
+    from {
+        opacity: 0;
+        transform: scale(0.9);
     }
-    to { 
-        opacity: 1; 
-        transform: scale(1); 
+
+    to {
+        opacity: 1;
+        transform: scale(1);
     }
 }
 
 @keyframes gentleFadeIn {
-    from { 
-        opacity: 0; 
-        transform: scale(0.95); 
+    from {
+        opacity: 0;
+        transform: scale(0.95);
     }
-    to { 
-        opacity: 1; 
-        transform: scale(1); 
+
+    to {
+        opacity: 1;
+        transform: scale(1);
     }
 }
 
 /* Gentle exit animations */
 @keyframes gentleFadeOut {
-    from { 
-        opacity: 1; 
-        transform: scale(1); 
+    from {
+        opacity: 1;
+        transform: scale(1);
     }
-    to { 
-        opacity: 0; 
-        transform: scale(0.95); 
+
+    to {
+        opacity: 0;
+        transform: scale(0.95);
     }
 }
 
 @keyframes gentleSlideOutLeft {
-    from { 
-        opacity: 1; 
-        transform: translateX(0); 
+    from {
+        opacity: 1;
+        transform: translateX(0);
     }
-    to { 
-        opacity: 0; 
-        transform: translateX(-20px); 
+
+    to {
+        opacity: 0;
+        transform: translateX(-20px);
     }
 }
 
 @keyframes gentleSlideOutRight {
-    from { 
-        opacity: 1; 
-        transform: translateX(0); 
+    from {
+        opacity: 1;
+        transform: translateX(0);
     }
-    to { 
-        opacity: 0; 
-        transform: translateX(20px); 
+
+    to {
+        opacity: 0;
+        transform: translateX(20px);
     }
 }
 
 @keyframes gentleSlideOutUp {
-    from { 
-        opacity: 1; 
-        transform: translateY(0); 
+    from {
+        opacity: 1;
+        transform: translateY(0);
     }
-    to { 
-        opacity: 0; 
-        transform: translateY(-20px); 
+
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
     }
 }
 
 /* Gentle entrance animations with smooth easing */
-.topic-animate-in-1 { 
-    animation: gentleSlideInLeft 0.5s ease-out forwards; 
+.topic-animate-in-1 {
+    animation: gentleSlideInLeft 0.5s ease-out forwards;
 }
-.topic-animate-in-2 { 
-    animation: gentleSlideInRight 0.5s ease-out forwards; 
+
+.topic-animate-in-2 {
+    animation: gentleSlideInRight 0.5s ease-out forwards;
 }
-.topic-animate-in-3 { 
-    animation: gentleSlideInUp 0.5s ease-out forwards; 
+
+.topic-animate-in-3 {
+    animation: gentleSlideInUp 0.5s ease-out forwards;
 }
-.topic-animate-in-4 { 
-    animation: gentleSlideInDown 0.5s ease-out forwards; 
+
+.topic-animate-in-4 {
+    animation: gentleSlideInDown 0.5s ease-out forwards;
 }
-.topic-animate-in-5 { 
-    animation: gentleScaleIn 0.5s ease-out forwards; 
+
+.topic-animate-in-5 {
+    animation: gentleScaleIn 0.5s ease-out forwards;
 }
-.topic-animate-in-6 { 
-    animation: gentleFadeIn 0.5s ease-out forwards; 
+
+.topic-animate-in-6 {
+    animation: gentleFadeIn 0.5s ease-out forwards;
 }
-.topic-animate-in-7 { 
-    animation: gentleSlideInLeft 0.5s ease-out forwards; 
+
+.topic-animate-in-7 {
+    animation: gentleSlideInLeft 0.5s ease-out forwards;
 }
-.topic-animate-in-8 { 
-    animation: gentleSlideInRight 0.5s ease-out forwards; 
+
+.topic-animate-in-8 {
+    animation: gentleSlideInRight 0.5s ease-out forwards;
 }
 
 /* Gentle exit animation options */
@@ -544,4 +618,8 @@ header img[alt="RoleLang Logo"] {
 #lesson-title-container {
     width: 65%;
     flex-shrink: 0;
+}
+
+#features-section i {
+    margin-right: 5px;
 }
