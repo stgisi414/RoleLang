@@ -1,4 +1,3 @@
-
 import * as state from './state.js';
 
 let domElements = {};
@@ -185,8 +184,8 @@ export function showReviewModeUI(language, lessonPlan) {
 }
 
 export function populateLessonTopics() {
-    const translations = getTranslations();
-    const nativeLang = getNativeLang() || 'en';
+    const translations = getTranslationsFunc();
+    const nativeLang = getNativeLangFunc() || 'en';
     
     if (!translations || !translations[nativeLang] || !translations[nativeLang].topics) {
         console.warn('Topics not available for current language');
@@ -221,22 +220,9 @@ export function populateLessonTopics() {
                 container.appendChild(button);
             });
         }
-    });Haunted House', 'Mystery Solver', 'Scary Story', 'Thriller Plot']
-    };
-
-    Object.entries(containers).forEach(([containerId, topics]) => {
-        const container = document.getElementById(containerId);
-        if (container && container.children.length === 0) {
-            topics.forEach(topic => {
-                const button = document.createElement('button');
-                button.className = 'lesson-btn bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded text-sm transition-all';
-                button.setAttribute('data-topic', topic);
-                button.textContent = topic;
-                container.appendChild(button);
-            });
-        }
     });
 }
+
 
 export function displayLessonHistory() {
     if (!domElements.historyLessonsContainer) return;
@@ -253,42 +239,6 @@ export function displayLessonHistory() {
             noHistoryMsg.className = 'col-span-2 text-center text-gray-500 py-4';
             noHistoryMsg.textContent = translateText('noCompletedLessons') || 'No completed lessons yet';
             domElements.historyLessonsContainer.appendChild(noHistoryMsg);
-            return;
-        }
-
-        // Display the lessons with proper styling
-        history.slice(0, 6).forEach((lessonRecord, index) => {
-            const lessonCard = document.createElement('button');
-            lessonCard.className = 'history-card bg-gradient-to-r from-amber-600/20 to-orange-600/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/30 hover:border-amber-400/50 text-white p-3 rounded-lg text-left transition-all transform hover:scale-105 backdrop-blur-sm';
-            
-            lessonCard.innerHTML = `
-                <div class="font-medium text-sm mb-1 line-clamp-1">${lessonRecord.topic}</div>
-                <div class="text-xs text-gray-400 mb-1">${lessonRecord.language}</div>
-                <div class="text-xs text-gray-500">${lessonRecord.completedAt}</div>
-            `;
-            
-            lessonCard.style.opacity = '0';
-            lessonCard.style.animation = `gentleFadeIn 0.5s ease-out ${index * 0.1}s forwards`;
-            
-            lessonCard.onclick = () => {
-                // Load the lesson for review
-                if (lessonRecord.lessonPlan && domElements.topicInput) {
-                    domElements.topicInput.value = lessonRecord.topic;
-                    if (domElements.languageSelect) {
-                        domElements.languageSelect.value = lessonRecord.language;
-                    }
-                }
-            };
-            
-            domElements.historyLessonsContainer.appendChild(lessonCard);
-        });
-    } catch (error) {
-        console.warn('Failed to load lesson history:', error);
-        const errorMsg = document.createElement('div');
-        errorMsg.className = 'col-span-2 text-center text-red-400 py-4';
-        errorMsg.textContent = 'Error loading lesson history';
-        domElements.historyLessonsContainer.appendChild(errorMsg);
-    }essonsContainer.appendChild(noHistoryMsg);
             return;
         }
 
