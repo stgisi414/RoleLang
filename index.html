@@ -577,16 +577,6 @@
     </div>
 
     <!-- Custom JavaScript -->
-    <script type="module" src="main.js" onerror="console.error('Failed to load main.js')"></script>
-    
-    <!-- Debug script to check if modules are loading -->
-    <script>
-        console.log('HTML loaded, checking module support...');
-        if (!('import' in document.createElement('script'))) {
-            console.error('ES6 modules not supported in this browser');
-        } else {
-            console.log('ES6 modules supported');
-        }
-    </script>
+    <script type="module" src="main.js"></script>
 </body>
 </html>

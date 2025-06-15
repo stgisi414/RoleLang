@@ -200,4 +200,3 @@ setTimeout(() => {
         initializeApp();
     }
 }, 1000);
-```
