@@ -105,7 +105,7 @@ async function restoreState(savedState) {
 
         const isCompleted = state.currentTurnIndex >= state.lessonPlan.dialogue.length;
         if (isCompleted) {
-            if (elements.micStatus) elements.micStatus.textContent = ui.translateText('lessonComplete');
+            if (elements.micStatus) elements.micStatus.innerHTML = `🎉 ${ui.translateText('lessonComplete')}`;
             if (elements.micBtn) elements.micBtn.disabled = true;
             state.lessonPlan.isCompleted = true;
             if (ui) ui.showReviewModeUI(savedState.selectedLanguage);

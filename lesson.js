@@ -280,7 +280,8 @@ export async function advanceTurn(newTurnIndex) {
 
     const { lessonPlan, currentTurnIndex: cti } = stateRef;
     if (!lessonPlan || !lessonPlan.dialogue || cti >= lessonPlan.dialogue.length) {
-        uiRef.showLessonComplete();
+        uiRef.updateMicStatusHTML(`🎉 ${uiRef.translateText('lessonComplete')}`);
+        uiRef.enableMicButton(false);
         if (lessonPlan) {
             lessonPlan.isCompleted = true;
             saveLessonToHistory(lessonPlan, domElements.languageSelect.value, domElements.topicInput.value);

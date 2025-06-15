@@ -552,6 +552,6 @@ export function resetMic() {
 }
 
 export function showLessonComplete() {
-    updateMicStatus('lessonComplete');
+    updateMicStatusHTML(`🎉 ${translateText('lessonComplete')}`);
     enableMicButton(false);
 }
