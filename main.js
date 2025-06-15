@@ -45,6 +45,13 @@ function saveState() {
     try {
         localStorage.setItem(state.STATE_KEY, JSON.stringify(appState));
         console.log('State saved successfully. Target language:', selectedLang);
+        console.log('Full saved state:', appState);
+        // Verify it was actually saved
+        const verification = localStorage.getItem(state.STATE_KEY);
+        if (verification) {
+            const parsed = JSON.parse(verification);
+            console.log('Verification - stored target language:', parsed.selectedLanguage);
+        }
     } catch (error) {
         console.warn('Failed to save state to localStorage:', error);
     }
@@ -53,9 +60,12 @@ function saveState() {
 function loadState() {
     try {
         const savedState = localStorage.getItem(state.STATE_KEY);
+        console.log('Raw localStorage data:', savedState);
         if (!savedState) return null;
 
         const parsedState = JSON.parse(savedState);
+        console.log('Parsed state from localStorage:', parsedState);
+        console.log('Target language from localStorage:', parsedState.selectedLanguage);
 
         const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
         if (parsedState.lastSaved < sevenDaysAgo) {
