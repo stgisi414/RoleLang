@@ -1,5 +1,3 @@
-// state.js - Pure State Management
-
 // --- Constants ---
 export const STATE_KEY = 'rolelang_app_state';
 export const LESSON_HISTORY_KEY = 'rolelang_lesson_history';
@@ -40,6 +38,15 @@ export function setNativeLang(lang) {
 export function setCurrentTranslations(translations) {
     currentTranslations = translations;
 }
+
+/**
+ * Sets the pre-fetched audio blob in the state.
+ * @param {Blob|null} blob The audio blob or null.
+ */
+export function setPreFetchedFirstAudioBlob(blob) {
+    preFetchedFirstAudioBlob = blob;
+}
+
 
 // --- Getters ---
 export function getTranslations() {
