@@ -184,6 +184,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function clearState() {
         localStorage.removeItem(STATE_KEY);
+        
+        // Hide review mode banner when clearing state
+        hideReviewModeBanner();
+        
+        // Remove any review indicators from the lesson screen
+        const existingReviewIndicator = lessonScreen.querySelector('.review-mode-indicator');
+        if (existingReviewIndicator) {
+            existingReviewIndicator.remove();
+        }
     }
 
     async function restoreState(state) {
