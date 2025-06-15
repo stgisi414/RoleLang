@@ -7,6 +7,22 @@ body {
     padding-bottom: 50px; /* Add space for sticky footer */
 }
 
+/* Review mode banner styling */
+#review-mode-banner {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Body padding when review mode is active */
+body.review-mode-active {
+    padding-top: 70px; /* Adjust based on banner height */
+}
+
+/* App container margin adjustment for review mode */
+body.review-mode-active #app-container {
+    margin-top: 0;
+}
+
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }

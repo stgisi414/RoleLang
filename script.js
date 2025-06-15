@@ -27,6 +27,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const closeTutorialBtn = document.getElementById('close-tutorial-btn');
     const startTutorialLessonBtn = document.getElementById('start-tutorial-lesson-btn');
 
+    // Review mode banner elements
+    const reviewModeBanner = document.getElementById('review-mode-banner');
+    const backToLessonsBtn = document.getElementById('back-to-lessons-btn');
+    const vocabQuizBtn = document.getElementById('vocab-quiz-btn');
+
     // Native language dropdown elements
     const nativeLangBtn = document.getElementById('native-lang-btn');
     const nativeLangDropdown = document.getElementById('native-lang-dropdown');
@@ -2299,6 +2304,17 @@ Now, provide the JSON array for the given text:
     function removeParentheses(text) {
         // More thorough removal of parentheses and their content
         return text.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    // Review mode banner functions
+    function showReviewModeBanner() {
+        reviewModeBanner.classList.remove('hidden');
+        document.body.classList.add('review-mode-active');
+    }
+
+    function hideReviewModeBanner() {
+        reviewModeBanner.classList.add('hidden');
+        document.body.classList.remove('review-mode-active');
     }
 
     async function verifyUserSpeech(spokenText) {

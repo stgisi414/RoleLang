@@ -144,9 +144,27 @@
 </head>
 <body class="grid-background min-h-screen flex items-center justify-center p-4">
 
+    <!-- Review Mode Banner (absolute positioned at top) -->
+    <div id="review-mode-banner" class="fixed top-0 left-0 right-0 bg-purple-600 text-white px-4 py-3 z-50 hidden">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-history text-lg"></i>
+                <span class="font-medium" data-translate="reviewMode">Review Mode - Lesson</span>
+                <button id="back-to-lessons-btn" class="flex items-center space-x-2 bg-purple-700 hover:bg-purple-800 px-3 py-1 rounded-lg transition-colors">
+                    <i class="fas fa-arrow-left text-sm"></i>
+                    <span class="text-sm" data-translate="back">Back</span>
+                </button>
+            </div>
+            <button id="vocab-quiz-btn" class="flex items-center space-x-2 bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded-lg transition-colors">
+                <i class="fas fa-brain text-sm"></i>
+                <span class="text-sm" data-translate="vocabQuiz">Vocab Quiz</span>
+            </button>
+        </div>
+    </div>
+
     <div id="app-container" class="w-full max-w-4xl mx-auto">
         <!-- Header -->
-        <header class="p-4 md:p-5 flex justify-between items-center glassmorphism rounded-t-xl">
+        <header class="p-4 md:p-5 flex justify-between items-center glassmorphism rounded-t-xl"></header>
             <div class="flex items-center space-x-3">
                 <img src="assets/logo.png" alt="RoleLang Logo" class="h-10 w-10 rounded-full border-2 border-cyan-400/50">
                 <span class="text-2xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-sky-300 to-cyan-500">RoleLang</span>
