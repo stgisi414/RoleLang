@@ -46,7 +46,7 @@ You are an expert linguist specializing in splitting text for language learners 
 Provide the JSON array.`;
 
     try {
-        const data = await apiRef.callGeminiAPI(prompt, { modelPreference: 'lite' });
+        const data = await apiRef.callGeminiAPI(prompt);
         const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
         const sentences = JSON.parse(jsonString);
 
@@ -153,11 +153,10 @@ function getVoiceConfig(language, party = 'A') {
 }
 
 function createGeminiPrompt(language, topic, nativeLang) {
-    // This function correctly uses the global getRandomNames from names.js
     const randomNames = window.getRandomNames(language, 5);
     const nameExamples = randomNames.map(name => `"${name[0]} ${name[1]}"`).join(', ');
     const isEnglish = language === 'English';
-
+    
     const nativeLangName = {
         'en': 'English', 'es': 'Spanish', 'fr': 'French', 'de': 'German',
         'it': 'Italian', 'zh': 'Chinese', 'ja': 'Japanese', 'ko': 'Korean'
@@ -166,16 +165,13 @@ function createGeminiPrompt(language, topic, nativeLang) {
     const translationInstruction = isEnglish
         ? "The 'display' text should not contain any parenthetical translations."
         : `The 'display' text MUST include a brief, parenthetical ${nativeLangName} translation. Example: "Bonjour (Hello)".`;
-
     let lineObjectStructure = `
         - "display": The line of dialogue in ${language}. ${translationInstruction}
-        - "clean_text": The line of dialogue in ${language} WITHOUT any parenthetical translations. THIS IS FOR SPEECH RECOGNITION.
-    `;
+        - "clean_text": The line of dialogue in ${language} WITHOUT any parenthetical translations. THIS IS FOR SPEECH RECOGNITION.`;
     if (language === 'Japanese') {
         lineObjectStructure += `
         - "hiragana": A pure hiragana version of "clean_text".`;
     }
-
     return `
 You are a language tutor creating a lesson for a web application. Your task is to generate a single, complete, structured lesson plan in JSON format. Do not output any text or explanation outside of the single JSON object.
 
@@ -244,15 +240,15 @@ export async function initializeLesson() {
     const language = domElements.languageSelect.value;
     const topic = domElements.topicInput.value;
     if (!topic) {
-        uiRef.translateText('enterTopic');
+        alert(uiRef.translateText('enterTopic'));
         return;
     }
     
-    uiRef.showLoadingSpinner(); // Using UI module
+    uiRef.showLoadingSpinner(); 
     const prompt = createGeminiPrompt(language, topic, stateRef.nativeLang);
     
     try {
-        const data = await apiRef.callGeminiAPI(prompt, { modelPreference: 'pro' }); // Using API module
+        const data = await apiRef.callGeminiAPI(prompt); 
         const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
         const plan = JSON.parse(jsonString);
         
@@ -266,6 +262,7 @@ export async function initializeLesson() {
 
         await startConversation();
         
+        uiRef.showStartOverlay();
         uiRef.disableStartButton(true);
 
         const illustrationPromise = fetchAndDisplayIllustration(plan.illustration_prompt);
@@ -403,13 +400,13 @@ export function confirmStartLesson() {
 async function fetchAndDisplayIllustration(prompt) {
     try {
         uiRef.showImageLoader();
-        const result = await apiRef.generateImage(`${prompt}, digital art, minimalist, educational illustration`); // Using API module
+        const result = await apiRef.generateImage(`${prompt}, digital art, minimalist, educational illustration`);
         if (result.imageUrl) {
             if (stateRef.lessonPlan) {
                 stateRef.lessonPlan.illustration_url = result.imageUrl;
                 if (saveStateRef) saveStateRef();
             }
-            await uiRef.restoreIllustration(result.imageUrl); // Using UI module
+            await uiRef.restoreIllustration(result.imageUrl); 
         } else {
             throw new Error("No image URL returned from API.");
         }
@@ -458,7 +455,7 @@ export async function verifyUserSpeech(spokenText) {
             const nativeLangName = {'en': 'English', 'es': 'Spanish', 'fr': 'French', 'de': 'German', 'it': 'Italian', 'zh': 'Chinese', 'ja': 'Japanese', 'ko': 'Korean'}[stateRef.nativeLang] || 'English';
             let expectedLine = (currentSentences.length > 1) ? currentSentences[currentSentenceIndex] : currentTurnData.line.clean_text;
             const verificationPrompt = `You are a language evaluation tool... Expected: "${expectedLine}" Spoken: "${spokenText}" Provide the JSON response.`;
-            const data = await apiRef.callGeminiAPI(verificationPrompt, { modelPreference: 'super' });
+            const data = await apiRef.callGeminiAPI(verificationPrompt);
             const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
             const result = JSON.parse(jsonString);
             if (result.is_match) {
@@ -551,12 +548,9 @@ function extractTranslation(text) {
 export async function extractVocabularyFromDialogue() {
     const language = domElements.languageSelect.value;
 
-    // AI-based extraction for English lessons
     if (language === 'English') {
         if (!stateRef.lessonPlan || !stateRef.lessonPlan.dialogue) return [];
-
         const dialogueText = stateRef.lessonPlan.dialogue.map(turn => turn.line.display).join('\n');
-
         const prompt = `
 You are a vocabulary extraction tool for an English language learner. From the following dialogue, identify 5-10 key vocabulary words or phrases that would be useful for a learner. For each item, provide the word/phrase and a simple definition or synonym in English. Your response MUST be a valid JSON array of objects, with each object having a "word" key and a "translation" key (where "translation" is the definition/synonym).
 
@@ -568,7 +562,7 @@ ${dialogueText}
 Provide the JSON array.`;
 
         try {
-            const data = await apiRef.callGeminiAPI(prompt, { modelPreference: 'lite' });
+            const data = await apiRef.callGeminiAPI(prompt);
             const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
             const vocabulary = JSON.parse(jsonString);
 
@@ -586,12 +580,9 @@ Provide the JSON array.`;
             return [];
         }
     } else {
-        // Parenthetical extraction for other languages
         if (!stateRef.lessonPlan || !stateRef.lessonPlan.dialogue) return [];
-
         const vocabulary = [];
         const seenWords = new Set();
-
         stateRef.lessonPlan.dialogue.forEach((turn, turnIndex) => {
             if (turn.line && turn.line.display) {
                 const cleanText = removeParentheses(turn.line.display);
@@ -625,9 +616,9 @@ export async function fallbackVocabularyExtraction() {
         if (turn.line && turn.line.display) {
             const fullText = turn.line.display;
             const patterns = [
-                /([^(]+)\s*\(([^)]+)\)/g,          // Standard: text (translation)
-                /([가-힣]+[^(]*)\s*\(([^)]+)\)/g,    // Korean specific
-                /([^\s]+)\s*\(([^)]+)\)/g,          // Single word
+                /([^(]+)\s*\(([^)]+)\)/g,
+                /([가-힣]+[^(]*)\s*\(([^)]+)\)/g,
+                /([^\s]+)\s*\(([^)]+)\)/g,
             ];
 
             patterns.forEach(pattern => {
@@ -656,7 +647,6 @@ export async function forceVocabularyExtraction() {
 
     const language = domElements.languageSelect.value;
     const dialogueText = stateRef.lessonPlan.dialogue.map(turn => turn.line.display).join('\n');
-
     const prompt = `
 You are a vocabulary extraction tool. From the following dialogue in ${language}, extract 5-10 key vocabulary words or phrases useful for language learners. For each item, provide the original word/phrase and a simple English translation or definition. Your response MUST be a valid JSON array of objects, with each object having a "word" key (original text) and a "translation" key (English definition).
 
@@ -668,7 +658,7 @@ ${dialogueText}
 Provide the JSON array:`;
 
     try {
-        const data = await apiRef.callGeminiAPI(prompt, { modelPreference: 'lite' });
+        const data = await apiRef.callGeminiAPI(prompt);
         const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
         const vocabulary = JSON.parse(jsonString);
 
@@ -688,22 +678,15 @@ Provide the JSON array:`;
 }
 
 export async function startVocabularyQuiz(language) {
-    // 1. Try the primary extraction method first.
     let vocabulary = await extractVocabularyFromDialogue();
-
-    // 2. If it returns nothing, try the more aggressive fallback.
     if (vocabulary.length === 0) {
         console.log('No vocabulary found with primary method, trying fallback...');
         vocabulary = await fallbackVocabularyExtraction();
     }
-
-    // 3. If still no vocabulary, show a special modal to the user.
     if (vocabulary.length === 0) {
         showVocabularyReloadModal(language);
-        return; // Stop here
+        return;
     }
-
-    // 4. If vocabulary was found, create the quiz.
     createVocabularyQuizModal(vocabulary, language);
 }
 
@@ -711,7 +694,6 @@ function showVocabularyReloadModal(language) {
     const reloadModal = document.createElement('div');
     reloadModal.id = 'vocab-reload-modal';
     reloadModal.className = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4';
-
     reloadModal.innerHTML = `
         <div class="bg-gray-800 rounded-xl p-6 max-w-md w-full glassmorphism text-center">
             <div class="text-4xl mb-4">📚</div>
@@ -729,10 +711,8 @@ function showVocabularyReloadModal(language) {
             </div>
         </div>
     `;
-
     document.body.appendChild(reloadModal);
 
-    // Event listener for the "Force Extract" button inside the modal
     document.getElementById('force-extract-btn').addEventListener('click', async () => {
         reloadModal.remove();
         ui.showLoadingSpinner();
@@ -761,7 +741,6 @@ async function createVocabularyQuizModal(vocabulary, language) {
     const shuffledVocab = [...vocabulary].sort(() => 0.5 - Math.random());
     let currentQuestion = 0;
     let score = 0;
-    // This function will generate the translations for the user's native language
     const vocabularyWithNativeTranslations = await generateVocabularyTranslations(shuffledVocab, language);
 
 
@@ -839,7 +818,7 @@ async function generateVocabularyTranslations(vocabulary, targetLanguage) {
     const prompt = `Translate the following words/phrases from ${targetLanguage} into ${nativeLangName}. Return ONLY a JSON array of objects with "word" (original) and "translation" (${nativeLangName}). Words: ${vocabList}`;
 
     try {
-        const data = await apiRef.callGeminiAPI(prompt, { modelPreference: 'lite' });
+        const data = await apiRef.callGeminiAPI(prompt);
         const translations = JSON.parse(data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim());
         return vocabulary.map(v => ({...v, nativeTranslation: translations.find(t => t.word === v.word)?.translation || v.translation}));
     } catch (error) {
@@ -862,7 +841,6 @@ function getGenericWrongAnswers(targetLanguage, nativeLangCode) {
 }
 
 export async function reviewLesson(lessonRecord) {
-    // 1. Set the lesson plan and reset progress
     const plan = lessonRecord.lessonPlan;
     if (!plan.id) {
         plan.id = `lesson-${lessonRecord.language}-${Date.now()}`;
@@ -870,39 +848,32 @@ export async function reviewLesson(lessonRecord) {
     stateRef.setLessonPlan(plan);
     stateRef.setCurrentTurnIndex(0);
 
-    // 2. Update the UI to match the selected lesson's language and topic
     if (domElements.languageSelect) domElements.languageSelect.value = lessonRecord.language;
     if (domElements.topicInput) domElements.topicInput.value = lessonRecord.topic;
 
-    // 3. Set the speech recognition language
     if (stateRef.recognition) {
         stateRef.recognition.lang = getLangCode(lessonRecord.language);
     }
 
-    // 4. Switch from the landing page to the lesson screen
     uiRef.showLessonScreen();
     uiRef.stopTopicRotations();
 
-    // 5. Display the lesson content (illustration, title, etc.)
     if (plan.illustration_url) {
         uiRef.restoreIllustration(plan.illustration_url);
     } else if (plan.illustration_prompt) {
-        // This function is already in lesson.js
         fetchAndDisplayIllustration(plan.illustration_prompt);
     }
-
-    // This function is also in lesson.js
+    
     await startConversation();
-
-    // 6. Show the purple "Review Mode" banner
+    
     uiRef.showReviewModeUI(lessonRecord.language);
-
-    // 7. Save the current state so the review session can be restored if the user refreshes
+    
     if (saveStateRef) saveStateRef();
+    
+    advanceTurn(0);
 }
 
 export async function playLineAudio(text, party = 'B') {
-    // Abort any turn-advancement logic from the main lesson flow
     stateRef.audioController.abort();
     stateRef.audioController = new AbortController();
 
@@ -922,26 +893,20 @@ export async function playLineAudio(text, party = 'B') {
         
     } catch (error) {
         console.error("Failed to fetch audio for manual playback:", error);
-        // Optionally, display a UI error to the user
     }
 }
 
 export function playLineAudioDebounced(text, party = 'B') {
-    // Clear any pending playback
     if (audioDebounceTimer) {
         clearTimeout(audioDebounceTimer);
     }
-
-    // Stop any currently playing audio immediately
     if (!stateRef.audioPlayer.paused) {
         stateRef.audioPlayer.pause();
     }
-
-    // Set a new playback to start after a short delay
     audioDebounceTimer = setTimeout(() => {
         playLineAudio(text, party);
         audioDebounceTimer = null;
-    }, 300); // 300ms delay
+    }, 300);
 }
 
 export function debounce(func, wait) {

@@ -16,7 +16,6 @@ const IMAGE_API_URL = 'https://ainovel.site/api/generate-image';
  */
 export async function callGeminiAPI(prompt, options = {}) {
     const {
-        modelPreference = 'pro',
         retryAttempts = 3,
         safetySettings = [
             { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
@@ -26,14 +25,12 @@ export async function callGeminiAPI(prompt, options = {}) {
         ]
     } = options;
 
-    const modelPriority = [
-        modelPreference,
-        ...Object.keys(GEMINI_MODELS).filter(key => key !== modelPreference)
-    ];
+    // CORRECTED LOGIC: Sequentially try every model from the GEMINI_MODELS list.
+    const modelsToTry = Object.keys(GEMINI_MODELS);
 
     let lastError = null;
 
-    for (const modelKey of modelPriority) {
+    for (const modelKey of modelsToTry) {
         const modelName = GEMINI_MODELS[modelKey];
         if (!modelName) continue;
 
@@ -58,7 +55,8 @@ export async function callGeminiAPI(prompt, options = {}) {
                 if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
                     throw new Error('Invalid response structure from Gemini API');
                 }
-                return data;
+                // Success, return immediately.
+                return data; 
             } catch (error) {
                 console.warn(`Attempt ${attempt} failed for model ${modelName}:`, error.message);
                 lastError = error;
@@ -68,6 +66,7 @@ export async function callGeminiAPI(prompt, options = {}) {
             }
         }
     }
+    // If all models and retries failed
     throw new Error(`All Gemini models failed. Last error: ${lastError?.message || 'Unknown error'}`);
 }
 
