@@ -118,14 +118,12 @@ async function restoreState(savedState) {
 async function initializeApp() {
     console.log('Initializing app...');
     
-    // Prevent duplicate initialization
     if (document.getElementById('app-container')?.dataset.initialized) {
-        console.log('App already initialized, skipping...');
         return;
     }
     
-    // Populate DOM elements object
     elements = {
+        // ... (all element definitions remain the same) ...
         landingScreen: document.getElementById('landing-screen'),
         lessonScreen: document.getElementById('lesson-screen'),
         startLessonBtn: document.getElementById('start-lesson-btn'),
@@ -177,7 +175,9 @@ async function initializeApp() {
 
     // Initialize modules
     ui.init(elements, state.getTranslations, state.getNativeLang, saveState);
-    lesson.init(elements, state, api, ui);
+    
+    // FIX: Pass the saveState function to the lesson module as well
+    lesson.init(elements, state, api, ui, saveState);
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
