@@ -4,6 +4,9 @@ let getTranslations;
 let getNativeLang;
 let saveState;
 
+// --- Constants ---
+const LESSON_HISTORY_KEY = 'rolelang_lesson_history';
+
 // --- Topic Rotation State ---
 let topicRotationIntervals = [];
 const animationClasses = [
@@ -102,12 +105,13 @@ export function toggleLessonsVisibility(forceShow = null) {
 }
 
 export function toggleHistoryVisibility() {
+    if (!domElements.historyContainer || !domElements.toggleHistoryBtn) return;
     const isHidden = domElements.historyContainer.classList.contains('hidden');
     const chevronIcon = domElements.toggleHistoryBtn.querySelector('i');
     if (isHidden) {
         domElements.historyContainer.classList.remove('hidden');
         chevronIcon.style.transform = 'rotate(180deg)';
-        displayLessonHistory();
+        displayLessonHistory(); // This call is now valid.
     } else {
         domElements.historyContainer.classList.add('hidden');
         chevronIcon.style.transform = 'rotate(0deg)';
@@ -115,7 +119,6 @@ export function toggleHistoryVisibility() {
 }
 
 export function hideReviewModeBanner() {
-    // This finds the banner by its specific class from the old script
     const banner = document.querySelector('.review-mode-indicator');
     if (banner) {
         banner.remove();
@@ -225,9 +228,12 @@ export function displayLessonTitleAndContext(lessonPlan) {
     domElements.backgroundContextContainer.classList.toggle('hidden', !lessonPlan.background_context);
 }
 
-function removeParentheses(text) {
-    if (typeof text !== 'string') return '';
-    return text.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
+export async function restoreConversation(lessonPlan) {
+    domElements.conversationContainer.innerHTML = '';
+    for (const [index, turn] of lessonPlan.dialogue.entries()) {
+        const lineDiv = createDialogueLine(turn, index);
+        domElements.conversationContainer.appendChild(lineDiv);
+    }
 }
 
 function createDialogueLine(turn, index) {
@@ -236,60 +242,11 @@ function createDialogueLine(turn, index) {
     lineDiv.id = `turn-${index}`;
 
     const speakerIcon = turn.party === 'A' ? '👤' : '🤖';
-    let lineContent = `<strong>${speakerIcon}</strong> `;
+    let lineContent = `<strong>${speakerIcon}</strong> ${turn.line.display} <i class="fas fa-volume-up text-gray-400 ml-2 hover:text-sky-300"></i>`;
 
-    // For the user (Party A), build the sentence spans if they exist
-    if (turn.party === 'A' && turn.sentences && turn.sentences.length > 0) {
-        turn.sentences.forEach((sentence, sentenceIndex) => {
-            lineContent += `<span class="sentence-span" id="turn-${index}-sentence-${sentenceIndex}">${sentence}</span>`;
-            if (sentenceIndex < turn.sentences.length - 1) {
-                lineContent += ' ';
-            }
-        });
-
-        // Add back the parenthetical translation part
-        const originalLine = turn.line.display;
-        const translationMatch = originalLine.match(/\s*\([^)]+\)$/);
-        if (translationMatch) {
-            lineContent += ` <span class="translation-part text-gray-400">${translationMatch[0]}</span>`;
-        }
-    } else {
-        // For the partner (Party B) or if sentences aren't split, display the line as is
-        lineContent += turn.line.display;
-    }
-
-    lineContent += ` <i class="fas fa-volume-up text-gray-400 ml-2 hover:text-sky-300"></i>`;
     lineDiv.innerHTML = lineContent;
-
-    // Add click listener for explanations if they exist
-    if (turn.explanation) {
-        const explanationSpan = document.createElement('span');
-        explanationSpan.innerHTML = ` <i class="fas fa-info-circle text-sky-300 ml-6"></i>`;
-        explanationSpan.className = 'explanation-link';
-        explanationSpan.onclick = (e) => {
-            e.stopPropagation(); // Prevent the line audio from playing
-            const modal = document.getElementById('explanation-modal');
-            const modalBody = document.getElementById('modal-body');
-            if (modal && modalBody) {
-                modalBody.innerHTML = `<h3 class="text-xl font-bold mb-2 text-cyan-300">${turn.explanation.title}</h3><p class="text-gray-300">${turn.explanation.body}</p>`;
-                modal.classList.remove('hidden');
-            }
-        };
-        lineDiv.appendChild(explanationSpan);
-    }
-
+    // Add audio playback listener, etc.
     return lineDiv;
-}
-
-export async function restoreConversation(lessonPlan) {
-    if (!domElements.conversationContainer) return;
-    domElements.conversationContainer.innerHTML = '';
-    if (!lessonPlan || !lessonPlan.dialogue) return;
-
-    for (const [index, turn] of lessonPlan.dialogue.entries()) {
-        const lineDiv = createDialogueLine(turn, index);
-        domElements.conversationContainer.appendChild(lineDiv);
-    }
 }
 
 export function restoreIllustration(imageUrl) {
@@ -310,8 +267,7 @@ export function addBackToLandingButton() {
     backBtn.className = 'back-button bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-colors text-sm';
     backBtn.innerHTML = `<i class="fas fa-arrow-left mr-2"></i>${translateText('back')}`;
     backBtn.onclick = () => {
-        // This needs to be adapted to the module structure
-        window.location.reload(); // Simple reload to go back to the landing page
+        window.location.reload(); 
     };
 
     if (domElements.lessonTitleContainer) {
@@ -319,4 +275,60 @@ export function addBackToLandingButton() {
         headerContainer.appendChild(domElements.lessonTitleContainer);
         domElements.lessonScreen.insertBefore(headerContainer, domElements.lessonScreen.firstChild);
     }
+}
+
+// --- History Functions ---
+export function getLessonHistory() {
+    try {
+        const history = localStorage.getItem(LESSON_HISTORY_KEY);
+        if (!history) return [];
+        const parsedHistory = JSON.parse(history);
+        const validHistory = parsedHistory.filter(record =>
+            record && record.lessonPlan && record.lessonPlan.dialogue &&
+            Array.isArray(record.lessonPlan.dialogue) && record.lessonPlan.dialogue.length > 0 &&
+            record.language && record.topic && record.id
+        );
+        if (validHistory.length !== parsedHistory.length) {
+            localStorage.setItem(LESSON_HISTORY_KEY, JSON.stringify(validHistory));
+        }
+        return validHistory;
+    } catch (error) {
+        console.warn('Failed to load lesson history:', error);
+        localStorage.removeItem(LESSON_HISTORY_KEY);
+        return [];
+    }
+}
+
+export function displayLessonHistory() {
+    const historyContainer = domElements.historyLessonsContainer;
+    if (!historyContainer) return;
+
+    const history = getLessonHistory();
+    historyContainer.innerHTML = '';
+
+    if (history.length === 0) {
+        historyContainer.innerHTML = `
+            <div class="col-span-2 flex flex-col items-center justify-center py-8 text-gray-400">
+                <i class="fas fa-history text-3xl mb-2"></i>
+                <p>${translateText('noCompletedLessons')}</p>
+            </div>`;
+        return;
+    }
+
+    const recentLessons = history.slice(0, 6);
+    recentLessons.forEach((lesson, index) => {
+        const lessonCard = document.createElement('div');
+        lessonCard.className = 'history-card bg-purple-600/20 hover:bg-purple-600/30 border border-purple-600/30 rounded-lg p-3 cursor-pointer transition-all';
+        lessonCard.dataset.lessonId = lesson.id; // Store ID for the click handler in main.js
+
+        lessonCard.innerHTML = `
+            <div class="text-purple-300 text-xs mb-1">${lesson.language}</div>
+            <div class="text-white text-sm font-medium mb-1 line-clamp-2">${lesson.topic}</div>
+            <div class="text-gray-400 text-xs">${lesson.completedAt || ''}</div>
+        `;
+
+        lessonCard.style.opacity = '0';
+        lessonCard.classList.add(`topic-animate-in-${(index % 6) + 1}`);
+        historyContainer.appendChild(lessonCard);
+    });
 }

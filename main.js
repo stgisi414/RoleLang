@@ -234,7 +234,7 @@ async function initializeApp() {
 	});
     elements.micBtn?.addEventListener('click', () => lesson.toggleSpeechRecognition());
     elements.toggleLessonsBtn?.addEventListener('click', () => ui.toggleLessonsVisibility());
-    elements.toggleHistoryBtn?.addEventListener('click', () => ui.toggleHistoryVisibility());
+    elements.toggleHistoryBtn?.addEventListener('click', ui.toggleHistoryVisibility);
     elements.difficultyTab?.addEventListener('click', () => ui.switchTab('difficulty'));
     elements.situationsTab?.addEventListener('click', () => ui.switchTab('situations'));
     elements.resetLessonBtn?.addEventListener('click', () => lesson.resetLesson());
@@ -309,6 +309,24 @@ async function initializeApp() {
 
         const turn = currentLessonPlan.dialogue[turnIndex];
         lesson.playLineAudioDebounced(turn.line.display, turn.party);
+    });
+	
+	elements.historyLessonsContainer?.addEventListener('click', (event) => {
+        const card = event.target.closest('.history-card');
+        if (!card) return;
+
+        const lessonId = card.dataset.lessonId;
+        if (!lessonId) return;
+
+        const history = ui.getLessonHistory(); 
+        const lessonRecord = history.find(record => record.id === lessonId);
+
+        if (lessonRecord) {
+            clearState(); // Clear old state before starting review
+            lesson.reviewLesson(lessonRecord);
+        } else {
+            console.error('Could not find lesson record for ID:', lessonId);
+        }
     });
 
     // --- Initialization ---
