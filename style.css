@@ -16,12 +16,12 @@ body {
 
 /* Body padding when review mode is active */
 body.review-mode-active {
-    padding-top: 70px; /* Adjust based on banner height */
+    padding-top: 70px; /* Space for the banner */
 }
 
-/* App container margin adjustment for review mode */
-body.review-mode-active #app-container {
-    margin-top: 0;
+/* Push lesson header down when review mode is active */
+body.review-mode-active #lesson-header {
+    margin-top: 70px; /* Push down by banner height */
 }
 
 /* Ensure lesson header and other elements are below the banner */
