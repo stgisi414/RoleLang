@@ -15,6 +15,15 @@ export let preFetchedFirstAudioBlob = null;
 export const audioPlayer = new Audio();
 export let audioController = new AbortController();
 
+// Setter functions for read-only module properties
+export function setRecognition(recognitionInstance) {
+    recognition = recognitionInstance;
+}
+
+export function setIsRecognizing(value) {
+    isRecognizing = value;
+}
+
 // DOM elements and modules
 let domElements = {};
 let uiModule;

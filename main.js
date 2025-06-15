@@ -18,6 +18,13 @@ console.log('main.js loaded');
 
 async function initializeApp() {
     console.log('Initializing app...');
+    
+    // Prevent duplicate initialization
+    if (document.getElementById('app-container')?.dataset.initialized) {
+        console.log('App already initialized, skipping...');
+        return;
+    }
+    
     // --- DOM Elements ---
     const elements = {
         landingScreen: document.getElementById('landing-screen'),
@@ -75,27 +82,27 @@ async function initializeApp() {
     // --- Speech Recognition Setup ---
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
-        state.recognition = new SpeechRecognition();
-        state.recognition.continuous = false;
-        state.recognition.lang = 'en-US';
-        state.recognition.interimResults = false;
-        state.recognition.maxAlternatives = 1;
+        const recognitionInstance = new SpeechRecognition();
+        recognitionInstance.continuous = false;
+        recognitionInstance.lang = 'en-US';
+        recognitionInstance.interimResults = false;
+        recognitionInstance.maxAlternatives = 1;
 
-        state.recognition.onstart = () => {
-            state.isRecognizing = true;
+        recognitionInstance.onstart = () => {
+            state.setIsRecognizing(true);
             elements.micBtn?.classList.add('bg-green-600');
             elements.micBtn?.classList.remove('bg-red-600');
             if (elements.micStatus) elements.micStatus.textContent = ui.translateText('listening');
         };
 
-        state.recognition.onend = () => {
-            state.isRecognizing = false;
+        recognitionInstance.onend = () => {
+            state.setIsRecognizing(false);
             elements.micBtn?.classList.remove('bg-green-600');
             elements.micBtn?.classList.add('bg-red-600');
         };
 
-        state.recognition.onerror = (event) => {
-            console.error("Speech recognition error:", event.error, "for language:", state.recognition.lang);
+        recognitionInstance.onerror = (event) => {
+            console.error("Speech recognition error:", event.error, "for language:", recognitionInstance.lang);
             const currentLanguage = elements.languageSelect?.value;
             if (event.error === 'language-not-supported' && elements.micStatus) {
                 elements.micStatus.innerHTML = `Speech recognition for <strong>${currentLanguage}</strong> is not supported by your browser.`;
@@ -105,11 +112,14 @@ async function initializeApp() {
             }
         };
 
-        state.recognition.onresult = (event) => {
+        recognitionInstance.onresult = (event) => {
             const spokenText = event.results[0][0].transcript;
             if (elements.micStatus) elements.micStatus.textContent = `${ui.translateText('youSaid')} "${spokenText}"`;
             lesson.verifyUserSpeech(spokenText);
         };
+
+        // Set the recognition instance in state
+        state.setRecognition(recognitionInstance);
     } else {
         if (elements.micStatus) elements.micStatus.textContent = ui.translateText('speechNotSupported');
         if (elements.micBtn) elements.micBtn.disabled = true;
@@ -181,6 +191,11 @@ async function initializeApp() {
         await state.restore(savedState);
     } else {
         ui.startTopicRotations();
+    }
+    
+    // Mark app as initialized
+    if (elements.appContainer) {
+        elements.appContainer.dataset.initialized = 'true';
     }
 }
 
