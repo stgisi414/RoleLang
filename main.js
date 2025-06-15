@@ -79,18 +79,20 @@ function clearState() {
 }
 
 async function restoreState(savedState) {
-    // Restore native language first if saved
+    // Restore target language selection first
+    if (savedState.selectedLanguage && elements.languageSelect) {
+        elements.languageSelect.value = savedState.selectedLanguage;
+    }
+
+    // Restore native language (UI language) if saved
     if (savedState.nativeLang) {
         state.setNativeLang(savedState.nativeLang);
         state.setCurrentTranslations(window.translations[savedState.nativeLang] || window.translations.en);
-        // Update UI language display
+        // Update UI language display - this will get the correct flag/name from initializeNativeLanguage
         if (ui) {
-            ui.setNativeLanguage(savedState.nativeLang, '🇺🇸', 'English'); // Will be updated by the language detection
+            // Don't override with hardcoded values, let the stored data be used
+            ui.initializeNativeLanguage();
         }
-    }
-
-    if (savedState.selectedLanguage && elements.languageSelect) {
-        elements.languageSelect.value = savedState.selectedLanguage;
     }
     if (savedState.topicInput && elements.topicInput) {
         elements.topicInput.value = savedState.topicInput;
