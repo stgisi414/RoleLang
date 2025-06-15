@@ -179,7 +179,6 @@ function getRandomNames(language, count = 5) {
 }
 
 export async function initializeLesson() {
-    // ... function implementation is correct and remains the same
     if (!domElements.languageSelect || !domElements.topicInput) return;
     
     const language = domElements.languageSelect.value;
@@ -195,7 +194,8 @@ export async function initializeLesson() {
     if (domElements.illustrationPlaceholder) domElements.illustrationPlaceholder.classList.remove('hidden');
     if (domElements.imageLoader) domElements.imageLoader.classList.add('hidden');
 
-    const prompt = createGeminiPrompt(language, topic, stateRef.getNativeLang());
+    // FIX: Changed function call to lowercase to match its definition
+    const prompt = creategeminiprompt(language, topic, stateRef.getNativeLang());
     
     try {
         const data = await apiRef.callGeminiAPI(prompt, { modelPreference: 'pro' });
@@ -220,8 +220,8 @@ export async function initializeLesson() {
             document.getElementById('start-lesson-overlay')?.classList.remove('hidden');
         }
 
-        const illustrationPromise = fetchAndDisplayIllustration(plan.illustration_prompt);
-        const audioPromise = preFetchFirstAudio(plan.dialogue[0]);
+        const illustrationPromise = fetchanddisplayillustration(plan.illustration_prompt);
+        const audioPromise = prefetchfirstaudio(plan.dialogue[0]);
 
         await Promise.all([illustrationPromise, audioPromise]);
         
