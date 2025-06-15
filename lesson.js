@@ -151,7 +151,7 @@ function createGeminiPrompt(language, topic, nativeLang) {
     const randomNames = window.getRandomNames(language, 5);
     const nameExamples = randomNames.map(name => `"${name[0]} ${name[1]}"`).join(', ');
     const isEnglish = language === 'English';
-    
+
     const nativeLangName = {
         'en': 'English', 'es': 'Spanish', 'fr': 'French', 'de': 'German',
         'it': 'Italian', 'zh': 'Chinese', 'ja': 'Japanese', 'ko': 'Korean'
@@ -211,23 +211,29 @@ export function getLangCode(languageValue) {
 
 
 export async function initializeLesson() {
-    if (!domElements.languageSelect || !domElements.topicInput) return;
-    
-    const language = domElements.languageSelect.value;
-    const topic = domElements.topicInput.value;
+    const language = domElements.languageSelect?.value;
+    const topic = domElements.topicInput?.value;
+
     if (!topic) {
         alert(uiRef.translateText('enterTopic'));
         return;
     }
-    
-    uiRef.showLoadingSpinner(); 
+
+    // Clear state and reset UI
+    state.setLessonPlan(null);
+    state.setCurrentTurnIndex(0);
+    if (typeof saveStateRef === 'function') saveStateRef();
+
+    uiRef.showLoadingSpinner();
+    uiRef.hideReviewModeBanner();
+
     const prompt = createGeminiPrompt(language, topic, stateRef.nativeLang);
-    
+
     try {
         const data = await apiRef.callGeminiAPI(prompt); 
         const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
         const plan = JSON.parse(jsonString);
-        
+
         if (!plan.id) plan.id = `lesson-${language}-${Date.now()}`;
         stateRef.setLessonPlan(plan);
 
@@ -237,7 +243,7 @@ export async function initializeLesson() {
         uiRef.showLessonScreen();
 
         await startConversation();
-        
+
         uiRef.showStartOverlay();
         uiRef.disableStartButton(true);
 
@@ -245,9 +251,9 @@ export async function initializeLesson() {
         const audioPromise = prefetchFirstAudio(plan.dialogue[0]);
 
         await Promise.all([illustrationPromise, audioPromise]);
-        
+
         uiRef.disableStartButton(false);
-        
+
         if (saveStateRef) saveStateRef();
     } catch (error) {
         console.error("Failed to initialize lesson:", error);
@@ -268,7 +274,7 @@ export async function startConversation() {
             }
         }
     }
-    
+
     await uiRef.restoreConversation(stateRef.lessonPlan);
     uiRef.displayLessonTitleAndContext(stateRef.lessonPlan);
     uiRef.addBackToLandingButton();
@@ -305,7 +311,7 @@ export async function advanceTurn(newTurnIndex) {
         currentSentences = currentTurnData.sentences; 
         currentSentenceIndex = 0;
         uiRef.updateMicStatus('listenFirst', true);
-        
+
         try {
             const audioBlob = await apiRef.fetchPartnerAudio(cleanText, getVoiceConfig(domElements.languageSelect.value, 'A'));
             const audioUrl = URL.createObjectURL(audioBlob);
@@ -345,7 +351,7 @@ export async function advanceTurn(newTurnIndex) {
 function enableUserMicForSentence() {
     uiRef.enableMicButton(true);
     uiRef.highlightActiveSentence(stateRef.currentTurnIndex, currentSentenceIndex);
-    
+
     if (currentSentences && currentSentences.length > 1) {
         const displaySentence = currentSentences[currentSentenceIndex];
         uiRef.updateMicStatusForSentence(currentSentenceIndex + 1, currentSentences.length, displaySentence);
@@ -368,10 +374,10 @@ export function confirmStartLesson() {
     if (stateRef.preFetchedFirstAudioBlob) {
         const firstTurn = stateRef.lessonPlan.dialogue[0];
         const audioUrl = URL.createObjectURL(stateRef.preFetchedFirstAudioBlob);
-        
+
         stateRef.audioPlayer.src = audioUrl;
         stateRef.audioPlayer.playbackRate = parseFloat(domElements.audioSpeedSelect.value);
-        
+
         stateRef.audioPlayer.play().catch(e => console.error("Error playing pre-fetched audio:", e));
 
         uiRef.highlightActiveLine(0);
@@ -452,7 +458,7 @@ export async function verifyUserSpeech(spokenText) {
             uiRef.updateMicStatus('verifyingWithAI');
             const nativeLangName = {'en': 'English', 'es': 'Spanish', 'fr': 'French', 'de': 'German', 'it': 'Italian', 'zh': 'Chinese', 'ja': 'Japanese', 'ko': 'Korean'}[stateRef.nativeLang] || 'English';
             let expectedLine = (currentSentences.length > 1) ? currentSentences[currentSentenceIndex] : currentTurnData.line.clean_text;
-            
+
             // --- START OF FIX ---
             // This detailed prompt is restored from the original script.
             const verificationPrompt = `
@@ -558,9 +564,9 @@ function handleIncorrectSpeech(similarity, required, spoken, apiFeedback = null)
         const sentenceInfo = currentSentences.length > 1 ? ` (Sentence ${currentSentenceIndex + 1}/${currentSentences.length})` : '';
         feedbackText = `${uiRef.translateText('tryAgain')} (${(similarity * 100).toFixed(0)}% match)${sentenceInfo}`;
     }
-    
+
     uiRef.updateMicStatusHTML(feedbackText);
-    
+
     if (currentLanguage === 'Chinese' && speechAttempts >= 3 && isAsianLang) {
         uiRef.showSkipButton(handleCorrectSpeech);
     }
@@ -695,7 +701,7 @@ function createVocabularyQuizModal(vocabulary, language) {
                 if (isCorrect) {
                     score++;
                 }
-                
+
                 // Move to the next question after a delay
                 setTimeout(() => {
                     currentQuestion++;
@@ -713,11 +719,11 @@ export async function reviewLesson(lessonRecord) {
     if (!plan.id) {
         plan.id = `lesson-${lessonRecord.language}-${Date.now()}`;
     }
-    
+
     // Mark as review mode BEFORE setting lesson plan
     plan.isReviewMode = true;
     plan.isCompleted = true;
-    
+
     stateRef.setLessonPlan(plan);
     stateRef.setCurrentTurnIndex(0);
 
@@ -736,16 +742,16 @@ export async function reviewLesson(lessonRecord) {
     } else if (plan.illustration_prompt) {
         fetchAndDisplayIllustration(plan.illustration_prompt);
     }
-    
+
     await startConversation();
-    
+
     uiRef.showReviewModeUI(lessonRecord.language);
-    
+
     // Just highlight the first line, don't start audio
     uiRef.highlightActiveLine(0);
     uiRef.updateMicStatus('reviewModeReady');
     uiRef.enableMicButton(false);
-    
+
     if (saveStateRef) saveStateRef();
 }
 
@@ -764,9 +770,9 @@ export async function playLineAudio(text, party = 'B') {
         }
         stateRef.audioPlayer.src = audioUrl;
         stateRef.audioPlayer.playbackRate = parseFloat(domElements.audioSpeedSelect.value);
-        
+
         await stateRef.audioPlayer.play();
-        
+
     } catch (error) {
         console.error("Failed to fetch audio for manual playback:", error);
     }
@@ -806,12 +812,12 @@ export function resetLesson() {
     uiRef.resetMic();
     stateRef.recognition?.stop();
     uiRef.hideReviewModeBanner?.();
-    
+
     // Clear review mode flag when resetting
     if (stateRef.lessonPlan.isReviewMode) {
         delete stateRef.lessonPlan.isReviewMode;
     }
-    
+
     advanceTurn(0);
 }
 

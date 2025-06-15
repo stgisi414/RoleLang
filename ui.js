@@ -66,6 +66,13 @@ export function initializeNativeLanguage() {
 export function setNativeLanguage(langCode, flag, name) {
     if (domElements.nativeFlagEl) domElements.nativeFlagEl.textContent = flag;
     if (domElements.nativeLangTextEl) domElements.nativeLangTextEl.textContent = name;
+    
+    // Update state module
+    if (window.state) {
+        window.state.setNativeLang(langCode);
+        window.state.setCurrentTranslations(window.translations[langCode] || window.translations.en);
+    }
+    
     updateTranslations();
     updateBackButton(); 
     stopTopicRotations();

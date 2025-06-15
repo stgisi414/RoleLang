@@ -83,12 +83,24 @@ async function restoreState(savedState) {
     if (savedState.nativeLang) {
         state.setNativeLang(savedState.nativeLang);
         state.setCurrentTranslations(window.translations[savedState.nativeLang] || window.translations.en);
+        // Update UI language display
+        if (ui) {
+            ui.setNativeLanguage(savedState.nativeLang, '🇺🇸', 'English'); // Will be updated by the language detection
+        }
     }
 
-    if (savedState.selectedLanguage && elements.languageSelect) elements.languageSelect.value = savedState.selectedLanguage;
-    if (savedState.topicInput && elements.topicInput) elements.topicInput.value = savedState.topicInput;
-    if (savedState.lessonsVisible && ui) ui.toggleLessonsVisibility(true);
-    if (savedState.audioSpeed && elements.audioSpeedSelect) elements.audioSpeedSelect.value = savedState.audioSpeed;
+    if (savedState.selectedLanguage && elements.languageSelect) {
+        elements.languageSelect.value = savedState.selectedLanguage;
+    }
+    if (savedState.topicInput && elements.topicInput) {
+        elements.topicInput.value = savedState.topicInput;
+    }
+    if (savedState.lessonsVisible && ui) {
+        ui.toggleLessonsVisibility(true);
+    }
+    if (savedState.audioSpeed && elements.audioSpeedSelect) {
+        elements.audioSpeedSelect.value = savedState.audioSpeed;
+    }
 
     if (savedState.lessonPlan && savedState.currentScreen === 'lesson') {
         
@@ -256,8 +268,10 @@ async function initializeApp() {
     
     document.addEventListener('click', (event) => {
         if (event.target.classList.contains('lesson-btn')) {
-            if (elements.topicInput) elements.topicInput.value = event.target.getAttribute('data-topic');
-            saveState();
+            if (elements.topicInput) {
+                elements.topicInput.value = event.target.getAttribute('data-topic');
+                saveState();
+            }
         }
         if (event.target.closest('.native-lang-option')) {
             const option = event.target.closest('.native-lang-option');
@@ -270,7 +284,9 @@ async function initializeApp() {
             state.setCurrentTranslations(window.translations[langCode] || window.translations.en);
             
             // Update UI
-            ui.setNativeLanguage(langCode, flag, name);
+            if (ui) {
+                ui.setNativeLanguage(langCode, flag, name);
+            }
             elements.nativeLangDropdown?.classList.add('hidden');
             
             // Save state
