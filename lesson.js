@@ -782,3 +782,50 @@ export function resetLesson() {
 
     advanceTurn(0);
 }
+
+// FIX: Add the missing reviewLesson function
+export async function reviewLesson(lessonRecord) {
+    // Set up the lesson for review
+    stateRef.setLessonPlan(lessonRecord.lessonPlan);
+    stateRef.setCurrentTurnIndex(0);
+
+    // Update form values
+    domElements.languageSelect.value = lessonRecord.language;
+    domElements.topicInput.value = lessonRecord.topic;
+
+    // Set speech recognition language
+    if (stateRef.recognition) {
+        stateRef.recognition.lang = getLangCode(lessonRecord.language);
+    }
+
+    // Switch to lesson screen
+    domElements.landingScreen.classList.add('hidden');
+    domElements.lessonScreen.classList.remove('hidden');
+
+    // Stop topic rotations
+    uiRef.stopTopicRotations();
+
+    // Set up lesson UI
+    if (stateRef.lessonPlan.illustration_url) {
+        uiRef.restoreIllustration(stateRef.lessonPlan.illustration_url);
+    } else if (stateRef.lessonPlan.illustration_prompt) {
+        fetchAndDisplayIllustration(stateRef.lessonPlan.illustration_prompt);
+    }
+
+    // Start the conversation flow
+    await startConversation();
+
+    // Show the special UI for review mode
+    if (uiRef.showReviewModeUI) {
+      uiRef.showReviewModeUI(lessonRecord.language, stateRef.lessonPlan);
+    }
+    
+    // Manually advance to the end to show completion status
+    const totalTurns = stateRef.lessonPlan.dialogue.length;
+    stateRef.setCurrentTurnIndex(totalTurns);
+    if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('lessonComplete');
+    if (domElements.micBtn) domElements.micBtn.disabled = true;
+
+    // Save state for the review session
+    if(uiRef.saveState) uiRef.saveState();
+}

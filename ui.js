@@ -86,6 +86,7 @@ function detectNativeLanguage() {
 }
 
 // --- History Functions (Moved Up) ---
+// FIX: Export this function
 export function getLessonHistory() {
     try {
         const history = localStorage.getItem(LESSON_HISTORY_KEY);
@@ -172,6 +173,42 @@ export function toggleHistoryVisibility() {
         chevronIcon.style.transform = 'rotate(0deg)';
     }
 }
+
+// FIX: Add the missing showReviewModeUI function
+export function showReviewModeUI(language, lessonPlan) {
+    hideReviewModeBanner(); // Clear any existing banner first
+
+    const reviewBanner = document.createElement('div');
+    reviewBanner.className = 'review-mode-indicator bg-purple-600 text-white px-4 py-3 mb-4 rounded-lg';
+
+    const reviewModeText = translateText('reviewMode');
+    const lessonCompleteText = translateText('lessonCompleteReview');
+    const vocabQuizText = translateText('vocabQuiz');
+
+    reviewBanner.innerHTML = `
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-history text-lg"></i>
+                <span class="font-medium">${reviewModeText} - ${lessonCompleteText}</span>
+            </div>
+            <button id="vocab-quiz-btn" class="flex items-center space-x-2 bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded-lg transition-colors">
+                <i class="fas fa-brain text-sm"></i>
+                <span class="text-sm">${vocabQuizText}</span>
+            </button>
+        </div>
+    `;
+    
+    domElements.lessonScreen.insertBefore(reviewBanner, domElements.lessonScreen.firstChild);
+
+    // Add event listener for the new button.
+    // This is not ideal, but necessary given the structure.
+    document.getElementById('vocab-quiz-btn').addEventListener('click', () => {
+        // We need a way to trigger the quiz. This is a placeholder
+        // for where you would call a quiz function, likely from the lesson module.
+        console.log("Vocabulary quiz button clicked for:", language);
+    });
+}
+
 
 export function hideReviewModeBanner() {
     const banner = document.querySelector('.review-mode-indicator');
