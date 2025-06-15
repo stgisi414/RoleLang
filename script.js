@@ -1959,6 +1959,8 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
 		try {
 			const cleanText = removeParentheses(text);
+			console.log('Line audio - Original text:', text);
+			console.log('Line audio - Cleaned text for TTS:', cleanText);
 			const audioBlob = await fetchPartnerAudio(cleanText, party);
 			const audioUrl = URL.createObjectURL(audioBlob);
 
@@ -2120,7 +2122,10 @@ Now, provide the JSON array for the given text:
 		micBtn.disabled = true;
 
 		try {
+			// Ensure we always clean the text before sending to TTS
 			const cleanText = removeParentheses(text);
+			console.log('Original text:', text);
+			console.log('Cleaned text for TTS:', cleanText);
 			const audioBlob = await fetchPartnerAudio(cleanText, party);
 			const audioUrl = URL.createObjectURL(audioBlob);
 
@@ -2292,7 +2297,8 @@ Now, provide the JSON array for the given text:
     }
 
     function removeParentheses(text) {
-        return text.replace(/\s*\([^)]*\)/g, '').trim();
+        // More thorough removal of parentheses and their content
+        return text.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
     }
 
     async function verifyUserSpeech(spokenText) {
@@ -2532,6 +2538,8 @@ Now, provide the JSON array for the given text:
 
         // Strip parentheses and content before sending to TTS
         const cleanText = removeParentheses(text);
+        console.log('TTS API - Input text:', text);
+        console.log('TTS API - Cleaned text being sent:', cleanText);
 
         const response = await fetch(TTS_API_URL, {
             method: 'POST',
