@@ -332,40 +332,44 @@ export async function advanceTurn(newTurnIndex) {
 }
 
 export async function fetchanddisplayillustration(prompt) {
-    return new promise(async (resolve) => {
+    return new Promise(async (resolve) => {
         try {
-            if (domelements.illustrationplaceholder) domelements.illustrationplaceholder.classlist.add('hidden');
-            if (domelements.imageloader) domelements.imageloader.classlist.remove('hidden');
+            if (domElements.illustrationPlaceholder) domElements.illustrationPlaceholder.classList.add('hidden');
+            if (domElements.imageLoader) domElements.imageLoader.classList.remove('hidden');
 
-            const result = await apiref.generateimage(`${prompt}, digital art, minimalist, educational illustration`, {
-                imagesize: 'square_hd',
-                numinferencesteps: 50,
-                guidancescale: 10
+            const result = await apiRef.generateImage(`${prompt}, digital art, minimalist, educational illustration`, {
+                imageSize: 'square_hd',
+                numInferenceSteps: 50,
+                guidanceScale: 10
             });
 
-            if (result.imageurl) {
-                if (stateref.lessonplan) {
-                    stateref.lessonplan.illustration_url = result.imageurl;
-                    // savestate();
+            if (result.imageUrl) {
+                if (stateRef.lessonPlan) {
+                    stateRef.lessonPlan.illustration_url = result.imageUrl;
+                    // FIX: Called the correct save function reference
+                    if (saveStateRef) saveStateRef();
                 }
                 
-                if (domelements.illustrationimg) {
-                    domelements.illustrationimg.src = result.imageurl;
-                    domelements.illustrationimg.onload = () => {
-                        if (domelements.imageloader) domelements.imageloader.classlist.add('hidden');
-                        domelements.illustrationimg.classlist.remove('hidden');
+                if (domElements.illustrationImg) {
+                    domElements.illustrationImg.src = result.imageUrl;
+                    domElements.illustrationImg.onload = () => {
+                        if (domElements.imageLoader) domElements.imageLoader.classList.add('hidden');
+                        domElements.illustrationImg.classList.remove('hidden');
                         resolve();
                     };
-                    domelements.illustrationimg.onerror = () => {
+                    domElements.illustrationImg.onerror = () => {
                         showfallbackillustration();
                         resolve();
                     };
+                } else {
+                     showfallbackillustration();
+                     resolve();
                 }
             } else {
-                throw new error("no image url returned from api.");
+                throw new Error("No image URL returned from API.");
             }
         } catch (error) {
-            console.error("failed to fetch illustration:", error);
+            console.error("Failed to fetch illustration:", error);
             showfallbackillustration();
             resolve();
         }
