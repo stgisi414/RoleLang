@@ -1156,6 +1156,9 @@ const translations = {
   }
 };
 
+// Make translations available globally
+window.translations = translations;
+
 // Export for use in other files
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = translations;
