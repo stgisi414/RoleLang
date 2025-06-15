@@ -1738,8 +1738,12 @@ Now, provide the JSON array for the given text.
 		}
 	}
 
-    async function advanceTurn(startIndex = 0) {
-		currentTurnIndex = startIndex; // Set the turn index to where we need to start
+    async function advanceTurn(startIndex = -1) {
+		// FIX: Only update the turn index if a specific start index is passed.
+		// This prevents the lesson from resetting to 0 every time.
+		if (startIndex !== -1) {
+			currentTurnIndex = startIndex;
+		}
 
 		if (!lessonPlan || !lessonPlan.dialogue) {
 			console.error('Invalid lesson plan structure detected');
@@ -1779,7 +1783,7 @@ Now, provide the JSON array for the given text.
 				const audioUrl = URL.createObjectURL(audioBlob);
 				const audio = new Audio(audioUrl);
 				audio.playbackRate = parseFloat(audioSpeedSelect.value);
-				audio.play();
+				await audio.play();
 				audio.onended = () => {
 					URL.revokeObjectURL(audioUrl);
 					enableUserMicForSentence();
@@ -1797,19 +1801,22 @@ Now, provide the JSON array for the given text.
 				const audioUrl = URL.createObjectURL(audioBlob);
 				const audio = new Audio(audioUrl);
 				audio.playbackRate = parseFloat(audioSpeedSelect.value);
-				audio.play();
+				await audio.play();
 				audio.onended = () => {
 					URL.revokeObjectURL(audioUrl);
 					micStatus.textContent = translateText('audioFinished');
 					setTimeout(() => {
-						advanceTurn(currentTurnIndex + 1);
+						// This now works correctly because the global currentTurnIndex isn't being reset
+						currentTurnIndex++;
+						advanceTurn();
 					}, 500);
 				};
 			} catch (error) {
 				console.error("Failed to fetch partner audio:", error);
 				micStatus.textContent = translateText('audioUnavailable');
 				setTimeout(() => {
-					advanceTurn(currentTurnIndex + 1);
+					currentTurnIndex++;
+					advanceTurn();
 				}, 1500);
 			}
 		}
