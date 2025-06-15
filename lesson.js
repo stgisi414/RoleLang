@@ -255,7 +255,7 @@ export async function initializeLesson() {
         if (domElements.landingScreen) domElements.landingScreen.classList.add('hidden');
         if (domElements.lessonScreen) domElements.lessonScreen.classList.remove('hidden');
 
-        startConversation();
+        await startConversation();
         
         const overlayButton = document.getElementById('confirm-start-lesson-btn');
         if (overlayButton) {
@@ -281,42 +281,47 @@ export async function initializeLesson() {
     }
 }
 
-export function startConversation() {
+export async function startConversation() {
     stateRef.setCurrentTurnIndex(0);
-    uiRef.restoreConversation(stateRef.lessonPlan);
+
+    // Pre-process all user dialogue lines to get sentences for the UI
+    if (stateRef.lessonPlan && stateRef.lessonPlan.dialogue) {
+        for (const turn of stateRef.lessonPlan.dialogue) {
+            if (turn.party === 'A' && (!turn.sentences || turn.sentences.length === 0)) {
+                const cleanText = removeParentheses(turn.line.display);
+                turn.sentences = await splitIntoSentences(cleanText);
+            }
+        }
+    }
+
+    // Now that the lessonPlan is enriched with sentence data, restore the UI
+    await uiRef.restoreConversation(stateRef.lessonPlan);
     uiRef.displayLessonTitleAndContext(stateRef.lessonPlan);
     uiRef.addBackToLandingButton();
 }
 
 export async function advanceTurn(newTurnIndex) {
     stateRef.setCurrentTurnIndex(newTurnIndex);
-    // saveState(); // This should be handled in main.js
+    // saveState(); // This is correctly handled by a debounced listener in main.js
 
     const { lessonPlan, currentTurnIndex: cti } = stateRef;
-    const currentTurn = stateRef.lessonPlan.dialogue[stateRef.currentTurnIndex];
-
-    
-    if (!lessonPlan || !lessonPlan.dialogue) {
-        console.error('Invalid lesson plan structure detected');
-        return;
-    }
-
-    if (stateRef.currentTurnIndex >= lessonPlan.dialogue.length) {
+    if (!lessonPlan || !lessonPlan.dialogue || cti >= lessonPlan.dialogue.length) {
         if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('lessonComplete');
         if (domElements.micBtn) domElements.micBtn.disabled = true;
-        lessonPlan.isCompleted = true;
-        saveLessonToHistory(lessonPlan, domElements.languageSelect.value, domElements.topicInput.value);
-        // This should probably be in ui.js
-        // uiRef.showReviewModeUI(domElements.languageSelect.value, lessonPlan);
+        if (lessonPlan) {
+            lessonPlan.isCompleted = true;
+            saveLessonToHistory(lessonPlan, domElements.languageSelect.value, domElements.topicInput.value);
+            // uiRef.showReviewModeUI(...); // This should be handled by the UI module
+        }
         return;
     }
 
-    const currentTurnData = lessonPlan.dialogue[stateRef.currentTurnIndex];
+    const currentTurnData = lessonPlan.dialogue[cti];
 
     document.querySelectorAll('.dialogue-line.active').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
     
-    const currentLineEl = document.getElementById(`turn-${stateRef.currentTurnIndex}`);
+    const currentLineEl = document.getElementById(`turn-${cti}`);
     if (currentLineEl) {
         currentLineEl.classList.add('active');
         currentLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -324,7 +329,15 @@ export async function advanceTurn(newTurnIndex) {
 
     if (currentTurnData.party === 'A') {
         const cleanText = removeParentheses(currentTurnData.line.display);
-        currentSentences = await splitIntoSentences(cleanText);
+        
+        // Check for pre-processed sentences and use them, or generate them if missing.
+        if (currentTurnData.sentences && currentTurnData.sentences.length > 0) {
+            currentSentences = currentTurnData.sentences;
+        } else {
+            currentSentences = await splitIntoSentences(cleanText);
+            currentTurnData.sentences = currentSentences; // Cache for future use
+        }
+        
         currentSentenceIndex = 0;
         
         if (domElements.micBtn) domElements.micBtn.disabled = true;
@@ -351,7 +364,7 @@ export async function advanceTurn(newTurnIndex) {
             console.error("Failed to fetch user audio:", error);
             enableUserMicForSentence();
         }
-    } else {
+    } else { // Party 'B' logic (partner's turn)
         if (domElements.micBtn) domElements.micBtn.disabled = true;
         if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('partnerSpeaking');
         
@@ -366,24 +379,18 @@ export async function advanceTurn(newTurnIndex) {
             audio.onended = () => {
                 URL.revokeObjectURL(audioUrl);
                 if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('audioFinished');
-                setTimeout(() => {
-                    advanceTurn(stateRef.currentTurnIndex + 1);
-                }, 500);
+                setTimeout(() => advanceTurn(cti + 1), 500);
             };
             
             audio.onerror = () => {
                 console.error("Audio playback error for partner line.");
                 URL.revokeObjectURL(audioUrl);
-                setTimeout(() => {
-                    advanceTurn(stateRef.currentTurnIndex + 1);
-                }, 500);
+                setTimeout(() => advanceTurn(cti + 1), 500);
             };
         } catch (error) {
             console.error("Failed to fetch partner audio:", error);
             if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('audioUnavailable');
-            setTimeout(() => {
-                advanceTurn(stateRef.currentTurnIndex + 1);
-            }, 1500);
+            setTimeout(() => advanceTurn(cti + 1), 1500);
         }
     }
 }

@@ -225,12 +225,9 @@ export function displayLessonTitleAndContext(lessonPlan) {
     domElements.backgroundContextContainer.classList.toggle('hidden', !lessonPlan.background_context);
 }
 
-export async function restoreConversation(lessonPlan) {
-    domElements.conversationContainer.innerHTML = '';
-    for (const [index, turn] of lessonPlan.dialogue.entries()) {
-        const lineDiv = createDialogueLine(turn, index);
-        domElements.conversationContainer.appendChild(lineDiv);
-    }
+function removeParentheses(text) {
+    if (typeof text !== 'string') return '';
+    return text.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 function createDialogueLine(turn, index) {
@@ -239,11 +236,60 @@ function createDialogueLine(turn, index) {
     lineDiv.id = `turn-${index}`;
 
     const speakerIcon = turn.party === 'A' ? '👤' : '🤖';
-    let lineContent = `<strong>${speakerIcon}</strong> ${turn.line.display} <i class="fas fa-volume-up text-gray-400 ml-2 hover:text-sky-300"></i>`;
+    let lineContent = `<strong>${speakerIcon}</strong> `;
 
+    // For the user (Party A), build the sentence spans if they exist
+    if (turn.party === 'A' && turn.sentences && turn.sentences.length > 0) {
+        turn.sentences.forEach((sentence, sentenceIndex) => {
+            lineContent += `<span class="sentence-span" id="turn-${index}-sentence-${sentenceIndex}">${sentence}</span>`;
+            if (sentenceIndex < turn.sentences.length - 1) {
+                lineContent += ' ';
+            }
+        });
+
+        // Add back the parenthetical translation part
+        const originalLine = turn.line.display;
+        const translationMatch = originalLine.match(/\s*\([^)]+\)$/);
+        if (translationMatch) {
+            lineContent += ` <span class="translation-part text-gray-400">${translationMatch[0]}</span>`;
+        }
+    } else {
+        // For the partner (Party B) or if sentences aren't split, display the line as is
+        lineContent += turn.line.display;
+    }
+
+    lineContent += ` <i class="fas fa-volume-up text-gray-400 ml-2 hover:text-sky-300"></i>`;
     lineDiv.innerHTML = lineContent;
-    // Add audio playback listener, etc.
+
+    // Add click listener for explanations if they exist
+    if (turn.explanation) {
+        const explanationSpan = document.createElement('span');
+        explanationSpan.innerHTML = ` <i class="fas fa-info-circle text-sky-300 ml-6"></i>`;
+        explanationSpan.className = 'explanation-link';
+        explanationSpan.onclick = (e) => {
+            e.stopPropagation(); // Prevent the line audio from playing
+            const modal = document.getElementById('explanation-modal');
+            const modalBody = document.getElementById('modal-body');
+            if (modal && modalBody) {
+                modalBody.innerHTML = `<h3 class="text-xl font-bold mb-2 text-cyan-300">${turn.explanation.title}</h3><p class="text-gray-300">${turn.explanation.body}</p>`;
+                modal.classList.remove('hidden');
+            }
+        };
+        lineDiv.appendChild(explanationSpan);
+    }
+
     return lineDiv;
+}
+
+export async function restoreConversation(lessonPlan) {
+    if (!domElements.conversationContainer) return;
+    domElements.conversationContainer.innerHTML = '';
+    if (!lessonPlan || !lessonPlan.dialogue) return;
+
+    for (const [index, turn] of lessonPlan.dialogue.entries()) {
+        const lineDiv = createDialogueLine(turn, index);
+        domElements.conversationContainer.appendChild(lineDiv);
+    }
 }
 
 export function restoreIllustration(imageUrl) {

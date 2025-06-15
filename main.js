@@ -287,6 +287,29 @@ async function initializeApp() {
             elements.nativeLangDropdown?.classList.add('hidden');
         }
     });
+	
+	elements.conversationContainer?.addEventListener('click', (event) => {
+        const lineElement = event.target.closest('.dialogue-line');
+        if (!lineElement) return;
+
+        // Prevent audio playback if an explanation icon was clicked
+        if (event.target.closest('.explanation-link')) {
+            return;
+        }
+
+        const turnId = lineElement.id;
+        if (!turnId || !turnId.startsWith('turn-')) return;
+
+        const turnIndex = parseInt(turnId.split('-')[1], 10);
+        const currentLessonPlan = state.lessonPlan;
+
+        if (isNaN(turnIndex) || !currentLessonPlan || !currentLessonPlan.dialogue[turnIndex]) {
+            return;
+        }
+
+        const turn = currentLessonPlan.dialogue[turnIndex];
+        lesson.playLineAudioDebounced(turn.line.display, turn.party);
+    });
 
     // --- Initialization ---
     ui.initializeNativeLanguage();
