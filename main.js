@@ -101,9 +101,22 @@ async function restoreState(savedState) {
     isRestoring = true; // Prevent saveState from being called during restoration
 
     // Restore target language FIRST before anything else
-    if (savedState.selectedLanguage && elements.languageSelect) {
-        console.log('Attempting to restore target language to:', savedState.selectedLanguage);
-        console.log('Available options:', Array.from(elements.languageSelect.options).map(opt => opt.value));
+        if (savedState.selectedLanguage && elements.languageSelect) {
+            console.log('BEFORE restoration - languageSelect value:', elements.languageSelect.value);
+            elements.languageSelect.value = savedState.selectedLanguage;
+            console.log('AFTER restoration - languageSelect value:', elements.languageSelect.value);
+
+            // Watch for changes
+            setTimeout(() => {
+                console.log('After 100ms - languageSelect value:', elements.languageSelect.value);
+            }, 100);
+            setTimeout(() => {
+                console.log('After 500ms - languageSelect value:', elements.languageSelect.value);
+            }, 500);
+            setTimeout(() => {
+                console.log('After 1000ms - languageSelect value:', elements.languageSelect.value);
+            }, 1000);
+        }
 
         // Set the value directly
         elements.languageSelect.value = savedState.selectedLanguage;
