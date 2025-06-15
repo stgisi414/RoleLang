@@ -28,7 +28,15 @@ console.log('main.js loaded');
 let elements = {};
 
 // --- State Persistence Functions ---
+let isRestoring = false;
+
 function saveState() {
+    // Don't save state while we're restoring it
+    if (isRestoring) {
+        console.log('Skipping saveState during restoration');
+        return;
+    }
+    
     const selectedLang = elements.languageSelect?.value;
     const appState = {
         lessonPlan: state.lessonPlan,
@@ -90,27 +98,9 @@ function clearState() {
 }
 
 async function restoreState(savedState) {
-    // Restore native language (UI language) if saved
-    if (savedState.nativeLang) {
-        state.setNativeLang(savedState.nativeLang);
-        state.setCurrentTranslations(window.translations[savedState.nativeLang] || window.translations.en);
-        // Update UI language display - this will get the correct flag/name from initializeNativeLanguage
-        if (ui) {
-            // Don't override with hardcoded values, let the stored data be used
-            ui.initializeNativeLanguage();
-        }
-    }
-    if (savedState.topicInput && elements.topicInput) {
-        elements.topicInput.value = savedState.topicInput;
-    }
-    if (savedState.lessonsVisible && ui) {
-        ui.toggleLessonsVisibility(true);
-    }
-    if (savedState.audioSpeed && elements.audioSpeedSelect) {
-        elements.audioSpeedSelect.value = savedState.audioSpeed;
-    }
-
-    // Restore target language selection - simple and direct approach
+    isRestoring = true; // Prevent saveState from being called during restoration
+    
+    // Restore target language FIRST before anything else
     if (savedState.selectedLanguage && elements.languageSelect) {
         console.log('Attempting to restore target language to:', savedState.selectedLanguage);
         console.log('Available options:', Array.from(elements.languageSelect.options).map(opt => opt.value));
@@ -133,6 +123,26 @@ async function restoreState(savedState) {
         
         // Verify the final state
         console.log('Final target language value:', elements.languageSelect.value);
+    }
+    
+    // Restore native language (UI language) if saved
+    if (savedState.nativeLang) {
+        state.setNativeLang(savedState.nativeLang);
+        state.setCurrentTranslations(window.translations[savedState.nativeLang] || window.translations.en);
+        // Update UI language display - this will get the correct flag/name from initializeNativeLanguage
+        if (ui) {
+            // Don't override with hardcoded values, let the stored data be used
+            ui.initializeNativeLanguage();
+        }
+    }
+    if (savedState.topicInput && elements.topicInput) {
+        elements.topicInput.value = savedState.topicInput;
+    }
+    if (savedState.lessonsVisible && ui) {
+        ui.toggleLessonsVisibility(true);
+    }
+    if (savedState.audioSpeed && elements.audioSpeedSelect) {
+        elements.audioSpeedSelect.value = savedState.audioSpeed;
     }
 
     if (savedState.lessonPlan && savedState.currentScreen === 'lesson') {
@@ -187,6 +197,8 @@ async function restoreState(savedState) {
         
         if (ui) ui.stopTopicRotations();
     }
+    
+    isRestoring = false; // Allow saveState to work normally again
 }
 
 async function initializeApp() {
@@ -416,8 +428,10 @@ async function initializeApp() {
                 }
             }
         }
+        isRestoring = false; // Clear the flag after successful restoration
     } else {
         ui.startTopicRotations();
+        isRestoring = false; // Clear the flag even if no saved state
     }
     
     if (elements.appContainer) {
