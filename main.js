@@ -30,7 +30,7 @@ function saveState() {
         nativeLang: state.nativeLang,
         lessonsVisible: !elements.lessonsContainer?.classList.contains('hidden'),
         audioSpeed: elements.audioSpeedSelect ? elements.audioSpeedSelect.value : '1',
-        lastSaved: Date.now() // <-- ADD THIS LINE
+        lastSaved: Date.now()
     };
 
     try {
@@ -47,15 +47,12 @@ function loadState() {
 
         const parsedState = JSON.parse(savedState);
 
-        // --- ADD THIS LOGIC ---
-        // Check if state is recent (older than 7 days)
         const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
         if (parsedState.lastSaved < sevenDaysAgo) {
             console.log("Saved state is older than 7 days, clearing.");
             localStorage.removeItem(state.STATE_KEY);
             return null;
         }
-        // --- END OF ADDED LOGIC ---
 
         return parsedState;
     } catch (error) {
@@ -129,7 +126,6 @@ async function initializeApp() {
     }
     
     elements = {
-        // ... (all element definitions remain the same) ...
         landingScreen: document.getElementById('landing-screen'),
         lessonScreen: document.getElementById('lesson-screen'),
         startLessonBtn: document.getElementById('start-lesson-btn'),
@@ -180,7 +176,7 @@ async function initializeApp() {
     }
 
     lesson.init(elements, state, api, ui, saveState);
-	ui.init(elements, state.getTranslations, state.getNativeLang, saveState, goBackToLanding); // Pass the function heres well
+	ui.init(elements, state.getTranslations, state.getNativeLang, saveState, goBackToLanding);
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
@@ -221,7 +217,6 @@ async function initializeApp() {
 
     // --- Event Listeners ---
     elements.startLessonBtn?.addEventListener('click', () => {
-		clearState(); 
 		lesson.initializeLesson();
 	});
     elements.micBtn?.addEventListener('click', () => lesson.toggleSpeechRecognition());
@@ -283,12 +278,10 @@ async function initializeApp() {
         const history = ui.getLessonHistory(); 
         const lessonRecord = history.find(record => record.id === lessonId);
         if (lessonRecord) {
-            clearState();
             lesson.reviewLesson(lessonRecord);
         }
     });
 
-    // FIX: Add a delegated event listener for the vocabulary quiz
     elements.lessonScreen?.addEventListener('click', (event) => {
         if (event.target.closest('#vocab-quiz-btn')) {
             const language = elements.languageSelect?.value;
@@ -318,10 +311,8 @@ function goBackToLanding() {
     state.setLessonPlan(null);
     state.setCurrentTurnIndex(0);
 
-    // Use the new UI function to switch screens
     ui.showLandingScreen();
 
-    // Restart the topic animations on the landing page
     ui.startTopicRotations();
 }
 
