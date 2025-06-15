@@ -655,4 +655,16 @@ function enableUserMicForSentence() {
             domElements.micStatus.innerHTML = `<strong>${recordSentenceText} ${currentSentenceIndex + 1}/${currentSentences.length}:</strong><br><span style="color: #38bdf8; font-weight: bold; text-decoration: underline;">"${displaySentence}"</span>`;
         }
     } else {
-        const singleSentenceEl =
+        // This is the missing part
+        const singleSentenceEl = document.getElementById(`turn-${stateRef.currentTurnIndex}-sentence-0`);
+        if (singleSentenceEl) {
+            singleSentenceEl.classList.add('active-sentence');
+        }
+
+        const yourTurnText = uiRef.translateText('yourTurn') || 'Your turn';
+        const lookForHighlightedText = uiRef.translateText('lookForHighlighted') || 'Look for the highlighted sentence above';
+        if (domElements.micStatus) {
+            domElements.micStatus.innerHTML = `<strong>${yourTurnText}</strong><br><span style="color: #38bdf8; font-style: italic;">${lookForHighlightedText}</span>`;
+        }
+    }
+} // <-- And this closing brace was missing
