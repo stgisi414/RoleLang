@@ -220,6 +220,9 @@ async function initializeApp() {
         return;
     }
 
+    // Set flag IMMEDIATELY to prevent any saveState calls during initialization
+    isRestoring = true;
+
     elements = {
         landingScreen: document.getElementById('landing-screen'),
         lessonScreen: document.getElementById('lesson-screen'),
@@ -421,9 +424,6 @@ async function initializeApp() {
     } else {
         console.error('Translations not available, UI will not be properly translated');
     }
-
-    // Set flag to prevent any saveState calls during initialization
-    isRestoring = true;
 
     const savedState = loadState();
     if (savedState) {
