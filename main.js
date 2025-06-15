@@ -79,11 +79,6 @@ function clearState() {
 }
 
 async function restoreState(savedState) {
-    // Restore target language selection first
-    if (savedState.selectedLanguage && elements.languageSelect) {
-        elements.languageSelect.value = savedState.selectedLanguage;
-    }
-
     // Restore native language (UI language) if saved
     if (savedState.nativeLang) {
         state.setNativeLang(savedState.nativeLang);
@@ -102,6 +97,12 @@ async function restoreState(savedState) {
     }
     if (savedState.audioSpeed && elements.audioSpeedSelect) {
         elements.audioSpeedSelect.value = savedState.audioSpeed;
+    }
+
+    // Restore target language selection at the very end to ensure it's not overwritten
+    if (savedState.selectedLanguage && elements.languageSelect) {
+        elements.languageSelect.value = savedState.selectedLanguage;
+        console.log('Target language restored to:', savedState.selectedLanguage);
     }
 
     if (savedState.lessonPlan && savedState.currentScreen === 'lesson') {
