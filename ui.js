@@ -185,18 +185,43 @@ export function showReviewModeUI(language, lessonPlan) {
 }
 
 export function populateLessonTopics() {
-    // This function would populate the lesson topic buttons
-    // For now, we'll add some basic topics to test the functionality
+    const translations = getTranslations();
+    const nativeLang = getNativeLang() || 'en';
+    
+    if (!translations || !translations[nativeLang] || !translations[nativeLang].topics) {
+        console.warn('Topics not available for current language');
+        return;
+    }
+
+    const topics = translations[nativeLang].topics;
+    
     const containers = {
-        'beginner-container': ['Ordering Coffee', 'Introducing Yourself', 'Asking for Directions', 'Shopping for Groceries'],
-        'intermediate-container': ['Job Interview', 'Booking a Hotel', 'At the Doctor', 'Making Friends'],
-        'advanced-container': ['Business Meeting', 'Academic Discussion', 'Debating Politics', 'Cultural Exchange'],
-        'realistic-container': ['Airport Check-in', 'Restaurant Order', 'Taxi Ride', 'Phone Call'],
-        'futuristic-container': ['AI Assistant', 'Space Travel', 'Virtual Reality', 'Robot Companion'],
-        'historical-container': ['Medieval Market', 'Ancient Rome', 'Wild West', 'Victorian Era'],
-        'drama-container': ['Family Conflict', 'Love Triangle', 'Betrayal', 'Reconciliation'],
-        'comedy-container': ['Funny Mishap', 'Awkward Date', 'Silly Mix-up', 'Comedy Show'],
-        'horror-container': ['Haunted House', 'Mystery Solver', 'Scary Story', 'Thriller Plot']
+        'beginner-container': topics.beginner || [],
+        'intermediate-container': topics.intermediate || [],
+        'advanced-container': topics.advanced || [],
+        'realistic-container': topics.realistic || [],
+        'futuristic-container': topics.futuristic || [],
+        'historical-container': topics.historical || [],
+        'drama-container': topics.drama || [],
+        'comedy-container': topics.comedy || [],
+        'horror-container': topics.horror || []
+    };
+
+    Object.entries(containers).forEach(([containerId, topicList]) => {
+        const container = document.getElementById(containerId);
+        if (container) {
+            container.innerHTML = ''; // Clear existing content
+            topicList.slice(0, 4).forEach((topic, index) => {
+                const button = document.createElement('button');
+                button.className = 'lesson-btn bg-gradient-to-r from-blue-600/20 to-purple-600/20 hover:from-blue-500/30 hover:to-purple-500/30 border border-blue-500/30 hover:border-blue-400/50 text-white px-3 py-2 rounded-lg text-sm transition-all transform hover:scale-105 backdrop-blur-sm';
+                button.setAttribute('data-topic', topic);
+                button.textContent = topic;
+                button.style.opacity = '0';
+                button.style.animation = `gentleFadeIn 0.5s ease-out ${index * 0.1}s forwards`;
+                container.appendChild(button);
+            });
+        }
+    });Haunted House', 'Mystery Solver', 'Scary Story', 'Thriller Plot']
     };
 
     Object.entries(containers).forEach(([containerId, topics]) => {
@@ -226,8 +251,44 @@ export function displayLessonHistory() {
         if (history.length === 0) {
             const noHistoryMsg = document.createElement('div');
             noHistoryMsg.className = 'col-span-2 text-center text-gray-500 py-4';
-            noHistoryMsg.textContent = translateText('noLessonHistory') || 'No previous lessons found';
+            noHistoryMsg.textContent = translateText('noCompletedLessons') || 'No completed lessons yet';
             domElements.historyLessonsContainer.appendChild(noHistoryMsg);
+            return;
+        }
+
+        // Display the lessons with proper styling
+        history.slice(0, 6).forEach((lessonRecord, index) => {
+            const lessonCard = document.createElement('button');
+            lessonCard.className = 'history-card bg-gradient-to-r from-amber-600/20 to-orange-600/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/30 hover:border-amber-400/50 text-white p-3 rounded-lg text-left transition-all transform hover:scale-105 backdrop-blur-sm';
+            
+            lessonCard.innerHTML = `
+                <div class="font-medium text-sm mb-1 line-clamp-1">${lessonRecord.topic}</div>
+                <div class="text-xs text-gray-400 mb-1">${lessonRecord.language}</div>
+                <div class="text-xs text-gray-500">${lessonRecord.completedAt}</div>
+            `;
+            
+            lessonCard.style.opacity = '0';
+            lessonCard.style.animation = `gentleFadeIn 0.5s ease-out ${index * 0.1}s forwards`;
+            
+            lessonCard.onclick = () => {
+                // Load the lesson for review
+                if (lessonRecord.lessonPlan && domElements.topicInput) {
+                    domElements.topicInput.value = lessonRecord.topic;
+                    if (domElements.languageSelect) {
+                        domElements.languageSelect.value = lessonRecord.language;
+                    }
+                }
+            };
+            
+            domElements.historyLessonsContainer.appendChild(lessonCard);
+        });
+    } catch (error) {
+        console.warn('Failed to load lesson history:', error);
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'col-span-2 text-center text-red-400 py-4';
+        errorMsg.textContent = 'Error loading lesson history';
+        domElements.historyLessonsContainer.appendChild(errorMsg);
+    }essonsContainer.appendChild(noHistoryMsg);
             return;
         }
 

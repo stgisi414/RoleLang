@@ -276,8 +276,7 @@ const characterNames = {
       ["Sabrina", "Gobbo"], ["Samira", "Orlando"], ["Serena", "Corsi"], ["Sharon", "Bianco"],
       ["Silvia", "Poli"], ["Sole", "Grossi"], ["Stella", "Mancuso"], ["Susanna", "Ferrante"],
       ["Sveva", "Rinaldi"], ["Talita", "De Angelis"], ["Tamara", "Guerra"], ["Tea", "Pace"],
-      ["Teresa", "D'Angelo"], ["Valentina", "Sorrentino"], ["Valeria", "Galli"], ["Vanessa", "Carboni"],
-      ["Vera", "Basso"], ["Veronica", "Lorusso"], ["Viola", "Fiore"], ["Virginia", "Tripodi"],
+      ["Teresa", "D'Angelo"], ["Valentina", "Sorrentino"], ["Valeria", "Galli"], ["Vanessa", "Carboni"],      ["Vera", "Basso"], ["Veronica", "Lorusso"], ["Viola", "Fiore"], ["Virginia", "Tripodi"],
       ["Viviana", "Moro"], ["Zoe", "Negri"], ["Agnese", "Palumbo"], ["Alessandra", "Marra"]
     ],
     male: [
@@ -413,7 +412,7 @@ const characterNames = {
       ["徐", "志宏"], ["孙", "文彬"], ["胡", "子涵"], ["朱", "俊楠"], ["高", "明杰"],
       ["林", "浩宇"], ["何", "文轩"], ["郭", "国强"], ["罗", "志明"], ["宋", "俊伟"],
       ["郑", "博超"], ["谢", "明远"], ["唐", "嘉熙"], ["韩", "翰林"], ["曹", "天翊"],
-      ["许", "文龙"], ["邓", "浩铭"], ["萧", "子豪"], ["冯", "明辉"], ["程", "建军"]
+      ["许", "文龙"], ["邓", "浩铭"], ["萧", "子豪"], ["冯", "明辉"], ["程", "志宏"]
     ]
   },
   Korean: {
@@ -495,8 +494,10 @@ function getRandomNamesByGender(language, gender, count = 3) {
   return shuffled.slice(0, count);
 }
 
+// Make characterNames available globally
+window.characterNames = characterNames;
+
 // Export for use in other files
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { characterNames, getRandomNames, getRandomNamesByGender };
+  module.exports = characterNames;
 }
-
