@@ -708,3 +708,70 @@ function enableUserMicForSentence() {
         if (domElements.micStatus) domElements.micStatus.innerHTML = `<strong>${yourTurnText}</strong><br><span style="color: #38bdf8; font-style: italic;">${lookForHighlightedText}</span>`;
     }
 }
+
+export function confirmStartLesson() {
+    if (!domElements.startLessonOverlay) return;
+    domElements.startLessonOverlay.classList.add('hidden');
+
+    if (stateRef.preFetchedFirstAudioBlob) {
+        const firstTurn = stateRef.lessonPlan.dialogue[0];
+        const audioUrl = URL.createObjectURL(stateRef.preFetchedFirstAudioBlob);
+        const audio = new Audio(audioUrl);
+        audio.playbackRate = parseFloat(domElements.audioSpeedSelect.value);
+
+        audio.play().catch(e => console.error("Error playing pre-fetched audio:", e));
+
+        const firstLineEl = document.getElementById('turn-0');
+        if (firstLineEl) {
+            firstLineEl.classList.add('active');
+            firstLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        audio.addEventListener('ended', async () => {
+            URL.revokeObjectURL(audioUrl);
+
+            if (firstTurn.party === 'A') {
+                const cleanText = removeParentheses(firstTurn.line.display);
+                currentSentences = await splitIntoSentences(cleanText);
+                currentSentenceIndex = 0;
+                enableUserMicForSentence();
+            } else {
+                advanceTurn(1);
+            }
+        });
+    } else {
+        advanceTurn(0);
+    }
+}
+
+export function resetLesson() {
+    if (!stateRef.lessonPlan) return;
+
+    if (stateRef.audioPlayer && !stateRef.audioPlayer.paused) {
+        stateRef.audioPlayer.pause();
+        stateRef.audioPlayer.src = "";
+    }
+
+    stateRef.setCurrentTurnIndex(0);
+
+    document.querySelectorAll('.dialogue-line.active').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
+
+    if (domElements.micBtn) {
+        domElements.micBtn.disabled = false;
+        domElements.micBtn.classList.remove('bg-green-600');
+        domElements.micBtn.classList.add('bg-red-600');
+    }
+    if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('micStatus');
+
+
+    if (stateRef.isRecognizing && stateRef.recognition) {
+        stateRef.recognition.stop();
+    }
+
+    if (uiRef.hideReviewModeBanner) {
+        uiRef.hideReviewModeBanner();
+    }
+
+    advanceTurn(0);
+}
