@@ -1328,6 +1328,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // Helper function to generate generic wrong answers when vocabulary pool is too small
+    function getGenericWrongAnswers(targetLanguage, nativeLangCode) {
+        const wrongAnswersByNative = {
+            'en': ['apple', 'house', 'water', 'happy', 'run', 'beautiful', 'money', 'time'],
+            'es': ['manzana', 'casa', 'agua', 'feliz', 'correr', 'hermoso', 'dinero', 'tiempo'],
+            'fr': ['pomme', 'maison', 'eau', 'heureux', 'courir', 'beau', 'argent', 'temps'],
+            'de': ['Apfel', 'Haus', 'Wasser', 'glücklich', 'laufen', 'schön', 'Geld', 'Zeit'],
+            'it': ['mela', 'casa', 'acqua', 'felice', 'correre', 'bello', 'soldi', 'tempo'],
+            'ja': ['りんご', '家', '水', '嬉しい', '走る', '美しい', 'お金', '時間'],
+            'ko': ['사과', '집', '물', '행복한', '달리다', '아름다운', '돈', '시간'],
+            'zh': ['苹果', '房子', '水', '快乐', '跑步', '美丽', '钱', '时间']
+        };
+        
+        return wrongAnswersByNative[nativeLangCode] || wrongAnswersByNative['en'];
+    }
+
     // Force vocabulary extraction using AI for any language
     async function forceVocabularyExtraction() {
         if (!lessonPlan || !lessonPlan.dialogue) return [];
@@ -1561,11 +1577,36 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
             }
 
             const currentVocab = vocabularyWithNativeTranslations[currentQuestion];
-                const allTranslations = vocabularyWithNativeTranslations.map(v => v.nativeTranslation || v.translation);
-                const wrongAnswers = allTranslations.filter(t => t !== (currentVocab.nativeTranslation || currentVocab.translation))
-                    .sort(() => 0.5 - Math.random()).slice(0, 3);
                 const correctAnswer = currentVocab.nativeTranslation || currentVocab.translation;
-                const allOptions = [correctAnswer, ...wrongAnswers]
+                
+                // Get all possible translations except the correct one
+                const allTranslations = vocabularyWithNativeTranslations
+                    .map(v => v.nativeTranslation || v.translation)
+                    .filter(t => t !== correctAnswer);
+                
+                // If we don't have enough unique translations, create some generic wrong answers
+                let wrongAnswers = [];
+                if (allTranslations.length >= 3) {
+                    wrongAnswers = allTranslations
+                        .sort(() => 0.5 - Math.random())
+                        .slice(0, 3);
+                } else {
+                    // Add available translations
+                    wrongAnswers = [...allTranslations];
+                    
+                    // Add generic wrong answers to make up the difference
+                    const language = languageSelect.value;
+                    const genericWrongAnswers = getGenericWrongAnswers(language, nativeLang);
+                    const neededAnswers = 3 - wrongAnswers.length;
+                    
+                    for (let i = 0; i < neededAnswers && i < genericWrongAnswers.length; i++) {
+                        if (!wrongAnswers.includes(genericWrongAnswers[i]) && genericWrongAnswers[i] !== correctAnswer) {
+                            wrongAnswers.push(genericWrongAnswers[i]);
+                        }
+                    }
+                }
+                
+                const allOptions = [correctAnswer, ...wrongAnswers.slice(0, 3)]
                     .sort(() => 0.5 - Math.random());
 
                 // Remove English translations from context to avoid giving away the answer
