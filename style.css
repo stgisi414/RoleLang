@@ -5,6 +5,9 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     padding-bottom: 50px; /* Add space for sticky footer */
+    overflow-x: hidden; /* Prevent horizontal scroll */
+    width: 100%;
+    max-width: 100vw;
 }
 
 /* Review mode banner styling */
@@ -33,6 +36,9 @@ body {
     /* backdrop-filter: blur(12px); */ /* This was causing the child elements to be blurry */
     /* -webkit-backdrop-filter: blur(12px); */
     border: 1px solid rgba(255, 255, 255, 0.1);
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
 }
 
 /* A subtle grid background for the body */
@@ -455,6 +461,36 @@ header img[alt="RoleLang Logo"] {
     gap: 0.5rem;
     align-content: start;
     height: 100%;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Responsive container fixes */
+* {
+    box-sizing: border-box;
+}
+
+#app-container {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+}
+
+/* Mobile responsive fixes */
+@media (max-width: 640px) {
+    .grid.lg\\:grid-cols-2 {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    #conversation-container {
+        max-height: 40vh;
+    }
+    
+    #illustration-container {
+        height: 200px;
+    }
 }
 
 /* Smooth hover effects for topic buttons */
