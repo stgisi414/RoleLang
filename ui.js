@@ -114,6 +114,14 @@ export function toggleHistoryVisibility() {
     }
 }
 
+export function hideReviewModeBanner() {
+    // This finds the banner by its specific class from the old script
+    const banner = document.querySelector('.review-mode-indicator');
+    if (banner) {
+        banner.remove();
+    }
+}
+
 export function showTutorial() {
     domElements.tutorialModal.classList.remove('hidden');
     updateTranslations();
