@@ -2448,41 +2448,49 @@ Now, provide the JSON array for the given text.
 
     // Reset lesson to beginning
     function resetLesson() {
-        if (!lessonPlan) return;
+		if (!lessonPlan) return;
 
-        // Reset turn index to beginning
-        currentTurnIndex = 0;
+		// Stop any currently playing audio from the lesson.
+		const audioPlayer = document.querySelector('audio');
+		if (audioPlayer && !audioPlayer.paused) {
+			audioPlayer.pause();
+			audioPlayer.src = "";
+		}
+		// If you have a global audio player object, use this instead:
+		// if (window.audioPlayer && !window.audioPlayer.paused) {
+		//     window.audioPlayer.pause();
+		//     window.audioPlayer.src = "";
+		// }
 
-        // Clear any active states and reset dialogue lines
-        document.querySelectorAll('.dialogue-line.active').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.dialogue-line').forEach(el => {
-            el.style.borderColor = '';
-        });
+		// Reset turn index to the absolute beginning
+		currentTurnIndex = 0;
 
-        // Reset mic button state
-        micBtn.disabled = false;
-        micBtn.classList.remove('bg-green-600');
-        micBtn.classList.add('bg-red-600');
+		// Clear all visual highlights
+		document.querySelectorAll('.dialogue-line.active').forEach(el => el.classList.remove('active'));
+		document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
 
-        // Reset status message
-        micStatus.textContent = translateText('micStatus');
+		// Reset the microphone button and status message
+		micBtn.disabled = false;
+		micBtn.classList.remove('bg-green-600');
+		micBtn.classList.add('bg-red-600');
+		micStatus.textContent = translateText('micStatus');
 
-        // Stop any ongoing speech recognition
-        if (isRecognizing && recognition) {
-            recognition.stop();
-        }
+		// Stop any speech recognition in progress
+		if (isRecognizing && recognition) {
+			recognition.stop();
+		}
 
-        // Remove review indicator if present (in case this is a review lesson being reset)
-        const existingReviewIndicator = lessonScreen.querySelector('.absolute.top-16.left-4');
-        if (existingReviewIndicator) {
-            existingReviewIndicator.remove();
-        }
+		// Remove the "Review Mode" UI if it's visible
+		const existingReviewIndicator = lessonScreen.querySelector('.review-mode-indicator');
+		if (existingReviewIndicator) {
+			existingReviewIndicator.remove();
+		}
 
-        // Save state and restart conversation
-        saveState();
-        advanceTurn();
-    }
-
+		// --- THIS IS THE FIX ---
+		// Start the lesson flow from the very first turn (index 0).
+		advanceTurn(0);
+	}
+	
     // Add back to landing button functionality
     function addBackToLandingButton() {
         // Check if button already exists
