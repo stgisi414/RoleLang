@@ -76,6 +76,15 @@ async function restoreState(savedState) {
     if (savedState.audioSpeed && elements.audioSpeedSelect) elements.audioSpeedSelect.value = savedState.audioSpeed;
 
     if (savedState.lessonPlan && savedState.currentScreen === 'lesson') {
+        
+        // --- START OF FIX ---
+        // Pre-process the lesson plan to add the 'sentences' array to user turns.
+        // This ensures the UI can render correctly from a saved state.
+        if (lesson) {
+            savedState.lessonPlan = await lesson.preprocessLessonPlan(savedState.lessonPlan);
+        }
+        // --- END OF FIX ---
+
         state.setLessonPlan(savedState.lessonPlan);
         state.setCurrentTurnIndex(savedState.currentTurnIndex);
 
@@ -99,6 +108,8 @@ async function restoreState(savedState) {
             if (state.lessonPlan.illustration_url) {
                 ui.restoreIllustration(state.lessonPlan.illustration_url);
             } else if (state.lessonPlan.illustration_prompt && lesson) {
+                // This call is intentionally not awaited to allow the UI to be interactive
+                // while the image loads in the background.
                 lesson.fetchAndDisplayIllustration(state.lessonPlan.illustration_prompt);
             }
         }
@@ -117,7 +128,6 @@ async function restoreState(savedState) {
         if (ui) ui.stopTopicRotations();
     }
 }
-
 
 async function initializeApp() {
     console.log('Initializing app...');

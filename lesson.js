@@ -437,7 +437,44 @@ export async function verifyUserSpeech(spokenText) {
             uiRef.updateMicStatus('verifyingWithAI');
             const nativeLangName = {'en': 'English', 'es': 'Spanish', 'fr': 'French', 'de': 'German', 'it': 'Italian', 'zh': 'Chinese', 'ja': 'Japanese', 'ko': 'Korean'}[stateRef.nativeLang] || 'English';
             let expectedLine = (currentSentences.length > 1) ? currentSentences[currentSentenceIndex] : currentTurnData.line.clean_text;
-            const verificationPrompt = `You are a language evaluation tool... Expected: "${expectedLine}" Spoken: "${spokenText}" Provide the JSON response.`;
+            
+            // --- START OF FIX ---
+            // This detailed prompt is restored from the original script.
+            const verificationPrompt = `
+You are a language evaluation tool. The user's native language is ${nativeLangName}.
+
+Your task is to determine if a student's spoken text is a correct phonetic match for a given sentence, ignoring punctuation and spacing.
+
+IMPORTANT CONSIDERATIONS FOR CHINESE:
+- Chinese speech recognition often struggles with technical terms, English words, and mixed content.
+- Browser speech recognition for Chinese has significant limitations with tones and pronunciation variations.
+- Focus heavily on overall meaning and context rather than exact character matching.
+- Be very lenient with technical vocabulary.
+- If the spoken text contains any key concepts from the expected sentence, consider it a match.
+- Chinese speech recognition frequently mistranscribes or omits technical terms entirely.
+- Accept partial matches if core vocabulary is present, even if grammar or word order differs.
+- Consider regional accent variations and pronunciation differences.
+- If more than 50% of the core meaning is captured, consider it a successful attempt.
+
+GENERAL CONSIDERATIONS:
+- Be flexible with mixed-language content (e.g., English words/acronyms within other languages).
+- Speech recognition may not capture English letters/acronyms correctly when embedded in other languages.
+- Focus on the overall meaning and pronunciation rather than exact character matching.
+- If the spoken text captures the main meaning despite missing parts, consider it a match.
+
+Your response MUST be a simple JSON object with two fields:
+1. "is_match": a boolean (true or false). For Chinese, be VERY generous with this assessment.
+2. "feedback": A brief, encouraging explanation; citing, if applicable, what exactly the user got wrong. IMPORTANT: This "feedback" field MUST be written in the user's native language, which is ${nativeLangName}.
+
+Here is the information for your evaluation:
+- The student was expected to say: "${expectedLine}"
+- The student's speech recognition produced: "${spokenText}"
+
+Remember: For Chinese learners, speech recognition technology is often inadequate. Be very forgiving and focus on effort and partial understanding.
+
+Now, provide the JSON response.`;
+            // --- END OF FIX ---
+
             const data = await apiRef.callGeminiAPI(verificationPrompt);
             const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
             const result = JSON.parse(jsonString);
@@ -729,4 +766,23 @@ export function resetLesson() {
     stateRef.recognition?.stop();
     uiRef.hideReviewModeBanner?.();
     advanceTurn(0);
+}
+
+/**
+ * Pre-processes a lesson plan to split user dialogue lines into sentences.
+ * This is crucial for restoring state correctly.
+ * @param {object} plan The lesson plan object.
+ * @returns {Promise<object>} The processed lesson plan with 'sentences' arrays.
+ */
+export async function preprocessLessonPlan(plan) {
+    if (plan && plan.dialogue) {
+        for (const turn of plan.dialogue) {
+            // Check if it's a user turn and sentences haven't been generated
+            if (turn.party && turn.party.toUpperCase() === 'A' && (!turn.sentences || turn.sentences.length === 0)) {
+                const cleanText = removeParentheses(turn.line.display);
+                turn.sentences = await splitIntoSentences(cleanText);
+            }
+        }
+    }
+    return plan;
 }
