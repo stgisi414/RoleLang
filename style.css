@@ -233,6 +233,20 @@ header img[alt="RoleLang Logo"] {
 .dialogue-line strong {
     font-size: 1.1em;
     margin-right: 0.5rem;
+    background-color: #c0c0c0; /* Silver background */
+    padding: 0.3rem 0.5rem;
+    border-radius: 5%;
+    display: inline-block;
+}
+
+/* User emoji styling (👤) - Blue border */
+.dialogue-line.user-line strong {
+    border: 2px solid #3b82f6; /* Blue border */
+}
+
+/* Partner emoji styling (🤖) - Purple border */
+.dialogue-line.partner-line strong {
+    border: 2px solid #8b5cf6; /* Purple border */
 }
 
 /* Explanation link styling */
