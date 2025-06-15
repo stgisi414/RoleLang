@@ -733,26 +733,58 @@ document.addEventListener('DOMContentLoaded', async () => {
             existingReviewIndicator.remove();
         }
 
-        // Add review indicator with vocabulary quiz button
-        const reviewIndicator = document.createElement('div');
-        reviewIndicator.className = 'review-mode-indicator absolute top-16 left-4 bg-purple-600 text-white px-3 py-1 rounded-lg text-sm z-10 flex items-center space-x-2';
+        // Create review mode banner at the top of lesson screen
+        const reviewBanner = document.createElement('div');
+        reviewBanner.className = 'review-mode-indicator bg-purple-600 text-white px-4 py-3 mb-4 rounded-lg';
+        reviewBanner.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.3)';
+        reviewBanner.style.borderBottom = '2px solid rgba(255, 255, 255, 0.1)';
 
         // Use currentTranslations directly to ensure we get the most up-to-date translations
         const reviewModeText = currentTranslations.reviewMode || translations.en.reviewMode;
         const lessonCompleteText = currentTranslations.lessonCompleteReview || translations.en.lessonCompleteReview;
         const vocabQuizText = currentTranslations.vocabQuiz || translations.en.vocabQuiz;
+        const backText = currentTranslations.back || translations.en.back;
 
-        reviewIndicator.innerHTML = `
-            <span><i class="fas fa-history mr-2"></i>${reviewModeText} - ${lessonCompleteText}</span>
-            <button id="vocab-quiz-btn" class="bg-purple-700 hover:bg-purple-800 px-2 py-1 rounded text-xs transition-colors">
-                <i class="fas fa-brain mr-1"></i>${vocabQuizText}
-            </button>
+        reviewBanner.innerHTML = `
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-history text-lg"></i>
+                    <span class="font-medium">${reviewModeText} - ${lessonCompleteText}</span>
+                    <button id="back-to-lessons-btn" class="flex items-center space-x-2 bg-purple-700 hover:bg-purple-800 px-3 py-1 rounded-lg transition-colors">
+                        <i class="fas fa-arrow-left text-sm"></i>
+                        <span class="text-sm">${backText}</span>
+                    </button>
+                </div>
+                <button id="vocab-quiz-btn" class="flex items-center space-x-2 bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded-lg transition-colors">
+                    <i class="fas fa-brain text-sm"></i>
+                    <span class="text-sm">${vocabQuizText}</span>
+                </button>
+            </div>
         `;
-        lessonScreen.appendChild(reviewIndicator);
+        
+        // Insert at the very beginning of lesson screen
+        lessonScreen.insertBefore(reviewBanner, lessonScreen.firstChild);
 
-        // Add vocabulary quiz button event listener
+        // Add event listeners for the new banner buttons
         document.getElementById('vocab-quiz-btn').addEventListener('click', () => {
             startVocabularyQuiz(language);
+        });
+
+        document.getElementById('back-to-lessons-btn').addEventListener('click', () => {
+            // Clear lesson state and return to landing
+            clearState();
+            lessonPlan = null;
+            currentTurnIndex = 0;
+
+            // Remove any review indicators
+            const existingReviewIndicator = lessonScreen.querySelector('.review-mode-indicator');
+            if (existingReviewIndicator) {
+                existingReviewIndicator.remove();
+            }
+
+            landingScreen.classList.remove('hidden');
+            lessonScreen.classList.add('hidden');
+            startTopicRotations();
         });
 
         // Update mic status to show lesson is complete and review mode is active
@@ -2317,13 +2349,17 @@ Now, provide the JSON array for the given text:
 
     // Review mode banner functions
     function showReviewModeBanner() {
-        reviewModeBanner.classList.remove('hidden');
-        document.body.classList.add('review-mode-active');
+        const banner = document.querySelector('.review-mode-indicator');
+        if (banner) {
+            banner.classList.remove('hidden');
+        }
     }
 
     function hideReviewModeBanner() {
-        reviewModeBanner.classList.add('hidden');
-        document.body.classList.remove('review-mode-active');
+        const banner = document.querySelector('.review-mode-indicator');
+        if (banner) {
+            banner.remove();
+        }
     }
 
     async function verifyUserSpeech(spokenText) {

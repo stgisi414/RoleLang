@@ -11,32 +11,6 @@ body {
 #review-mode-banner {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-    z-index: 100; /* Higher than other elements */
-}
-
-/* Body padding when review mode is active */
-body.review-mode-active {
-    padding-top: 70px; /* Space for the banner */
-}
-
-/* Push lesson header down when review mode is active */
-body.review-mode-active #lesson-header {
-    margin-top: 70px; /* Push down by banner height */
-}
-
-/* Ensure lesson header and other elements are below the banner */
-#lesson-header {
-    z-index: 50; /* Lower than banner */
-}
-
-/* Back button should be below banner */
-.back-button {
-    z-index: 40; /* Lower than header and banner */
-}
-
-/* Lesson title should be below banner */
-#lesson-title-container {
-    z-index: 30; /* Lower than other elements */
 }
 
 @keyframes fadeIn {
