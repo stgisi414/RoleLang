@@ -1342,8 +1342,9 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                     </div>
 
                     <div class="text-center mb-6">
-                        <p class="text-gray-300 text-sm mb-4">${translateText('whatDoesThisMean') || 'What does this mean?'}</p>
-                        <div class="text-3xl font-bold text-white mb-4">${cleanContext}</div>
+                        <p class="text-gray-300 text-sm mb-2">${translateText('whatDoesThisMean') || 'What does this mean?'}</p>
+                        <div class="text-3xl font-bold text-white mb-2">${currentVocab.word}</div>
+                        <div class="text-sm text-gray-400 italic">"${cleanContext}"</div>
                     </div>
 
                     <div class="grid grid-cols-1 gap-3 mb-6">
