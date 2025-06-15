@@ -100,15 +100,33 @@ async function restoreState(savedState) {
         elements.audioSpeedSelect.value = savedState.audioSpeed;
     }
 
-    // Restore target language selection at the very end to ensure it's not overwritten
+    // Restore target language selection with multiple attempts to ensure it sticks
     if (savedState.selectedLanguage && elements.languageSelect) {
         console.log('Attempting to restore target language to:', savedState.selectedLanguage);
         console.log('Available options:', Array.from(elements.languageSelect.options).map(opt => opt.value));
-        elements.languageSelect.value = savedState.selectedLanguage;
-        console.log('Target language select value after restoration:', elements.languageSelect.value);
         
-        // Trigger change event to ensure any listeners are notified
-        elements.languageSelect.dispatchEvent(new Event('change'));
+        const restoreTargetLanguage = (attempts = 0) => {
+            if (attempts > 5) {
+                console.error('Failed to restore target language after 5 attempts');
+                return;
+            }
+            
+            elements.languageSelect.value = savedState.selectedLanguage;
+            console.log(`Attempt ${attempts + 1}: Target language select value after restoration:`, elements.languageSelect.value);
+            
+            // If the value didn't stick, try again
+            if (elements.languageSelect.value !== savedState.selectedLanguage) {
+                setTimeout(() => restoreTargetLanguage(attempts + 1), 100);
+            } else {
+                // Trigger change event to ensure any listeners are notified
+                elements.languageSelect.dispatchEvent(new Event('change'));
+                console.log('Target language successfully restored to:', elements.languageSelect.value);
+            }
+        };
+        
+        // Try immediately and also with a small delay
+        restoreTargetLanguage();
+        setTimeout(() => restoreTargetLanguage(), 250);
     }
 
     if (savedState.lessonPlan && savedState.currentScreen === 'lesson') {
@@ -304,9 +322,13 @@ async function initializeApp() {
     });
 
     const debouncedSave = lesson.debounce(saveState, 500);
-    elements.languageSelect?.addEventListener('change', () => {
-        console.log('Target language changed to:', elements.languageSelect.value);
-        saveState();
+    elements.languageSelect?.addEventListener('change', (event) => {
+        console.log('Target language changed to:', event.target.value);
+        // Force immediate save with a small delay to ensure the value is captured
+        setTimeout(() => {
+            console.log('Saving state with target language:', elements.languageSelect.value);
+            saveState();
+        }, 50);
     });
     elements.topicInput?.addEventListener('input', debouncedSave);
     elements.audioSpeedSelect?.addEventListener('change', saveState);
