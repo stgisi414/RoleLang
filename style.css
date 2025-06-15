@@ -480,3 +480,18 @@ header img[alt="RoleLang Logo"] {
     filter: brightness(1.1);
     box-shadow: 0 4px 12px rgba(139, 69, 19, 0.2);
 }
+
+/* Lesson title container positioning to avoid back button overlap */
+#lesson-title-container {
+    margin-left: 120px; /* Make space for back button */
+    margin-right: 20px;
+    margin-top: 4px; /* Small top margin for better spacing */
+}
+
+/* Back button specific positioning */
+.back-button {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    z-index: 20;
+}

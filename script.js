@@ -2891,7 +2891,7 @@ Now, provide the JSON array for the given text:
 
         const backBtn = document.createElement('button');
         backBtn.id = 'back-to-landing-btn';
-        backBtn.className = 'absolute top-4 left-4 bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-colors text-sm';
+        backBtn.className = 'back-button absolute top-4 left-4 bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-colors text-sm z-20';
         backBtn.innerHTML = `<i class="fas fa-arrow-left mr-2"></i>${translateText('back')}`;
         backBtn.onclick = () => {
             // Clear lesson state and return to landing
