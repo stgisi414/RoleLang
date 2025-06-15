@@ -14,6 +14,7 @@ let currentSentenceIndex = 0;
 let speechAttempts = 0;
 let audioDebounceTimer = null;
 
+
 // --- Helper Functions (Unique to Lesson Logic) ---
 
 function removeParentheses(text) {
@@ -867,6 +868,49 @@ export async function reviewLesson(lessonRecord) {
 
     // 7. Save the current state so the review session can be restored if the user refreshes
     if (saveStateRef) saveStateRef();
+}
+
+export async function playLineAudio(text, party = 'B') {
+    // Abort any turn-advancement logic from the main lesson flow
+    stateRef.audioController.abort();
+    stateRef.audioController = new AbortController();
+
+    try {
+        const cleanText = removeParentheses(text);
+        const voiceConfig = getVoiceConfig(domElements.languageSelect.value, party);
+        const audioBlob = await apiRef.fetchPartnerAudio(cleanText, voiceConfig);
+        const audioUrl = URL.createObjectURL(audioBlob);
+
+        if (stateRef.audioPlayer.src) {
+            URL.revokeObjectURL(stateRef.audioPlayer.src);
+        }
+        stateRef.audioPlayer.src = audioUrl;
+        stateRef.audioPlayer.playbackRate = parseFloat(domElements.audioSpeedSelect.value);
+        
+        await stateRef.audioPlayer.play();
+        
+    } catch (error) {
+        console.error("Failed to fetch audio for manual playback:", error);
+        // Optionally, display a UI error to the user
+    }
+}
+
+export function playLineAudioDebounced(text, party = 'B') {
+    // Clear any pending playback
+    if (audioDebounceTimer) {
+        clearTimeout(audioDebounceTimer);
+    }
+
+    // Stop any currently playing audio immediately
+    if (!stateRef.audioPlayer.paused) {
+        stateRef.audioPlayer.pause();
+    }
+
+    // Set a new playback to start after a short delay
+    audioDebounceTimer = setTimeout(() => {
+        playLineAudio(text, party);
+        audioDebounceTimer = null;
+    }, 300); // 300ms delay
 }
 
 export function resetLesson() {
