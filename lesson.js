@@ -293,6 +293,13 @@ export async function advanceTurn(newTurnIndex) {
     const currentTurnData = lessonPlan.dialogue[cti];
     uiRef.highlightActiveLine(cti);
 
+    // If in review mode, don't auto-play audio
+    if (lessonPlan.isReviewMode) {
+        uiRef.updateMicStatus('reviewModeReady');
+        uiRef.enableMicButton(false);
+        return;
+    }
+
     if (currentTurnData.party && currentTurnData.party.toUpperCase() === 'A') {
         const cleanText = removeParentheses(currentTurnData.line.display);
         currentSentences = currentTurnData.sentences; 
@@ -349,6 +356,14 @@ function enableUserMicForSentence() {
 
 export function confirmStartLesson() {
     uiRef.hideStartOverlay();
+
+    // Check if we're in review mode - if so, don't auto-play
+    if (stateRef.lessonPlan && stateRef.lessonPlan.isReviewMode) {
+        uiRef.highlightActiveLine(0);
+        uiRef.updateMicStatus('reviewModeReady');
+        uiRef.enableMicButton(false);
+        return;
+    }
 
     if (stateRef.preFetchedFirstAudioBlob) {
         const firstTurn = stateRef.lessonPlan.dialogue[0];
@@ -698,6 +713,11 @@ export async function reviewLesson(lessonRecord) {
     if (!plan.id) {
         plan.id = `lesson-${lessonRecord.language}-${Date.now()}`;
     }
+    
+    // Mark as review mode BEFORE setting lesson plan
+    plan.isReviewMode = true;
+    plan.isCompleted = true;
+    
     stateRef.setLessonPlan(plan);
     stateRef.setCurrentTurnIndex(0);
 
@@ -720,9 +740,6 @@ export async function reviewLesson(lessonRecord) {
     await startConversation();
     
     uiRef.showReviewModeUI(lessonRecord.language);
-    
-    // Mark as review mode - don't auto-play
-    plan.isReviewMode = true;
     
     // Just highlight the first line, don't start audio
     uiRef.highlightActiveLine(0);
