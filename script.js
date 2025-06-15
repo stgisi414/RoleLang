@@ -1755,18 +1755,21 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                     }
 
                     console.log(`Successfully called Gemini API with model: ${modelName}`);
+                    // FIXED: Return immediately on success, don't continue to other models
                     return data;
 
                 } catch (error) {
                     console.warn(`Attempt ${attempt} failed for model ${modelName}:`, error.message);
                     lastError = error;
 
-                    // Add exponential backoff for retries
+                    // Add exponential backoff for retries within the same model
                     if (attempt < retryAttempts) {
                         await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
                     }
                 }
             }
+            // Only try next model if all retry attempts for current model failed
+            console.log(`All retry attempts failed for model ${modelName}, trying next model...`);
         }
 
         // If all models and retries failed
