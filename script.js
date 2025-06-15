@@ -2233,7 +2233,8 @@ Now, provide the JSON array for the given text:
             }
 
             const yourTurnText = currentTranslations.yourTurn || translations.en.yourTurn || 'Your turn';
-            micStatus.innerHTML = `<strong>${yourTurnText}</strong><br><span style="color: #38bdf8; font-style: italic;">Look for the highlighted sentence above</span>`;
+            const lookForHighlightedText = currentTranslations.lookForHighlighted || translations.en.lookForHighlighted || 'Look for the highlighted sentence above';
+            micStatus.innerHTML = `<strong>${yourTurnText}</strong><br><span style="color: #38bdf8; font-style: italic;">${lookForHighlightedText}</span>`;
         }
     }
 

@@ -120,6 +120,7 @@ const translations = {
     tip4: "Try different scenarios in the same language to expand your vocabulary",
     startLearning: "Start Learning!",
     beginnerExample: "Introducing yourself at a coffee shop",
+    lookForHighlighted: "Look for the highlighted sentence above",
     topics: {
       beginner: [
         "Introducing yourself", "Ordering food at a restaurant", "Asking for directions", "Shopping for clothes",
@@ -272,6 +273,7 @@ const translations = {
     tip3: "Revisa lecciones anteriores y toma cuestionarios de vocabulario para reforzar el aprendizaje",
     tip4: "Prueba diferentes escenarios en el mismo idioma para expandir tu vocabulario",
     startLearning: "¡Comienza a Aprender!",
+    lookForHighlighted: "Busca la oración resaltada arriba",
     topics: {
       beginner: [
         "Presentándote", "Pidiendo comida en un restaurante", "Pidiendo direcciones", "Comprando ropa",
@@ -412,6 +414,7 @@ const translations = {
     tip3: "Révisez les leçons précédentes et faites des quiz de vocabulaire pour renforcer l'apprentissage",
     tip4: "Essayez différents scénarios dans la même langue pour étendre votre vocabulaire",
     startLearning: "Commencez à Apprendre !",
+    lookForHighlighted: "Cherchez la phrase surlignée ci-dessus",
     topics: {
       beginner: [
         "Se présenter", "Commander de la nourriture au restaurant", "Demander son chemin", "Acheter des vêtements",
@@ -551,6 +554,7 @@ const translations = {
     tip3: "Wiederholen Sie frühere Lektionen und machen Sie Vokabel-Quiz zur Lernverstärkung",
     tip4: "Probieren Sie verschiedene Szenarien in derselben Sprache aus, um Ihren Wortschatz zu erweitern",
     startLearning: "Beginnen Sie zu Lernen!",
+    lookForHighlighted: "Suchen Sie den hervorgehobenen Satz oben",
     topics: {
       beginner: [
         "Sich vorstellen", "Essen im Restaurant bestellen", "Nach dem Weg fragen", "Kleidung einkaufen",
@@ -690,6 +694,7 @@ const translations = {
     tip3: "Rivedi le lezioni precedenti e fai quiz di vocabolario per rafforzare l'apprendimento",
     tip4: "Prova diversi scenari nella stessa lingua per espandere il tuo vocabolario",
     startLearning: "Inizia ad Imparare!",
+    lookForHighlighted: "Cerca la frase evidenziata sopra",
     topics: {
       beginner: [
         "Presentarsi", "Ordinare cibo al ristorante", "Chiedere indicazioni", "Comprare vestiti",
@@ -829,6 +834,7 @@ const translations = {
     tip3: "复习以前的课程并进行词汇测验以强化学习",
     tip4: "尝试同一语言的不同场景以扩展词汇量",
     startLearning: "开始学习！",
+    lookForHighlighted: "寻找上面高亮显示的句子",
     topics: {
       beginner: [
         "自我介绍", "在餐厅点餐", "问路", "买衣服",
@@ -968,6 +974,7 @@ const translations = {
     tip3: "学習を強化するために以前のレッスンを復習し、語彙クイズを受ける",
     tip4: "語彙を拡張するために同じ言語の異なるシナリオを試す",
     startLearning: "学習を始めましょう！",
+    lookForHighlighted: "上のハイライトされた文を探してください",
     topics: {
       beginner: [
         "自己紹介", "レストランで食事を注文", "道を尋ねる", "服を買う",
@@ -1107,6 +1114,7 @@ const translations = {
     tip3: "학습을 강화하기 위해 이전 레슨을 복습하고 어휘 퀴즈를 받으세요",
     tip4: "어휘를 확장하기 위해 같은 언어의 다른 시나리오를 시도해보세요",
     startLearning: "학습 시작하기!",
+    lookForHighlighted: "위의 강조 표시된 문장을 찾아보세요",
     topics: {
       beginner: [
         "자기소개하기", "식당에서 음식 주문하기", "길 묻기", "옷 쇼핑하기",
