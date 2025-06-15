@@ -222,7 +222,11 @@ async function initializeApp() {
     }
 
     // --- Event Listeners ---
-    elements.startLessonBtn?.addEventListener('click', () => lesson.initializeLesson());
+    elements.startLessonBtn?.addEventListener('click', () => {
+		// FIX: Call clearState() here before initializing a new lesson.
+		clearState(); 
+		lesson.initializeLesson();
+	});
     elements.micBtn?.addEventListener('click', () => lesson.toggleSpeechRecognition());
     elements.toggleLessonsBtn?.addEventListener('click', () => ui.toggleLessonsVisibility());
     elements.toggleHistoryBtn?.addEventListener('click', () => ui.toggleHistoryVisibility());
