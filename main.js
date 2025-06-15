@@ -29,11 +29,12 @@ let elements = {};
 
 // --- State Persistence Functions ---
 function saveState() {
+    const selectedLang = elements.languageSelect?.value;
     const appState = {
         lessonPlan: state.lessonPlan,
         currentTurnIndex: state.currentTurnIndex,
         currentScreen: state.lessonPlan ? 'lesson' : 'landing',
-        selectedLanguage: elements.languageSelect?.value,
+        selectedLanguage: selectedLang,
         topicInput: elements.topicInput?.value,
         nativeLang: state.nativeLang,
         lessonsVisible: !elements.lessonsContainer?.classList.contains('hidden'),
@@ -43,7 +44,7 @@ function saveState() {
 
     try {
         localStorage.setItem(state.STATE_KEY, JSON.stringify(appState));
-        console.log('State saved successfully:', appState);
+        console.log('State saved successfully. Target language:', selectedLang);
     } catch (error) {
         console.warn('Failed to save state to localStorage:', error);
     }
@@ -101,8 +102,13 @@ async function restoreState(savedState) {
 
     // Restore target language selection at the very end to ensure it's not overwritten
     if (savedState.selectedLanguage && elements.languageSelect) {
+        console.log('Attempting to restore target language to:', savedState.selectedLanguage);
+        console.log('Available options:', Array.from(elements.languageSelect.options).map(opt => opt.value));
         elements.languageSelect.value = savedState.selectedLanguage;
-        console.log('Target language restored to:', savedState.selectedLanguage);
+        console.log('Target language select value after restoration:', elements.languageSelect.value);
+        
+        // Trigger change event to ensure any listeners are notified
+        elements.languageSelect.dispatchEvent(new Event('change'));
     }
 
     if (savedState.lessonPlan && savedState.currentScreen === 'lesson') {
@@ -298,7 +304,10 @@ async function initializeApp() {
     });
 
     const debouncedSave = lesson.debounce(saveState, 500);
-    elements.languageSelect?.addEventListener('change', saveState);
+    elements.languageSelect?.addEventListener('change', () => {
+        console.log('Target language changed to:', elements.languageSelect.value);
+        saveState();
+    });
     elements.topicInput?.addEventListener('input', debouncedSave);
     elements.audioSpeedSelect?.addEventListener('change', saveState);
 
