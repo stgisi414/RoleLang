@@ -421,3 +421,8 @@ export function showLandingScreen() {
     domElements.landingScreen?.classList.remove('hidden');
     domElements.lessonScreen?.classList.add('hidden');
 }
+
+export function showLessonScreen() {
+    domElements.lessonScreen?.classList.remove('hidden');
+    domElements.landingScreen?.classList.add('hidden');
+}
