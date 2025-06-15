@@ -1,5 +1,10 @@
 console.log('Importing modules...');
 
+// Ensure translations are available globally
+if (!window.translations) {
+    console.error('Translations not loaded! Make sure translations.js is loaded before main.js');
+}
+
 try {
     var api = await import('./api.js');
     console.log('API module loaded');
@@ -326,8 +331,15 @@ async function initializeApp() {
     });
 
     // --- Initialization ---
-    ui.initializeNativeLanguage();
-    ui.updateTranslations();
+    // Ensure translations are properly initialized
+    if (window.translations) {
+        state.setCurrentTranslations(window.translations.en);
+        ui.initializeNativeLanguage();
+        ui.updateTranslations();
+    } else {
+        console.error('Translations not available, UI will not be properly translated');
+    }
+    
     const savedState = loadState();
     if (savedState) {
         await restoreState(savedState);

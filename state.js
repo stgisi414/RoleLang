@@ -9,7 +9,7 @@ export let currentTurnIndex = 0;
 export let isRecognizing = false;
 export let recognition = null;
 export let nativeLang = 'en';
-export let currentTranslations = window.translations?.en || {};
+export let currentTranslations = (typeof window !== 'undefined' && window.translations) ? window.translations.en : {};
 export let preFetchedFirstAudioBlob = null;
 export const audioPlayer = new Audio();
 export let audioController = new AbortController();

@@ -31,6 +31,10 @@ export function init(elements, translationsFunc, nativeLangFunc, saveFunc, backC
 // --- Translation ---
 export function translateText(key) {
     const translations = getTranslations();
+    if (!translations || typeof translations !== 'object') {
+        console.warn('Translations not available for key:', key);
+        return `[${key}]`;
+    }
     return translations[key] || `[${key}]`;
 }
 

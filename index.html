@@ -141,6 +141,16 @@
     <script src="translations.js"></script>
     <!-- Character Names -->
     <script src="names.js"></script>
+    
+    <script>
+        // Verify translations loaded
+        if (typeof translations === 'undefined') {
+            console.error('Translations failed to load');
+        } else {
+            console.log('Translations loaded successfully');
+            window.translations = translations;
+        }
+    </script>
 </head>
 <body class="grid-background min-h-screen flex items-center justify-center p-4">
 
