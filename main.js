@@ -136,7 +136,6 @@ async function restoreState(savedState) {
 
         // Verify the final state
         console.log('Final target language value:', elements.languageSelect.value);
-    }
 
     // Restore native language (UI language) if saved
     if (savedState.nativeLang) {
