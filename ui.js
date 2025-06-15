@@ -58,14 +58,18 @@ export function initializeNativeLanguage() {
 }
 
 export function setNativeLanguage(langCode, flag, name) {
-    getNativeLang(langCode); // Update state
+    // This function now correctly calls the getNativeLang function passed during init
+    // which updates the state in the main state.js module.
+    if (typeof getNativeLang === 'function') {
+        getNativeLang(langCode);
+    }
     domElements.nativeFlagEl.textContent = flag;
     domElements.nativeLangTextEl.textContent = name;
     updateTranslations();
     stopTopicRotations();
     startTopicRotations();
     localStorage.setItem('rolelang_native_lang', JSON.stringify({ code: langCode, flag, name }));
-    saveState();
+    if(typeof saveState === 'function') saveState();
 }
 
 
@@ -85,7 +89,7 @@ function detectNativeLanguage() {
     setNativeLanguage(lang.code, lang.flag, lang.name);
 }
 
-// --- History Functions (Moved Up) ---
+// --- History Functions ---
 export function getLessonHistory() {
     try {
         const history = localStorage.getItem(LESSON_HISTORY_KEY);
@@ -127,7 +131,7 @@ export function displayLessonHistory() {
     recentLessons.forEach((lesson, index) => {
         const lessonCard = document.createElement('div');
         lessonCard.className = 'history-card bg-purple-600/20 hover:bg-purple-600/30 border border-purple-600/30 rounded-lg p-3 cursor-pointer transition-all';
-        lessonCard.dataset.lessonId = lesson.id; // Store ID for the click handler in main.js
+        lessonCard.dataset.lessonId = lesson.id;
 
         lessonCard.innerHTML = `
             <div class="text-purple-300 text-xs mb-1">${lesson.language}</div>
@@ -156,7 +160,7 @@ export function toggleLessonsVisibility(forceShow = null) {
         chevronIcon.style.transform = 'rotate(0deg)';
         stopTopicRotations();
     }
-    saveState();
+    if(typeof saveState === 'function') saveState();
 }
 
 export function toggleHistoryVisibility() {
@@ -166,14 +170,13 @@ export function toggleHistoryVisibility() {
     if (isHidden) {
         domElements.historyContainer.classList.remove('hidden');
         chevronIcon.style.transform = 'rotate(180deg)';
-        displayLessonHistory(); // This call is now valid.
+        displayLessonHistory();
     } else {
         domElements.historyContainer.classList.add('hidden');
         chevronIcon.style.transform = 'rotate(0deg)';
     }
 }
 
-// FIX: Added showExplanation function
 export function showExplanation(content) {
     domElements.modalBody.innerHTML = `<h3 class="text-xl font-bold mb-2 text-cyan-300">${content.title}</h3><p class="text-gray-300">${content.body}</p>`;
     domElements.modal.classList.remove('hidden');
@@ -319,31 +322,54 @@ export function displayLessonTitleAndContext(lessonPlan) {
 
 export async function restoreConversation(lessonPlan) {
     domElements.conversationContainer.innerHTML = '';
-    for (const [index, turn] of lessonPlan.dialogue.entries()) {
-        const lineDiv = createDialogueLine(turn, index);
-        domElements.conversationContainer.appendChild(lineDiv);
+    if (lessonPlan && lessonPlan.dialogue) {
+        for (const [index, turn] of lessonPlan.dialogue.entries()) {
+            const lineDiv = createDialogueLine(turn, index);
+            domElements.conversationContainer.appendChild(lineDiv);
+        }
     }
 }
 
+/**
+ * THIS IS THE CORRECTED FUNCTION.
+ * It now correctly reads the `turn.sentences` array (prepared by lesson.js)
+ * and renders each sentence in its own `<span>` so it can be highlighted.
+ */
 function createDialogueLine(turn, index) {
     const lineDiv = document.createElement('div');
-    // **THE FIX: Make the party check case-insensitive**
     const party = turn.party ? turn.party.toUpperCase() : 'B';
 
     lineDiv.className = `dialogue-line text-white cursor-pointer ${party === 'A' ? 'user-line' : 'partner-line'}`;
     lineDiv.id = `turn-${index}`;
 
     const speakerIcon = party === 'A' ? '👤' : '🤖';
-    let lineContent = `<strong>${speakerIcon}</strong> ${turn.line.display} <i class="fas fa-volume-up text-gray-400 ml-2 hover:text-sky-300"></i>`;
-    
-    lineDiv.innerHTML = lineContent;
+    let lineContent = `<strong>${speakerIcon}</strong> `;
+
+    // Render pre-split sentences for user lines
+    if (party === 'A' && turn.sentences && turn.sentences.length > 0) {
+        turn.sentences.forEach((sentence, sentenceIndex) => {
+            lineContent += `<span class="sentence-span" id="turn-${index}-sentence-${sentenceIndex}">${sentence}</span> `;
+        });
+
+        const originalLine = turn.line.display;
+        if (originalLine.includes('(')) {
+            const translationPart = originalLine.substring(originalLine.indexOf('('));
+            lineContent += `<span class="translation-part text-gray-400">${translationPart}</span>`;
+        }
+    } else {
+        // Render partner lines or non-split user lines as before
+        lineContent += turn.line.display;
+    }
+
+    lineContent += ` <i class="fas fa-volume-up text-gray-400 ml-2 hover:text-sky-300"></i>`;
+    lineDiv.innerHTML = lineContent.trim();
 
     if (turn.explanation) {
         const explanationSpan = document.createElement('span');
         explanationSpan.innerHTML = ` <i class="fas fa-info-circle text-sky-300 ml-6"></i>`;
         explanationSpan.classList.add('explanation-link');
         explanationSpan.onclick = (e) => {
-            e.stopPropagation(); // Prevent audio playback
+            e.stopPropagation();
             showExplanation(turn.explanation);
         };
         lineDiv.appendChild(explanationSpan);
@@ -351,7 +377,6 @@ function createDialogueLine(turn, index) {
 
     return lineDiv;
 }
-
 
 export function restoreIllustration(imageUrl) {
     domElements.illustrationPlaceholder.classList.add('hidden');

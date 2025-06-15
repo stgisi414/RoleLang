@@ -15,41 +15,67 @@ let speechAttempts = 0;
 let audioDebounceTimer = null;
 
 // --- Helper Functions ---
+
 function removeParentheses(text) {
     if (typeof text !== 'string') return '';
     return text.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+/**
+ * THIS IS THE CORRECT, FULL-FEATURED SENTENCE SPLITTER FROM old/script.js
+ * It uses a detailed prompt and includes fallback logic.
+ */
 async function splitIntoSentences(text) {
-    const currentLanguage = domElements.languageSelect?.value || 'English';
+    const currentLanguage = domElements.languageSelect.value;
     const cleanText = text.trim();
 
-    if (cleanText.split(/\s+/).length <= 5) return [cleanText];
+    // 1. Handle very short texts immediately
+    const words = cleanText.split(/\s+/);
+    if (words.length <= 5) {
+        return [cleanText];
+    }
 
+    // 2. For longer texts, use the detailed Gemini prompt
     const prompt = `
-You are an expert linguist. Your task is to split the following text into natural, speakable chunks for a language learner.
-- Split at natural sentence boundaries, conjunctions, or logical pauses.
-- Each chunk should be meaningful.
-- For Korean/Japanese/Chinese, prioritize splitting at sentence endings and particles.
-- Your response MUST be a valid JSON array of strings.
-- If the text is longer than 8 words, try to split it into at least 2 chunks.
-Language: ${currentLanguage}
-Text to Split: "${cleanText}"
-Now, provide the JSON array.`;
+You are an expert linguist specializing in splitting text for language learners to practice speaking. Your task is to split the following text into natural, speakable chunks that are easier to practice.
+
+**Instructions:**
+1.  **Break into Practice Chunks:** Always try to break longer texts into 2-4 shorter, meaningful chunks that learners can practice separately.
+2.  **Natural Boundaries:** Split at natural sentence boundaries, conjunctions, or logical pauses.
+3.  **Preserve Meaning:** Each chunk should be complete and meaningful on its own.
+4.  **Language-Specific Rules:**
+    - For Korean: Split at sentence endings (다, 요, 까, etc.) and conjunctions
+    - For Japanese: Split at sentence endings (だ, です, ます, etc.) and particles
+    - For Chinese: Split at punctuation and natural phrase boundaries
+    - For European languages: Split at periods, commas with conjunctions, and clause boundaries
+5.  **Output Format:** Your response MUST be a valid JSON array of strings.
+6.  **Minimum Splits:** If the text is longer than 8 words, try to split it into at least 2 chunks.
+
+**Language:** ${currentLanguage}
+**Text to Split:** "${cleanText}"
+
+**Example for Korean:**
+Input: "잘 모르겠어. 큰 번화장아. 장단점이 있는 것 같아."
+Output: ["잘 모르겠어.", "큰 번화장아.", "장단점이 있는 것 같아."]
+
+Now, provide the JSON array for the given text:
+`;
 
     try {
         const data = await apiRef.callGeminiAPI(prompt, { modelPreference: 'lite' });
         const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
         const sentences = JSON.parse(jsonString);
+
         if (Array.isArray(sentences) && sentences.every(s => typeof s === 'string' && s.trim().length > 0)) {
-            if (sentences.length === 1 && cleanText.split(/\s+/).length > 8) {
+            if (sentences.length === 1 && words.length > 8) {
                 return tryFallbackSplit(cleanText, currentLanguage);
             }
             return sentences;
+        } else {
+            return tryFallbackSplit(cleanText, currentLanguage);
         }
-        return tryFallbackSplit(cleanText, currentLanguage);
     } catch (error) {
-        console.error("Gemini sentence splitting failed, using fallback.", error);
+        console.error("Gemini sentence splitting failed, using fallback split.", error);
         return tryFallbackSplit(cleanText, currentLanguage);
     }
 }
@@ -81,6 +107,7 @@ function tryFallbackSplit(text, language) {
     }
     return sentences.length > 0 ? sentences : [text];
 }
+
 
 function saveLessonToHistory(lessonPlan, selectedLanguage, originalTopic) {
     try {
@@ -219,7 +246,7 @@ export async function initializeLesson() {
     domElements.illustrationPlaceholder?.classList.remove('hidden');
     domElements.imageLoader?.classList.add('hidden');
 
-    const prompt = createGeminiPrompt(language, topic, stateRef.getNativeLang());
+    const prompt = createGeminiPrompt(language, topic, stateRef.nativeLang);
     
     try {
         const data = await apiRef.callGeminiAPI(prompt, { modelPreference: 'pro' });
@@ -261,8 +288,14 @@ export async function initializeLesson() {
     }
 }
 
+/**
+ * THIS IS THE CORRECTED FUNCTION.
+ * It pre-processes the entire dialogue, splitting user lines into sentences
+ * BEFORE the UI module tries to render anything.
+ */
 export async function startConversation() {
     stateRef.setCurrentTurnIndex(0);
+
     if (stateRef.lessonPlan && stateRef.lessonPlan.dialogue) {
         for (const turn of stateRef.lessonPlan.dialogue) {
             if (turn.party && turn.party.toUpperCase() === 'A' && (!turn.sentences || turn.sentences.length === 0)) {
@@ -271,6 +304,7 @@ export async function startConversation() {
             }
         }
     }
+    
     await uiRef.restoreConversation(stateRef.lessonPlan);
     uiRef.displayLessonTitleAndContext(stateRef.lessonPlan);
     uiRef.addBackToLandingButton();
@@ -302,11 +336,9 @@ export async function advanceTurn(newTurnIndex) {
         currentLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    // THIS IS THE CRITICAL FIX
     if (currentTurnData.party && currentTurnData.party.toUpperCase() === 'A') {
         const cleanText = removeParentheses(currentTurnData.line.display);
-        currentSentences = currentTurnData.sentences?.length ? currentTurnData.sentences : await splitIntoSentences(cleanText);
-        currentTurnData.sentences = currentSentences;
+        currentSentences = currentTurnData.sentences; // Use pre-processed sentences
         currentSentenceIndex = 0;
         domElements.micBtn.disabled = true;
         domElements.micStatus.textContent = uiRef.translateText('listenFirst');
@@ -322,7 +354,7 @@ export async function advanceTurn(newTurnIndex) {
         } catch (error) {
             enableUserMicForSentence();
         }
-    } else { // This is the partner's turn
+    } else { 
         domElements.micBtn.disabled = true;
         domElements.micStatus.textContent = uiRef.translateText('partnerSpeaking');
         try {
@@ -339,7 +371,6 @@ export async function advanceTurn(newTurnIndex) {
             };
             audio.onerror = () => {
                 URL.revokeObjectURL(audioUrl);
-                console.error("Audio playback error for partner line.");
                 setTimeout(() => advanceTurn(cti + 1), 500);
             };
         } catch (error) {
@@ -352,17 +383,18 @@ export async function advanceTurn(newTurnIndex) {
 function enableUserMicForSentence() {
     domElements.micBtn.disabled = false;
     document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
-    if (currentSentences.length > 1) {
+    
+    if (currentSentences && currentSentences.length > 1) {
         const currentSentenceEl = document.getElementById(`turn-${stateRef.currentTurnIndex}-sentence-${currentSentenceIndex}`);
         if (currentSentenceEl) currentSentenceEl.classList.add('active-sentence');
         const displaySentence = currentSentenceEl ? currentSentenceEl.textContent : currentSentences[currentSentenceIndex];
-        const recordSentenceText = uiRef.translateText('recordSentence') || 'Record sentence';
+        const recordSentenceText = uiRef.translateText('recordSentence');
         domElements.micStatus.innerHTML = `<strong>${recordSentenceText} ${currentSentenceIndex + 1}/${currentSentences.length}:</strong><br><span style="color: #38bdf8; font-weight: bold; text-decoration: underline;">"${displaySentence}"</span>`;
     } else {
         const singleSentenceEl = document.getElementById(`turn-${stateRef.currentTurnIndex}-sentence-0`);
         if (singleSentenceEl) singleSentenceEl.classList.add('active-sentence');
-        const yourTurnText = uiRef.translateText('yourTurn') || 'Your turn';
-        const lookForHighlightedText = uiRef.translateText('lookForHighlighted') || 'Look for the highlighted sentence above';
+        const yourTurnText = uiRef.translateText('yourTurn');
+        const lookForHighlightedText = uiRef.translateText('lookForHighlighted');
         domElements.micStatus.innerHTML = `<strong>${yourTurnText}</strong><br><span style="color: #38bdf8; font-style: italic;">${lookForHighlightedText}</span>`;
     }
 }
@@ -375,11 +407,13 @@ export function confirmStartLesson() {
         const audio = new Audio(audioUrl);
         audio.playbackRate = parseFloat(domElements.audioSpeedSelect.value);
         audio.play().catch(e => console.error("error playing pre-fetched audio:", e));
+        
         const firstLineEl = document.getElementById('turn-0');
         if (firstLineEl) {
             firstLineEl.classList.add('active');
             firstLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
+        
         audio.addEventListener('ended', async () => {
             URL.revokeObjectURL(audioUrl);
             if (firstTurn.party && firstTurn.party.toUpperCase() === 'A') {
@@ -396,14 +430,11 @@ export function confirmStartLesson() {
     }
 }
 
-// Keep the rest of the functions (verifyUserSpeech, handleCorrectSpeech, etc.) as they were in the previous correct version.
-// They rely on the advanceTurn and enableUserMicForSentence logic being correct.
-// ... (rest of the functions from previous response)
 export async function fetchAndDisplayIllustration(prompt) {
     return new Promise(async (resolve) => {
         try {
-            if (domElements.illustrationPlaceholder) domElements.illustrationPlaceholder.classList.add('hidden');
-            if (domElements.imageLoader) domElements.imageLoader.classList.remove('hidden');
+            domElements.illustrationPlaceholder?.classList.add('hidden');
+            domElements.imageLoader?.classList.remove('hidden');
 
             const result = await apiRef.generateImage(`${prompt}, digital art, minimalist, educational illustration`, {
                 imageSize: 'square_hd',
@@ -420,8 +451,8 @@ export async function fetchAndDisplayIllustration(prompt) {
                 if (domElements.illustrationImg) {
                     domElements.illustrationImg.src = result.imageUrl;
                     domElements.illustrationImg.onload = () => {
-                        if (domElements.imageLoader) domElements.imageLoader.classList.add('hidden');
-                        if (domElements.illustrationImg) domElements.illustrationImg.classList.remove('hidden');
+                        domElements.imageLoader?.classList.add('hidden');
+                        domElements.illustrationImg?.classList.remove('hidden');
                         resolve();
                     };
                     domElements.illustrationImg.onerror = () => {
@@ -444,7 +475,7 @@ export async function fetchAndDisplayIllustration(prompt) {
 }
 
 function showFallbackIllustration() {
-    if (domElements.imageLoader) domElements.imageLoader.classList.add('hidden');
+    domElements.imageLoader?.classList.add('hidden');
     if (domElements.illustrationPlaceholder) {
         domElements.illustrationPlaceholder.innerHTML = `
             <div class="text-center text-gray-400">
@@ -468,7 +499,6 @@ async function prefetchFirstAudio(firstTurn) {
             stateRef.setPreFetchedFirstAudioBlob(blob);
             resolve();
         } catch (error) {
-            console.error("failed to pre-fetch audio:", error);
             stateRef.setPreFetchedFirstAudioBlob(null);
             resolve();
         }
@@ -478,46 +508,7 @@ async function prefetchFirstAudio(firstTurn) {
 async function fetchPartnerAudio(text, party = 'B') {
     const currentLanguage = domElements.languageSelect?.value || 'English';
     const voiceConfig = getVoiceConfig(currentLanguage, party);
-    const cleanText = removeParentheses(text);
-    return await apiRef.fetchPartnerAudio(cleanText, voiceConfig);
-}
-
-export async function playLineAudioDebounced(text, party = 'B') {
-    if (audioDebounceTimer) clearTimeout(audioDebounceTimer);
-    if (stateRef.audioPlayer && !stateRef.audioPlayer.paused) stateRef.audioPlayer.pause();
-    audioDebounceTimer = setTimeout(() => {
-        playLineAudio(text, party);
-        audioDebounceTimer = null;
-    }, 300);
-}
-
-async function playLineAudio(text, party = 'B') {
-    stateRef.audioController.abort();
-    stateRef.audioController = new AbortController();
-    try {
-        const cleanText = removeParentheses(text);
-        const audioBlob = await fetchPartnerAudio(cleanText, party);
-        const audioUrl = URL.createObjectURL(audioBlob);
-        if (stateRef.audioPlayer.src) URL.revokeObjectURL(stateRef.audioPlayer.src);
-        stateRef.audioPlayer.src = audioUrl;
-        stateRef.audioPlayer.playbackRate = parseFloat(domElements.audioSpeedSelect?.value || '1');
-        stateRef.audioPlayer.load();
-        await stateRef.audioPlayer.play();
-    } catch (error) {
-        console.error("failed to fetch audio for playback:", error);
-    }
-}
-
-export function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
+    return await apiRef.fetchPartnerAudio(text, voiceConfig);
 }
 
 export function toggleSpeechRecognition() {
@@ -532,7 +523,7 @@ export function toggleSpeechRecognition() {
         } catch (error) {
             console.error('speech recognition failed to start:', error);
             if (domElements.micStatus) {
-                domElements.micStatus.textContent = 'speech recognition is not supported for this language in your browser.';
+                domElements.micStatus.textContent = 'Speech recognition is not supported for this language in your browser.';
             }
         }
     }
@@ -541,67 +532,27 @@ export function toggleSpeechRecognition() {
 export async function verifyUserSpeech(spokenText) {
     try {
         speechAttempts++;
-        const currentLanguage = domElements.languageSelect?.value || 'English';
+        const currentLanguage = domElements.languageSelect.value;
         const currentTurnData = stateRef.lessonPlan.dialogue[stateRef.currentTurnIndex];
-        
-        if (currentLanguage === 'Japanese' || currentLanguage === 'Korean' || currentLanguage === 'Chinese') {
-            if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('verifyingWithAI');
-            const nativeLangName = (stateRef.getTranslations().langEnglish || 'English'); 
-            let expectedLine = (currentSentences.length > 1) ? currentSentences[currentSentenceIndex] : currentTurnData.line.clean_text;
+        let requiredText = (currentSentences.length > 1) ? currentSentences[currentSentenceIndex] : currentTurnData.line.clean_text;
 
-            const verificationPrompt = `
-you are a language evaluation tool. the user's native language is ${nativeLangName}.
-your task is to determine if a student's spoken text is a correct phonetic match for a given sentence, ignoring punctuation and spacing.
-important: for chinese, be very lenient with technical vocabulary and accept partial matches if core concepts are present.
-your response must be a simple json object with two fields: "is_match": a boolean, and "feedback": a brief, encouraging explanation in ${nativeLangName}.
-expected: "${expectedLine}"
-spoken: "${spokenText}"
-provide the json response.`;
+        const normalize = (text) => text.trim().toLowerCase().replace(/[.,!?;:"'`´''""。！？]/g, '').replace(/\s+/g, ' ');
+        const normalizedSpoken = normalize(spokenText);
+        const normalizedRequired = normalize(requiredText);
 
-            const data = await apiRef.callGeminiAPI(verificationPrompt, { modelPreference: 'super' });
-            const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
-            const result = JSON.parse(jsonString);
+        const similarity = levenshteinDistance(normalizedSpoken, normalizedRequired);
+        const maxLength = Math.max(normalizedSpoken.length, normalizedRequired.length);
+        const similarityScore = maxLength === 0 ? 1 : 1 - (similarity / maxLength);
 
-            if (result.is_match) {
-                speechAttempts = 0;
-                handleCorrectSpeech();
-            } else {
-                const feedback = result.feedback || uiRef.translateText('tryAgain');
-                if (domElements.micStatus) domElements.micStatus.innerHTML = feedback;
-
-                if (currentLanguage === 'Chinese' && speechAttempts >= 3) {
-                    const skipBtn = document.createElement('button');
-                    skipBtn.className = 'ml-2 bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm';
-                    skipBtn.textContent = uiRef.translateText('skip') || '跳过 (skip)';
-                    skipBtn.onclick = () => { speechAttempts = 0; skipBtn.remove(); handleCorrectSpeech(); };
-                    if (domElements.micStatus) {
-                        domElements.micStatus.appendChild(document.createElement('br'));
-                        domElements.micStatus.appendChild(skipBtn);
-                    }
-                }
-                const currentLineEl = document.getElementById(`turn-${stateRef.currentTurnIndex}`);
-                if (currentLineEl) { currentLineEl.style.borderColor = '#f87171'; }
-                setTimeout(() => {
-                    if (currentSentences.length > 1) enableUserMicForSentence();
-                    else if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('tryAgainStatus');
-                    if (currentLineEl) currentLineEl.style.borderColor = '';
-                }, 4000);
-            }
+        if (similarityScore >= 0.75) {
+            handleCorrectSpeech();
         } else {
-            let requiredText = (currentSentences.length > 1) ? currentSentences[currentSentenceIndex] || '' : currentTurnData.line.clean_text;
-            const normalize = (text) => text.trim().toLowerCase().replace(/[.,!?;:"'`´''""。！？]/g, '').replace(/\s+/g, ' ');
-            const normalizedSpoken = normalize(spokenText);
-            const normalizedRequired = normalize(requiredText);
-            const distance = levenshteinDistance(normalizedSpoken, normalizedRequired);
-            const maxLength = Math.max(normalizedSpoken.length, normalizedRequired.length);
-            const similarity = maxLength === 0 ? 1 : 1 - (distance / maxLength);
-            if (similarity >= 0.75) { handleCorrectSpeech(); }
-            else { handleIncorrectSpeech(similarity, normalizedRequired, normalizedSpoken); }
+            handleIncorrectSpeech(similarityScore, normalizedRequired, normalizedSpoken);
         }
     } catch (error) {
-        console.error("critical error in verifyUserSpeech:", error);
-        if (domElements.micStatus) domElements.micStatus.textContent = 'a critical error occurred. please reset the lesson.';
-        if (domElements.micBtn) domElements.micBtn.disabled = true;
+        console.error("Critical error in verifyUserSpeech:", error);
+        domElements.micStatus.textContent = 'A critical error occurred. Please reset the lesson.';
+        domElements.micBtn.disabled = true;
     }
 }
 
@@ -622,23 +573,20 @@ function handleCorrectSpeech() {
     speechAttempts = 0;
     if (currentSentences.length > 1 && (currentSentenceIndex < currentSentences.length - 1)) {
         currentSentenceIndex++;
-        const sentenceCorrectText = uiRef.translateText('sentenceCorrect') || 'Correct! Next sentence...';
-        if (domElements.micStatus) domElements.micStatus.textContent = sentenceCorrectText;
-        setTimeout(() => { enableUserMicForSentence(); }, 1500);
+        domElements.micStatus.textContent = uiRef.translateText('sentenceCorrect');
+        setTimeout(() => enableUserMicForSentence(), 1500);
     } else {
-        const correctText = (currentSentences.length > 1) ? uiRef.translateText('allSentencesCorrect') : uiRef.translateText('correct');
-        if (domElements.micStatus) domElements.micStatus.textContent = correctText;
+        domElements.micStatus.textContent = (currentSentences.length > 1) ? uiRef.translateText('allSentencesCorrect') : uiRef.translateText('correct');
         const currentLineEl = document.getElementById(`turn-${stateRef.currentTurnIndex}`);
         if (currentLineEl) currentLineEl.style.borderColor = '#4ade80';
-        if (domElements.micBtn) domElements.micBtn.disabled = true;
-        const nextTurnIndex = stateRef.currentTurnIndex + 1;
-        setTimeout(() => { advanceTurn(nextTurnIndex); }, 2000);
+        domElements.micBtn.disabled = true;
+        setTimeout(() => advanceTurn(stateRef.currentTurnIndex + 1), 2000);
     }
 }
 
-function handleIncorrectSpeech(similarity, normalizedRequired, normalizedSpoken) {
-    const sentenceInfo = currentSentences.length > 1 ? ` (sentence ${currentSentenceIndex + 1}/${currentSentences.length})` : '';
-    if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('tryAgain') + ` (${(similarity * 100).toFixed(0)}% match)${sentenceInfo}`;
+function handleIncorrectSpeech(similarity, required, spoken) {
+    const sentenceInfo = currentSentences.length > 1 ? ` (Sentence ${currentSentenceIndex + 1}/${currentSentences.length})` : '';
+    domElements.micStatus.textContent = `${uiRef.translateText('tryAgain')} (${(similarity * 100).toFixed(0)}% match)${sentenceInfo}`;
     const currentLineEl = document.getElementById(`turn-${stateRef.currentTurnIndex}`);
     if (currentLineEl) {
         currentLineEl.classList.remove('active');
@@ -647,65 +595,29 @@ function handleIncorrectSpeech(similarity, normalizedRequired, normalizedSpoken)
         currentLineEl.style.borderColor = '#f87171';
     }
     setTimeout(() => {
-        if (currentSentences.length > 1) enableUserMicForSentence();
-        else if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('tryAgainStatus');
+        if (currentSentences.length > 1) {
+            enableUserMicForSentence();
+        } else {
+            domElements.micStatus.textContent = uiRef.translateText('tryAgainStatus');
+        }
         if (currentLineEl) currentLineEl.style.borderColor = '';
     }, 4000);
 }
 
-export async function reviewLesson(lessonRecord) {
-    stateRef.setLessonPlan(lessonRecord.lessonPlan);
-    stateRef.setCurrentTurnIndex(0);
-    domElements.languageSelect.value = lessonRecord.language;
-    domElements.topicInput.value = lessonRecord.topic;
-    if (stateRef.recognition) stateRef.recognition.lang = getLangCode(lessonRecord.language);
-    domElements.landingScreen.classList.add('hidden');
-    domElements.lessonScreen.classList.remove('hidden');
-    uiRef.stopTopicRotations();
-    if (stateRef.lessonPlan.illustration_url) {
-        uiRef.restoreIllustration(stateRef.lessonPlan.illustration_url);
-    } else if (stateRef.lessonPlan.illustration_prompt) {
-        fetchAndDisplayIllustration(stateRef.lessonPlan.illustration_prompt);
-    }
-    await startConversation();
-    uiRef.showReviewModeUI(lessonRecord.language);
-    stateRef.setCurrentTurnIndex(stateRef.lessonPlan.dialogue.length);
-    if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('lessonComplete');
-    if (domElements.micBtn) domElements.micBtn.disabled = true;
-    
-    if (saveStateRef) {
-        saveStateRef();
-    }
-}
-
 export function resetLesson() {
     if (!stateRef.lessonPlan) return;
-
-    if (stateRef.audioPlayer && !stateRef.audioPlayer.paused) {
-        stateRef.audioPlayer.pause();
-        stateRef.audioPlayer.src = "";
-    }
-
+    stateRef.audioPlayer?.pause();
+    stateRef.audioPlayer.src = "";
     stateRef.setCurrentTurnIndex(0);
-
-    document.querySelectorAll('.dialogue-line.active').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
-
-    if (domElements.micBtn) {
-        domElements.micBtn.disabled = false;
-        domElements.micBtn.classList.remove('bg-green-600');
-        domElements.micBtn.classList.add('bg-red-600');
-    }
-    if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('micStatus');
-
-
-    if (stateRef.isRecognizing && stateRef.recognition) {
-        stateRef.recognition.stop();
-    }
-
-    if (uiRef.hideReviewModeBanner) {
-        uiRef.hideReviewModeBanner();
-    }
-
+    document.querySelectorAll('.dialogue-line.active, .sentence-span.active-sentence').forEach(el => {
+        el.classList.remove('active', 'active-sentence');
+        el.style.borderColor = '';
+    });
+    domElements.micBtn.disabled = false;
+    domElements.micBtn.classList.remove('bg-green-600');
+    domElements.micBtn.classList.add('bg-red-600');
+    domElements.micStatus.textContent = uiRef.translateText('micStatus');
+    stateRef.recognition?.stop();
+    uiRef.hideReviewModeBanner?.();
     advanceTurn(0);
 }
