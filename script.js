@@ -1892,8 +1892,9 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
             lineDiv.classList.add('dialogue-line', 'text-white', 'cursor-pointer');
             lineDiv.id = `turn-${index}`;
 
-            // Create the base content with speaker name
-            let lineContent = `<strong>${turn.party}:</strong> `;
+            // Create the base content with speaker name (using emojis for display)
+            const speakerIcon = turn.party === 'A' ? '👤' : '🤖'; // Human for user, robot for partner
+            let lineContent = `<strong>${speakerIcon}:</strong> `;
 
             if (turn.party === 'A') {
                 const displayText = removeParentheses(turn.line.display); // Use line.display

@@ -226,6 +226,13 @@ header img[alt="RoleLang Logo"] {
 
 .dialogue-line.partner-line {
     background-color: rgba(74, 85, 104, 0.2); /* bg-gray-600/20 */
+    border-left: 3px solid #9ca3af; /* border-gray-400 */
+}
+
+/* Speaker emoji styling */
+.dialogue-line strong {
+    font-size: 1.1em;
+    margin-right: 0.5rem;
 }
 
 /* Explanation link styling */
