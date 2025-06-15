@@ -12,42 +12,12 @@ let saveStateRef;
 let currentSentences = [];
 let currentSentenceIndex = 0;
 let speechAttempts = 0;
-let currentAudio = null;
 let audioDebounceTimer = null;
-let isAudioPlaying = false;
 
 // --- Helper Functions ---
 function removeParentheses(text) {
     if (typeof text !== 'string') return '';
     return text.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
-}
-
-function tryFallbackSplit(text, language) {
-    const words = text.split(/\s+/);
-    if (words.length <= 5) return [text];
-
-    let splitPattern;
-    switch (language) {
-        case 'Korean': splitPattern = /([다요까]\s*)/; break;
-        case 'Japanese': splitPattern = /(です|ます|だ|である)\s*/; break;
-        case 'Chinese': splitPattern = /([。！？]\s*)/; break;
-        default: splitPattern = /([.!?]\s+)/;
-    }
-    const parts = text.split(splitPattern).filter(part => part && part.trim().length > 0);
-    const sentences = [];
-    let currentSentence = '';
-    for (let i = 0; i < parts.length; i++) {
-        currentSentence += parts[i];
-        if (splitPattern.test(parts[i]) || i === parts.length - 1) {
-            if (currentSentence.trim()) sentences.push(currentSentence.trim());
-            currentSentence = '';
-        }
-    }
-    if (sentences.length <= 1 && words.length > 8) {
-        const midPoint = Math.ceil(words.length / 2);
-        return [words.slice(0, midPoint).join(' '), words.slice(midPoint).join(' ')];
-    }
-    return sentences.length > 0 ? sentences : [text];
 }
 
 async function splitIntoSentences(text) {
@@ -84,6 +54,33 @@ Now, provide the JSON array.`;
     }
 }
 
+function tryFallbackSplit(text, language) {
+    const words = text.split(/\s+/);
+    if (words.length <= 5) return [text];
+
+    let splitPattern;
+    switch (language) {
+        case 'Korean': splitPattern = /([다요까]\s*)/; break;
+        case 'Japanese': splitPattern = /(です|ます|だ|である)\s*/; break;
+        case 'Chinese': splitPattern = /([。！？]\s*)/; break;
+        default: splitPattern = /([.!?]\s+)/;
+    }
+    const parts = text.split(splitPattern).filter(part => part && part.trim().length > 0);
+    const sentences = [];
+    let currentSentence = '';
+    for (let i = 0; i < parts.length; i++) {
+        currentSentence += parts[i];
+        if (splitPattern.test(parts[i]) || i === parts.length - 1) {
+            if (currentSentence.trim()) sentences.push(currentSentence.trim());
+            currentSentence = '';
+        }
+    }
+    if (sentences.length <= 1 && words.length > 8) {
+        const midPoint = Math.ceil(words.length / 2);
+        return [words.slice(0, midPoint).join(' '), words.slice(midPoint).join(' ')];
+    }
+    return sentences.length > 0 ? sentences : [text];
+}
 
 function saveLessonToHistory(lessonPlan, selectedLanguage, originalTopic) {
     try {
@@ -126,6 +123,7 @@ function saveLessonToHistory(lessonPlan, selectedLanguage, originalTopic) {
     }
 }
 
+
 // --- Core Module Functions ---
 
 export function init(elements, stateModule, apiModule, uiModule, saveFunc) {
@@ -163,14 +161,43 @@ function getVoiceConfig(language, party = 'A') {
     };
 }
 
+function createGeminiPrompt(language, topic, nativeLangName) {
+    const randomNames = getRandomNames(language, 5);
+    const nameExamples = randomNames.map(name => `"${name[0]} ${name[1]}"`).join(', ');
+    const isEnglish = language === 'English';
+    const translationInstruction = isEnglish
+        ? "The 'display' text should not contain any parenthetical translations."
+        : `The 'display' text MUST include a brief, parenthetical ${nativeLangName} translation. Example: "Bonjour (Hello)".`;
+    let lineObjectStructure = `
+        - "display": The line of dialogue in ${language}. ${translationInstruction}
+        - "clean_text": The line of dialogue in ${language} WITHOUT any parenthetical translations. THIS IS FOR SPEECH RECOGNITION.`;
+    if (language === 'Japanese') {
+        lineObjectStructure += `
+        - "hiragana": A pure hiragana version of "clean_text".`;
+    }
+    return `
+You are a language tutor creating a lesson for a web application. Your task is to generate a single, complete, structured lesson plan in JSON format. Do not output any text or explanation outside of the single JSON object.
+
+The user wants to learn: **${language}**
+The user's native language is: **${nativeLangName}**
+The user-provided topic for the roleplay is: **"${topic}"**
+
+Follow these steps precisely:
+
+1.  **JSON STRUCTURE:** The entire generated output must be only the JSON object with keys: "title", "background_context", "scenario", "language", "illustration_prompt", "dialogue".
+2.  **DIALOGUE PARTY:** Dialogue objects must have a "party" key with "a" (the user) or "b" (the partner).
+3.  **LINE OBJECT:** The "line" object must contain: ${lineObjectStructure}
+4.  **NAMES:** Use realistic, culturally-appropriate names for characters. Examples for ${language}: ${nameExamples}. DO NOT use placeholders like "[USER NAME]".
+5.  **LANGUAGE:** All explanations and titles must be in the user's native language (${nativeLangName}).
+6.  **ILLUSTRATION PROMPT:** This must be a brief, descriptive text in English.
+
+Now, generate the complete JSON lesson plan.`;
+}
+
 function getRandomNames(language, count = 5) {
     const namesByLanguage = window.characterNames;
-
-    if (!namesByLanguage || !namesByLanguage[language]) {
-        language = 'English';
-    }
-
-    const langNames = namesByLanguage[language];
+    const lang = (namesByLanguage && namesByLanguage[language]) ? language : 'English';
+    const langNames = namesByLanguage[lang];
     const allNames = [...langNames.female, ...langNames.male];
     const shuffled = [...allNames].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, count);
@@ -186,11 +213,11 @@ export async function initializeLesson() {
         return;
     }
     
-    if (domElements.loadingSpinner) domElements.loadingSpinner.classList.remove('hidden');
-    if (domElements.conversationContainer) domElements.conversationContainer.innerHTML = '';
-    if (domElements.illustrationImg) domElements.illustrationImg.classList.add('hidden');
-    if (domElements.illustrationPlaceholder) domElements.illustrationPlaceholder.classList.remove('hidden');
-    if (domElements.imageLoader) domElements.imageLoader.classList.add('hidden');
+    domElements.loadingSpinner?.classList.remove('hidden');
+    domElements.conversationContainer.innerHTML = '';
+    domElements.illustrationImg?.classList.add('hidden');
+    domElements.illustrationPlaceholder?.classList.remove('hidden');
+    domElements.imageLoader?.classList.add('hidden');
 
     const prompt = createGeminiPrompt(language, topic, stateRef.getNativeLang());
     
@@ -204,10 +231,10 @@ export async function initializeLesson() {
 
         if (stateRef.recognition) stateRef.recognition.lang = getLangCode(language);
 
-        if (domElements.loadingSpinner) domElements.loadingSpinner.classList.add('hidden');
+        domElements.loadingSpinner?.classList.add('hidden');
         uiRef.stopTopicRotations();
-        if (domElements.landingScreen) domElements.landingScreen.classList.add('hidden');
-        if (domElements.lessonScreen) domElements.lessonScreen.classList.remove('hidden');
+        domElements.landingScreen?.classList.add('hidden');
+        domElements.lessonScreen?.classList.remove('hidden');
 
         await startConversation();
         
@@ -228,15 +255,14 @@ export async function initializeLesson() {
     } catch (error) {
         console.error("Failed to initialize lesson:", error);
         alert(`${uiRef.translateText('errorLoading')} ${error.message}`);
-        if (domElements.loadingSpinner) domElements.loadingSpinner.classList.add('hidden');
-        if (domElements.landingScreen) domElements.landingScreen.classList.remove('hidden');
-        if (domElements.lessonScreen) domElements.lessonScreen.classList.add('hidden');
+        domElements.loadingSpinner?.classList.add('hidden');
+        domElements.landingScreen?.classList.remove('hidden');
+        domElements.lessonScreen?.classList.add('hidden');
     }
 }
 
 export async function startConversation() {
     stateRef.setCurrentTurnIndex(0);
-
     if (stateRef.lessonPlan && stateRef.lessonPlan.dialogue) {
         for (const turn of stateRef.lessonPlan.dialogue) {
             if (turn.party && turn.party.toUpperCase() === 'A' && (!turn.sentences || turn.sentences.length === 0)) {
@@ -245,7 +271,6 @@ export async function startConversation() {
             }
         }
     }
-
     await uiRef.restoreConversation(stateRef.lessonPlan);
     uiRef.displayLessonTitleAndContext(stateRef.lessonPlan);
     uiRef.addBackToLandingButton();
@@ -257,8 +282,8 @@ export async function advanceTurn(newTurnIndex) {
 
     const { lessonPlan, currentTurnIndex: cti } = stateRef;
     if (!lessonPlan || !lessonPlan.dialogue || cti >= lessonPlan.dialogue.length) {
-        if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('lessonComplete');
-        if (domElements.micBtn) domElements.micBtn.disabled = true;
+        domElements.micStatus.textContent = uiRef.translateText('lessonComplete');
+        domElements.micBtn.disabled = true;
         if (lessonPlan) {
             lessonPlan.isCompleted = true;
             saveLessonToHistory(lessonPlan, domElements.languageSelect.value, domElements.topicInput.value);
@@ -268,7 +293,6 @@ export async function advanceTurn(newTurnIndex) {
     }
 
     const currentTurnData = lessonPlan.dialogue[cti];
-
     document.querySelectorAll('.dialogue-line.active').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
     
@@ -278,19 +302,14 @@ export async function advanceTurn(newTurnIndex) {
         currentLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    // **THE FIX: Make the party check case-insensitive**
+    // THIS IS THE CRITICAL FIX
     if (currentTurnData.party && currentTurnData.party.toUpperCase() === 'A') {
         const cleanText = removeParentheses(currentTurnData.line.display);
-        
-        currentSentences = currentTurnData.sentences && currentTurnData.sentences.length > 0 
-            ? currentTurnData.sentences 
-            : await splitIntoSentences(cleanText);
-        currentTurnData.sentences = currentSentences; 
-        
+        currentSentences = currentTurnData.sentences?.length ? currentTurnData.sentences : await splitIntoSentences(cleanText);
+        currentTurnData.sentences = currentSentences;
         currentSentenceIndex = 0;
-        
-        if (domElements.micBtn) domElements.micBtn.disabled = true;
-        if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('listenFirst');
+        domElements.micBtn.disabled = true;
+        domElements.micStatus.textContent = uiRef.translateText('listenFirst');
         
         try {
             const audioBlob = await fetchPartnerAudio(cleanText, 'A');
@@ -298,44 +317,88 @@ export async function advanceTurn(newTurnIndex) {
             const audio = new Audio(audioUrl);
             audio.playbackRate = parseFloat(domElements.audioSpeedSelect?.value || '1');
             await audio.play();
-            
             audio.onended = () => { URL.revokeObjectURL(audioUrl); enableUserMicForSentence(); };
             audio.onerror = () => { URL.revokeObjectURL(audioUrl); enableUserMicForSentence(); };
         } catch (error) {
             enableUserMicForSentence();
         }
-        // **CRITICAL:** Stop execution here to wait for user input. Do not fall through.
-        return; 
-    } 
-    
-    // This is the partner's turn
-    if (domElements.micBtn) domElements.micBtn.disabled = true;
-    if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('partnerSpeaking');
-    
-    try {
-        const cleanText = removeParentheses(currentTurnData.line.display);
-        const audioBlob = await fetchPartnerAudio(cleanText, 'B');
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audio = new Audio(audioUrl);
-        audio.playbackRate = parseFloat(domElements.audioSpeedSelect?.value || '1');
-        await audio.play();
-        
-        audio.onended = () => { 
-            URL.revokeObjectURL(audioUrl); 
-            if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('audioFinished'); 
-            setTimeout(() => advanceTurn(cti + 1), 500); 
-        };
-        audio.onerror = () => { 
-            URL.revokeObjectURL(audioUrl);
-            console.error("Audio playback error for partner line.");
-            setTimeout(() => advanceTurn(cti + 1), 500); 
-        };
-    } catch (error) {
-        if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('audioUnavailable');
-        setTimeout(() => advanceTurn(cti + 1), 1500);
+    } else { // This is the partner's turn
+        domElements.micBtn.disabled = true;
+        domElements.micStatus.textContent = uiRef.translateText('partnerSpeaking');
+        try {
+            const cleanText = removeParentheses(currentTurnData.line.display);
+            const audioBlob = await fetchPartnerAudio(cleanText, 'B');
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const audio = new Audio(audioUrl);
+            audio.playbackRate = parseFloat(domElements.audioSpeedSelect?.value || '1');
+            await audio.play();
+            audio.onended = () => {
+                URL.revokeObjectURL(audioUrl);
+                domElements.micStatus.textContent = uiRef.translateText('audioFinished');
+                setTimeout(() => advanceTurn(cti + 1), 500);
+            };
+            audio.onerror = () => {
+                URL.revokeObjectURL(audioUrl);
+                console.error("Audio playback error for partner line.");
+                setTimeout(() => advanceTurn(cti + 1), 500);
+            };
+        } catch (error) {
+            domElements.micStatus.textContent = uiRef.translateText('audioUnavailable');
+            setTimeout(() => advanceTurn(cti + 1), 1500);
+        }
     }
 }
 
+function enableUserMicForSentence() {
+    domElements.micBtn.disabled = false;
+    document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
+    if (currentSentences.length > 1) {
+        const currentSentenceEl = document.getElementById(`turn-${stateRef.currentTurnIndex}-sentence-${currentSentenceIndex}`);
+        if (currentSentenceEl) currentSentenceEl.classList.add('active-sentence');
+        const displaySentence = currentSentenceEl ? currentSentenceEl.textContent : currentSentences[currentSentenceIndex];
+        const recordSentenceText = uiRef.translateText('recordSentence') || 'Record sentence';
+        domElements.micStatus.innerHTML = `<strong>${recordSentenceText} ${currentSentenceIndex + 1}/${currentSentences.length}:</strong><br><span style="color: #38bdf8; font-weight: bold; text-decoration: underline;">"${displaySentence}"</span>`;
+    } else {
+        const singleSentenceEl = document.getElementById(`turn-${stateRef.currentTurnIndex}-sentence-0`);
+        if (singleSentenceEl) singleSentenceEl.classList.add('active-sentence');
+        const yourTurnText = uiRef.translateText('yourTurn') || 'Your turn';
+        const lookForHighlightedText = uiRef.translateText('lookForHighlighted') || 'Look for the highlighted sentence above';
+        domElements.micStatus.innerHTML = `<strong>${yourTurnText}</strong><br><span style="color: #38bdf8; font-style: italic;">${lookForHighlightedText}</span>`;
+    }
+}
+
+export function confirmStartLesson() {
+    domElements.startLessonOverlay?.classList.add('hidden');
+    if (stateRef.preFetchedFirstAudioBlob) {
+        const firstTurn = stateRef.lessonPlan.dialogue[0];
+        const audioUrl = URL.createObjectURL(stateRef.preFetchedFirstAudioBlob);
+        const audio = new Audio(audioUrl);
+        audio.playbackRate = parseFloat(domElements.audioSpeedSelect.value);
+        audio.play().catch(e => console.error("error playing pre-fetched audio:", e));
+        const firstLineEl = document.getElementById('turn-0');
+        if (firstLineEl) {
+            firstLineEl.classList.add('active');
+            firstLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        audio.addEventListener('ended', async () => {
+            URL.revokeObjectURL(audioUrl);
+            if (firstTurn.party && firstTurn.party.toUpperCase() === 'A') {
+                const cleanText = removeParentheses(firstTurn.line.display);
+                currentSentences = await splitIntoSentences(cleanText);
+                currentSentenceIndex = 0;
+                enableUserMicForSentence();
+            } else {
+                advanceTurn(1);
+            }
+        });
+    } else {
+        advanceTurn(0);
+    }
+}
+
+// Keep the rest of the functions (verifyUserSpeech, handleCorrectSpeech, etc.) as they were in the previous correct version.
+// They rely on the advanceTurn and enableUserMicForSentence logic being correct.
+// ... (rest of the functions from previous response)
 export async function fetchAndDisplayIllustration(prompt) {
     return new Promise(async (resolve) => {
         try {
@@ -457,60 +520,6 @@ export function debounce(func, wait) {
     };
 }
 
-function createGeminiPrompt(language, topic, nativeLangName) {
-    const randomNames = getRandomNames(language, 5);
-    const nameExamples = randomNames.map(name => `"${name[0]} ${name[1]}"`).join(', ');
-    const isEnglish = language === 'English';
-    const translationInstruction = isEnglish
-        ? "The 'display' text should not contain any parenthetical translations."
-        : `The 'display' text MUST include a brief, parenthetical ${nativeLangName} translation. Example: "Bonjour (Hello)".`;
-    let lineObjectStructure = `
-        - "display": The line of dialogue in ${language}. ${translationInstruction}
-        - "clean_text": The line of dialogue in ${language} WITHOUT any parenthetical translations. THIS IS FOR SPEECH RECOGNITION.`;
-    if (language === 'Japanese') {
-        lineObjectStructure += `
-        - "hiragana": A pure hiragana version of "clean_text".`;
-    }
-    return `
-You are a language tutor creating a lesson for a web application. Your task is to generate a single, complete, structured lesson plan in JSON format. Do not output any text or explanation outside of the single JSON object.
-
-The user wants to learn: **${language}**
-The user's native language is: **${nativeLangName}**
-The user-provided topic for the roleplay is: **"${topic}"**
-
-Follow these steps precisely:
-
-**STEP 1: Understand the Topic**
-The user's topic above might not be in English. First, internally translate this topic to English to ensure you understand the user's intent. Do not show this translation in your output.
-
-**STEP 2: Generate the JSON Lesson Plan**
-Now, using your English understanding of the topic, create the lesson plan. The entire generated output must be only the JSON object.
-
-**JSON STRUCTURE REQUIREMENTS:**
-
-1.  **Top-Level Keys:** The JSON object must contain these keys: "title", "background_context", "scenario", "language", "illustration_prompt", "dialogue".
-
-2.  **Title:** A catchy, descriptive title for the lesson in ${nativeLangName} that captures the essence of the scenario.
-
-3.  **Background Context:** A brief paragraph in ${nativeLangName} explaining the context and setting of the roleplay scenario.
-
-4.  **Dialogue Object:** Each object in the "dialogue" array must contain:
-    - "party": "a" (the user) or "b" (the partner).
-    - "line": An object containing the text for the dialogue.
-    - "explanation" (optional): An object with a "title" and "body" for grammar tips in ${nativeLangName}.
-
-5.  **Line Object:** The "line" object must contain these exact fields:
-   ${lineObjectStructure}
-
-6.  **Character Names:** You MUST use realistic, culturally-appropriate names for the characters. Here are some good examples for ${language}: ${nameExamples}. Choose from these or similar culturally appropriate names for ${language}. Use both first and last names.
-
-7.  **NO PLACEHOLDERS:** Under no circumstances should you use placeholders like "[USER NAME]", "(YOUR NAME)", "<NAME>", or any similar variants.
-
-8.  **ILLUSTRATION PROMPT:** The "illustration_prompt" should be a brief, descriptive text in english to generate an appropriate illustration for the scenario.
-
-Now, generate the complete JSON lesson plan.`;
-}
-
 export function toggleSpeechRecognition() {
     if (!stateRef.recognition) return;
     if (stateRef.isRecognizing) {
@@ -535,8 +544,7 @@ export async function verifyUserSpeech(spokenText) {
         const currentLanguage = domElements.languageSelect?.value || 'English';
         const currentTurnData = stateRef.lessonPlan.dialogue[stateRef.currentTurnIndex];
         
-        // **THE FIX: Make the party check case-insensitive**
-        if (currentTurnData.party && (currentLanguage === 'Japanese' || currentLanguage === 'Korean' || currentLanguage === 'Chinese')) {
+        if (currentLanguage === 'Japanese' || currentLanguage === 'Korean' || currentLanguage === 'Chinese') {
             if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('verifyingWithAI');
             const nativeLangName = (stateRef.getTranslations().langEnglish || 'English'); 
             let expectedLine = (currentSentences.length > 1) ? currentSentences[currentSentenceIndex] : currentTurnData.line.clean_text;
@@ -643,60 +651,6 @@ function handleIncorrectSpeech(similarity, normalizedRequired, normalizedSpoken)
         else if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('tryAgainStatus');
         if (currentLineEl) currentLineEl.style.borderColor = '';
     }, 4000);
-}
-
-function enableUserMicForSentence() {
-    if (domElements.micBtn) domElements.micBtn.disabled = false;
-    document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
-    if (currentSentences.length > 1) {
-        const currentSentenceEl = document.getElementById(`turn-${stateRef.currentTurnIndex}-sentence-${currentSentenceIndex}`);
-        if (currentSentenceEl) currentSentenceEl.classList.add('active-sentence');
-        const displaySentence = currentSentenceEl ? currentSentenceEl.textContent : currentSentences[currentSentenceIndex];
-        const recordSentenceText = uiRef.translateText('recordSentence') || 'Record sentence';
-        if (domElements.micStatus) domElements.micStatus.innerHTML = `<strong>${recordSentenceText} ${currentSentenceIndex + 1}/${currentSentences.length}:</strong><br><span style="color: #38bdf8; font-weight: bold; text-decoration: underline;">"${displaySentence}"</span>`;
-    } else {
-        const singleSentenceEl = document.getElementById(`turn-${stateRef.currentTurnIndex}-sentence-0`);
-        if (singleSentenceEl) singleSentenceEl.classList.add('active-sentence');
-        const yourTurnText = uiRef.translateText('yourTurn') || 'Your turn';
-        const lookForHighlightedText = uiRef.translateText('lookForHighlighted') || 'Look for the highlighted sentence above';
-        if (domElements.micStatus) domElements.micStatus.innerHTML = `<strong>${yourTurnText}</strong><br><span style="color: #38bdf8; font-style: italic;">${lookForHighlightedText}</span>`;
-    }
-}
-
-export function confirmStartLesson() {
-    if (!domElements.startLessonOverlay) return;
-    domElements.startLessonOverlay.classList.add('hidden');
-
-    if (stateRef.preFetchedFirstAudioBlob) {
-        const firstTurn = stateRef.lessonPlan.dialogue[0];
-        const audioUrl = URL.createObjectURL(stateRef.preFetchedFirstAudioBlob);
-        const audio = new Audio(audioUrl);
-        audio.playbackRate = parseFloat(domElements.audioSpeedSelect.value);
-
-        audio.play().catch(e => console.error("error playing pre-fetched audio:", e));
-
-        const firstLineEl = document.getElementById('turn-0');
-        if (firstLineEl) {
-            firstLineEl.classList.add('active');
-            firstLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-
-        audio.addEventListener('ended', async () => {
-            URL.revokeObjectURL(audioUrl);
-
-            // **THE FIX: Make the party check case-insensitive**
-            if (firstTurn.party && firstTurn.party.toUpperCase() === 'A') {
-                const cleanText = removeParentheses(firstTurn.line.display);
-                currentSentences = await splitIntoSentences(cleanText);
-                currentSentenceIndex = 0;
-                enableUserMicForSentence();
-            } else {
-                advanceTurn(1);
-            }
-        });
-    } else {
-        advanceTurn(0);
-    }
 }
 
 export async function reviewLesson(lessonRecord) {
