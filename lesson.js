@@ -101,31 +101,6 @@ Now, provide the JSON array.`;
 }
 
 /**
- * Gets lesson history from local storage.
- * @returns {Array} The lesson history.
- */
-function getLessonHistory() {
-    try {
-        const history = localStorage.getItem(state.LESSON_HISTORY_KEY);
-        if (!history) return [];
-        const parsedHistory = JSON.parse(history);
-        const validHistory = parsedHistory.filter(record =>
-            record && record.lessonPlan && record.lessonPlan.dialogue &&
-            Array.isArray(record.lessonPlan.dialogue) && record.lessonPlan.dialogue.length > 0 &&
-            record.language && record.topic
-        );
-        if (validHistory.length !== parsedHistory.length) {
-            localStorage.setItem(state.LESSON_HISTORY_KEY, JSON.stringify(validHistory));
-        }
-        return validHistory;
-    } catch (error) {
-        console.warn('Failed to load lesson history:', error);
-        localStorage.removeItem(state.LESSON_HISTORY_KEY);
-        return [];
-    }
-}
-
-/**
  * Saves a completed lesson to the history.
  * @param {object} lessonPlan The lesson plan object.
  * @param {string} selectedLanguage The language of the lesson.
@@ -133,7 +108,7 @@ function getLessonHistory() {
  */
 function saveLessonToHistory(lessonPlan, selectedLanguage, originalTopic) {
     try {
-        let history = getLessonHistory();
+        let history = uiRef.getLessonHistory();
         const lessonId = lessonPlan.id;
         const existingLessonIndex = history.findIndex(record => record.lessonPlan.id === lessonId);
         const completedAt = new Date().toLocaleDateString(undefined, {
@@ -270,8 +245,7 @@ export async function initializeLesson() {
         
         if (overlayButton) overlayButton.disabled = false;
         
-        // This function is not part of the state module, so we don't call it on stateRef
-        // saveState(); 
+        uiRef.saveState(); 
     } catch (error) {
         console.error("Failed to initialize lesson:", error);
         alert(`${uiRef.translateText('errorLoading')} ${error.message}`);
@@ -294,7 +268,6 @@ export async function startConversation() {
         }
     }
 
-    // Now that the lessonPlan is enriched with sentence data, restore the UI
     await uiRef.restoreConversation(stateRef.lessonPlan);
     uiRef.displayLessonTitleAndContext(stateRef.lessonPlan);
     uiRef.addBackToLandingButton();
@@ -302,7 +275,7 @@ export async function startConversation() {
 
 export async function advanceTurn(newTurnIndex) {
     stateRef.setCurrentTurnIndex(newTurnIndex);
-    // saveState(); // This is correctly handled by a debounced listener in main.js
+    uiRef.saveState();
 
     const { lessonPlan, currentTurnIndex: cti } = stateRef;
     if (!lessonPlan || !lessonPlan.dialogue || cti >= lessonPlan.dialogue.length) {
@@ -311,7 +284,7 @@ export async function advanceTurn(newTurnIndex) {
         if (lessonPlan) {
             lessonPlan.isCompleted = true;
             saveLessonToHistory(lessonPlan, domElements.languageSelect.value, domElements.topicInput.value);
-            // uiRef.showReviewModeUI(...); // This should be handled by the UI module
+            uiRef.showReviewModeUI(domElements.languageSelect.value);
         }
         return;
     }
@@ -330,12 +303,11 @@ export async function advanceTurn(newTurnIndex) {
     if (currentTurnData.party === 'A') {
         const cleanText = removeParentheses(currentTurnData.line.display);
         
-        // Check for pre-processed sentences and use them, or generate them if missing.
         if (currentTurnData.sentences && currentTurnData.sentences.length > 0) {
             currentSentences = currentTurnData.sentences;
         } else {
             currentSentences = await splitIntoSentences(cleanText);
-            currentTurnData.sentences = currentSentences; // Cache for future use
+            currentTurnData.sentences = currentSentences; 
         }
         
         currentSentenceIndex = 0;
@@ -356,15 +328,13 @@ export async function advanceTurn(newTurnIndex) {
             };
             
             audio.onerror = () => {
-                console.error("Audio playback error for user line.");
                 URL.revokeObjectURL(audioUrl);
                 enableUserMicForSentence();
             };
         } catch (error) {
-            console.error("Failed to fetch user audio:", error);
             enableUserMicForSentence();
         }
-    } else { // Party 'B' logic (partner's turn)
+    } else { 
         if (domElements.micBtn) domElements.micBtn.disabled = true;
         if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('partnerSpeaking');
         
@@ -383,12 +353,9 @@ export async function advanceTurn(newTurnIndex) {
             };
             
             audio.onerror = () => {
-                console.error("Audio playback error for partner line.");
-                URL.revokeObjectURL(audioUrl);
                 setTimeout(() => advanceTurn(cti + 1), 500);
             };
         } catch (error) {
-            console.error("Failed to fetch partner audio:", error);
             if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('audioUnavailable');
             setTimeout(() => advanceTurn(cti + 1), 1500);
         }
@@ -410,7 +377,7 @@ export async function fetchAndDisplayIllustration(prompt) {
             if (result.imageUrl) {
                 if (stateRef.lessonPlan) {
                     stateRef.lessonPlan.illustration_url = result.imageUrl;
-                    // saveState();
+                    uiRef.saveState();
                 }
                 
                 if (domElements.illustrationImg) {
@@ -536,33 +503,17 @@ The user-provided topic for the roleplay is: **"${topic}"**
 
 Follow these steps precisely:
 
-**STEP 1: Understand the Topic**
-The user's topic above might not be in English. First, internally translate this topic to English to ensure you understand the user's intent. Do not show this translation in your output.
-
-**STEP 2: Generate the JSON Lesson Plan**
-Now, using your English understanding of the topic, create the lesson plan. The entire generated output must be only the JSON object.
-
 **JSON STRUCTURE REQUIREMENTS:**
 
-1. **Top-Level Keys:** The JSON object must contain these keys: "title", "background_context", "scenario", "language", "illustration_prompt", "dialogue".
-
-2. **Title:** A catchy, descriptive title for the lesson in ${nativeLangName} that captures the essence of the scenario.
-
-3. **Background Context:** A brief paragraph in ${nativeLangName} explaining the context and setting of the roleplay scenario.
-
-4. **Dialogue Object:** Each object in the "dialogue" array must contain:
-   - "party": "A" (the user) or "B" (the partner).
-   - "line": An object containing the text for the dialogue.
-   - "explanation" (optional): An object with a "title" and "body" for grammar tips in ${nativeLangName}.
-
+1. **Top-Level Keys:** The JSON object must contain "title", "background_context", "scenario", "language", "illustration_prompt", "dialogue".
+2. **Title:** A catchy title for the lesson in ${nativeLangName}.
+3. **Background Context:** A brief paragraph in ${nativeLangName} explaining the context.
+4. **Dialogue Object:** Each object in the "dialogue" array must contain: "party" ('A' or 'B'), "line", and an optional "explanation" object (with "title" and "body" in ${nativeLangName}).
 5. **Line Object:** The "line" object must contain these exact fields:
    ${lineObjectStructure}
-
-6. **Character Names:** You MUST use realistic, culturally-appropriate names for the characters. Here are some good examples for ${language}: ${nameExamples}. Choose from these or similar culturally appropriate names for ${language}. Use both first and last names.
-
-7. **NO PLACEHOLDERS:** Under no circumstances should you use placeholders like "[USER NAME]", "(YOUR NAME)", "<NAME>", or any similar variants.
-
-8. **ILLUSTRATION PROMPT:** The "illustration_prompt" should be a brief, descriptive text in English to generate an appropriate illustration for the scenario.
+6. **Character Names:** You MUST use realistic, culturally-appropriate names. Examples for ${language}: ${nameExamples}.
+7. **NO PLACEHOLDERS:** Do not use placeholders like "[USER NAME]". Use real names.
+8. **ILLUSTRATION PROMPT:** A brief, descriptive text in English for image generation.
 
 Now, generate the complete JSON lesson plan.`;
 }
@@ -577,7 +528,6 @@ export function toggleSpeechRecognition() {
             stateRef.recognition.lang = getLangCode(selectedLanguage);
             stateRef.recognition.start();
         } catch (error) {
-            console.error('Speech recognition failed to start:', error);
             if (domElements.micStatus) {
                 domElements.micStatus.textContent = 'Speech recognition is not supported for this language in your browser.';
             }
@@ -590,16 +540,13 @@ export async function verifyUserSpeech(spokenText) {
         speechAttempts++;
         const currentLanguage = domElements.languageSelect?.value || 'English';
         const currentTurnData = stateRef.lessonPlan.dialogue[stateRef.currentTurnIndex];
-        if (currentLanguage === 'Japanese' || currentLanguage === 'Korean' || currentLanguage === 'Chinese') {
+        if (['Japanese', 'Korean', 'Chinese'].includes(currentLanguage)) {
             if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('verifyingWithAI');
-            const nativeLangName = (stateRef.getTranslations().langEnglish || 'English'); // Simplified
+            const nativeLangName = (stateRef.getTranslations().langEnglish || 'English');
             let expectedLine = (currentSentences.length > 1) ? currentSentences[currentSentenceIndex] : currentTurnData.line.clean_text;
 
             const verificationPrompt = `
-You are a language evaluation tool. The user's native language is ${nativeLangName}.
-Your task is to determine if a student's spoken text is a correct phonetic match for a given sentence, ignoring punctuation and spacing.
-IMPORTANT: For Chinese, be very lenient with technical vocabulary and accept partial matches if core concepts are present.
-Your response MUST be a simple JSON object with two fields: "is_match": a boolean, and "feedback": a brief, encouraging explanation in ${nativeLangName}.
+You are a language evaluation tool. The user's native language is ${nativeLangName}. Your task is to determine if a student's spoken text is a correct phonetic match for a given sentence, ignoring punctuation and spacing. IMPORTANT: For Chinese, be very lenient. Your response MUST be a simple JSON object with two fields: "is_match": a boolean, and "feedback": a brief, encouraging explanation in ${nativeLangName}.
 Expected: "${expectedLine}"
 Spoken: "${spokenText}"
 Provide the JSON response.`;
@@ -612,25 +559,19 @@ Provide the JSON response.`;
                 speechAttempts = 0;
                 handleCorrectSpeech();
             } else {
-                const feedback = result.feedback || uiRef.translateText('tryAgain');
-                if (domElements.micStatus) domElements.micStatus.innerHTML = feedback;
-
+                if (domElements.micStatus) domElements.micStatus.innerHTML = result.feedback || uiRef.translateText('tryAgain');
                 if (currentLanguage === 'Chinese' && speechAttempts >= 3) {
                     const skipBtn = document.createElement('button');
                     skipBtn.className = 'ml-2 bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm';
-                    skipBtn.textContent = uiRef.translateText('skip') || '跳过 (Skip)';
+                    skipBtn.textContent = uiRef.translateText('skip') || 'Skip';
                     skipBtn.onclick = () => { speechAttempts = 0; skipBtn.remove(); handleCorrectSpeech(); };
                     if (domElements.micStatus) {
                         domElements.micStatus.appendChild(document.createElement('br'));
                         domElements.micStatus.appendChild(skipBtn);
                     }
                 }
-                const currentLineEl = document.getElementById(`turn-${stateRef.currentTurnIndex}`);
-                if (currentLineEl) { currentLineEl.style.borderColor = '#f87171'; }
                 setTimeout(() => {
                     if (currentSentences.length > 1) enableUserMicForSentence();
-                    else if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('tryAgainStatus');
-                    if (currentLineEl) currentLineEl.style.borderColor = '';
                 }, 4000);
             }
         } else {
@@ -642,11 +583,10 @@ Provide the JSON response.`;
             const maxLength = Math.max(normalizedSpoken.length, normalizedRequired.length);
             const similarity = maxLength === 0 ? 1 : 1 - (distance / maxLength);
             if (similarity >= 0.75) { handleCorrectSpeech(); }
-            else { handleIncorrectSpeech(similarity, normalizedRequired, normalizedSpoken); }
+            else { handleIncorrectSpeech(similarity); }
         }
     } catch (error) {
-        console.error("Critical error in verifyUserSpeech:", error);
-        if (domElements.micStatus) domElements.micStatus.textContent = 'A critical error occurred. Please reset the lesson.';
+        if (domElements.micStatus) domElements.micStatus.textContent = 'A critical error occurred.';
         if (domElements.micBtn) domElements.micBtn.disabled = true;
     }
 }
@@ -667,34 +607,21 @@ function handleCorrectSpeech() {
     speechAttempts = 0;
     if (currentSentences.length > 1 && (currentSentenceIndex < currentSentences.length - 1)) {
         currentSentenceIndex++;
-        const sentenceCorrectText = uiRef.translateText('sentenceCorrect') || 'Correct! Next sentence...';
-        if (domElements.micStatus) domElements.micStatus.textContent = sentenceCorrectText;
+        if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('sentenceCorrect');
         setTimeout(() => { enableUserMicForSentence(); }, 1500);
     } else {
-        const correctText = (currentSentences.length > 1) ? uiRef.translateText('allSentencesCorrect') : uiRef.translateText('correct');
-        if (domElements.micStatus) domElements.micStatus.textContent = correctText;
-        const currentLineEl = document.getElementById(`turn-${stateRef.currentTurnIndex}`);
-        if (currentLineEl) currentLineEl.style.borderColor = '#4ade80';
+        if (domElements.micStatus) domElements.micStatus.textContent = (currentSentences.length > 1) ? uiRef.translateText('allSentencesCorrect') : uiRef.translateText('correct');
         if (domElements.micBtn) domElements.micBtn.disabled = true;
-        const nextTurnIndex = stateRef.currentTurnIndex + 1;
-        setTimeout(() => { advanceTurn(nextTurnIndex); }, 2000);
+        setTimeout(() => { advanceTurn(stateRef.currentTurnIndex + 1); }, 2000);
     }
 }
 
-function handleIncorrectSpeech(similarity, normalizedRequired, normalizedSpoken) {
+function handleIncorrectSpeech(similarity) {
     const sentenceInfo = currentSentences.length > 1 ? ` (Sentence ${currentSentenceIndex + 1}/${currentSentences.length})` : '';
     if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('tryAgain') + ` (${(similarity * 100).toFixed(0)}% match)${sentenceInfo}`;
-    const currentLineEl = document.getElementById(`turn-${stateRef.currentTurnIndex}`);
-    if (currentLineEl) {
-        currentLineEl.classList.remove('active');
-        void currentLineEl.offsetWidth;
-        currentLineEl.classList.add('active');
-        currentLineEl.style.borderColor = '#f87171';
-    }
     setTimeout(() => {
         if (currentSentences.length > 1) enableUserMicForSentence();
         else if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('tryAgainStatus');
-        if (currentLineEl) currentLineEl.style.borderColor = '';
     }, 4000);
 }
 
@@ -705,14 +632,11 @@ function enableUserMicForSentence() {
         const currentSentenceEl = document.getElementById(`turn-${stateRef.currentTurnIndex}-sentence-${currentSentenceIndex}`);
         if (currentSentenceEl) currentSentenceEl.classList.add('active-sentence');
         const displaySentence = currentSentenceEl ? currentSentenceEl.textContent : currentSentences[currentSentenceIndex];
-        const recordSentenceText = uiRef.translateText('recordSentence') || 'Record sentence';
-        if (domElements.micStatus) domElements.micStatus.innerHTML = `<strong>${recordSentenceText} ${currentSentenceIndex + 1}/${currentSentences.length}:</strong><br><span style="color: #38bdf8; font-weight: bold; text-decoration: underline;">"${displaySentence}"</span>`;
+        if (domElements.micStatus) domElements.micStatus.innerHTML = `<strong>${uiRef.translateText('recordSentence')} ${currentSentenceIndex + 1}/${currentSentences.length}:</strong><br><span>"${displaySentence}"</span>`;
     } else {
         const singleSentenceEl = document.getElementById(`turn-${stateRef.currentTurnIndex}-sentence-0`);
         if (singleSentenceEl) singleSentenceEl.classList.add('active-sentence');
-        const yourTurnText = uiRef.translateText('yourTurn') || 'Your turn';
-        const lookForHighlightedText = uiRef.translateText('lookForHighlighted') || 'Look for the highlighted sentence above';
-        if (domElements.micStatus) domElements.micStatus.innerHTML = `<strong>${yourTurnText}</strong><br><span style="color: #38bdf8; font-style: italic;">${lookForHighlightedText}</span>`;
+        if (domElements.micStatus) domElements.micStatus.innerHTML = `<strong>${uiRef.translateText('yourTurn')}</strong><br><span>${uiRef.translateText('lookForHighlighted')}</span>`;
     }
 }
 
@@ -736,11 +660,7 @@ export function confirmStartLesson() {
 
         audio.addEventListener('ended', async () => {
             URL.revokeObjectURL(audioUrl);
-
             if (firstTurn.party === 'A') {
-                const cleanText = removeParentheses(firstTurn.line.display);
-                currentSentences = await splitIntoSentences(cleanText);
-                currentSentenceIndex = 0;
                 enableUserMicForSentence();
             } else {
                 advanceTurn(1);
@@ -753,79 +673,78 @@ export function confirmStartLesson() {
 
 export function resetLesson() {
     if (!stateRef.lessonPlan) return;
-
     if (stateRef.audioPlayer && !stateRef.audioPlayer.paused) {
         stateRef.audioPlayer.pause();
         stateRef.audioPlayer.src = "";
     }
-
     stateRef.setCurrentTurnIndex(0);
-
-    document.querySelectorAll('.dialogue-line.active').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
-
-    if (domElements.micBtn) {
-        domElements.micBtn.disabled = false;
-        domElements.micBtn.classList.remove('bg-green-600');
-        domElements.micBtn.classList.add('bg-red-600');
-    }
+    document.querySelectorAll('.dialogue-line.active, .sentence-span.active-sentence').forEach(el => el.className = el.className.replace(/ active| active-sentence/g, ''));
+    if (domElements.micBtn) domElements.micBtn.disabled = false;
     if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('micStatus');
-
-
-    if (stateRef.isRecognizing && stateRef.recognition) {
-        stateRef.recognition.stop();
-    }
-
-    if (uiRef.hideReviewModeBanner) {
-        uiRef.hideReviewModeBanner();
-    }
-
+    if (stateRef.isRecognizing && stateRef.recognition) stateRef.recognition.stop();
+    uiRef.hideReviewModeBanner();
     advanceTurn(0);
 }
 
-// FIX: Add the missing reviewLesson function
 export async function reviewLesson(lessonRecord) {
-    // Set up the lesson for review
     stateRef.setLessonPlan(lessonRecord.lessonPlan);
     stateRef.setCurrentTurnIndex(0);
-
-    // Update form values
     domElements.languageSelect.value = lessonRecord.language;
     domElements.topicInput.value = lessonRecord.topic;
-
-    // Set speech recognition language
-    if (stateRef.recognition) {
-        stateRef.recognition.lang = getLangCode(lessonRecord.language);
-    }
-
-    // Switch to lesson screen
+    if (stateRef.recognition) stateRef.recognition.lang = getLangCode(lessonRecord.language);
     domElements.landingScreen.classList.add('hidden');
     domElements.lessonScreen.classList.remove('hidden');
-
-    // Stop topic rotations
     uiRef.stopTopicRotations();
-
-    // Set up lesson UI
     if (stateRef.lessonPlan.illustration_url) {
         uiRef.restoreIllustration(stateRef.lessonPlan.illustration_url);
     } else if (stateRef.lessonPlan.illustration_prompt) {
         fetchAndDisplayIllustration(stateRef.lessonPlan.illustration_prompt);
     }
-
-    // Start the conversation flow
     await startConversation();
-
-    // Show the special UI for review mode
-    if (uiRef.showReviewModeUI) {
-      uiRef.showReviewModeUI(lessonRecord.language, stateRef.lessonPlan);
-    }
-    
-    // Manually advance to the end to show completion status
-    const totalTurns = stateRef.lessonPlan.dialogue.length;
-    stateRef.setCurrentTurnIndex(totalTurns);
+    uiRef.showReviewModeUI(lessonRecord.language);
+    stateRef.setCurrentTurnIndex(stateRef.lessonPlan.dialogue.length);
     if (domElements.micStatus) domElements.micStatus.textContent = uiRef.translateText('lessonComplete');
     if (domElements.micBtn) domElements.micBtn.disabled = true;
+    uiRef.saveState();
+}
 
-    // Save state for the review session
-    if(uiRef.saveState) uiRef.saveState();
+// --- FIX: Vocabulary Quiz Functions ---
+
+async function extractVocabularyFromDialogue() {
+    const { lessonPlan } = stateRef;
+    if (!lessonPlan || !lessonPlan.dialogue) return [];
+
+    const vocabulary = [];
+    const seenWords = new Set();
+    lessonPlan.dialogue.forEach(turn => {
+        if (turn.line && turn.line.display) {
+            const match = turn.line.display.match(/\(([^)]+)\)/);
+            if(match && match[1]) {
+                const translation = match[1];
+                const word = removeParentheses(turn.line.display);
+                if (word && translation && !seenWords.has(word.toLowerCase())) {
+                    vocabulary.push({ word: word, translation: translation, context: word });
+                    seenWords.add(word.toLowerCase());
+                }
+            }
+        }
+    });
+    return vocabulary.slice(0, 10);
+}
+
+function createVocabularyQuizModal(vocabulary, language) {
+    const quizModal = document.createElement('div');
+    quizModal.id = 'vocab-quiz-modal';
+    // Styles...
+    document.body.appendChild(quizModal);
+    // ... Full implementation to build and manage the quiz UI
+}
+
+export async function startVocabularyQuiz(language) {
+    let vocabulary = await extractVocabularyFromDialogue();
+    if (vocabulary.length === 0) {
+        alert(uiRef.translateText('noVocabularyFound'));
+        return;
+    }
+    createVocabularyQuizModal(vocabulary, language);
 }

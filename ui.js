@@ -86,7 +86,6 @@ function detectNativeLanguage() {
 }
 
 // --- History Functions (Moved Up) ---
-// FIX: Export this function
 export function getLessonHistory() {
     try {
         const history = localStorage.getItem(LESSON_HISTORY_KEY);
@@ -174,9 +173,15 @@ export function toggleHistoryVisibility() {
     }
 }
 
-// FIX: Add the missing showReviewModeUI function
-export function showReviewModeUI(language, lessonPlan) {
-    hideReviewModeBanner(); // Clear any existing banner first
+// FIX: Added showExplanation function
+export function showExplanation(content) {
+    domElements.modalBody.innerHTML = `<h3 class="text-xl font-bold mb-2 text-cyan-300">${content.title}</h3><p class="text-gray-300">${content.body}</p>`;
+    domElements.modal.classList.remove('hidden');
+}
+
+
+export function showReviewModeUI(language) {
+    hideReviewModeBanner();
 
     const reviewBanner = document.createElement('div');
     reviewBanner.className = 'review-mode-indicator bg-purple-600 text-white px-4 py-3 mb-4 rounded-lg';
@@ -199,14 +204,6 @@ export function showReviewModeUI(language, lessonPlan) {
     `;
     
     domElements.lessonScreen.insertBefore(reviewBanner, domElements.lessonScreen.firstChild);
-
-    // Add event listener for the new button.
-    // This is not ideal, but necessary given the structure.
-    document.getElementById('vocab-quiz-btn').addEventListener('click', () => {
-        // We need a way to trigger the quiz. This is a placeholder
-        // for where you would call a quiz function, likely from the lesson module.
-        console.log("Vocabulary quiz button clicked for:", language);
-    });
 }
 
 
@@ -328,6 +325,7 @@ export async function restoreConversation(lessonPlan) {
     }
 }
 
+// FIX: Updated to include grammar explanation icon logic
 function createDialogueLine(turn, index) {
     const lineDiv = document.createElement('div');
     lineDiv.className = `dialogue-line text-white cursor-pointer ${turn.party === 'A' ? 'user-line' : 'partner-line'}`;
@@ -335,11 +333,23 @@ function createDialogueLine(turn, index) {
 
     const speakerIcon = turn.party === 'A' ? '👤' : '🤖';
     let lineContent = `<strong>${speakerIcon}</strong> ${turn.line.display} <i class="fas fa-volume-up text-gray-400 ml-2 hover:text-sky-300"></i>`;
-
+    
     lineDiv.innerHTML = lineContent;
-    // Add audio playback listener, etc.
+
+    if (turn.explanation) {
+        const explanationSpan = document.createElement('span');
+        explanationSpan.innerHTML = ` <i class="fas fa-info-circle text-sky-300 ml-6"></i>`;
+        explanationSpan.classList.add('explanation-link');
+        explanationSpan.onclick = (e) => {
+            e.stopPropagation(); // Prevent audio playback
+            showExplanation(turn.explanation);
+        };
+        lineDiv.appendChild(explanationSpan);
+    }
+
     return lineDiv;
 }
+
 
 export function restoreIllustration(imageUrl) {
     domElements.illustrationPlaceholder.classList.add('hidden');

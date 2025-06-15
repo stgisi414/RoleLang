@@ -164,7 +164,6 @@ async function initializeApp() {
         startLessonOverlay: document.getElementById('start-lesson-overlay'),
         confirmStartLessonBtn: document.getElementById('confirm-start-lesson-btn'),
         appContainer: document.getElementById('app-container'),
-        // --- ADD THESE MISSING ELEMENTS ---
         lessonTitleContainer: document.getElementById('lesson-title-container'),
         lessonTitle: document.getElementById('lesson-title'),
         backgroundContextContainer: document.getElementById('background-context-container'),
@@ -180,7 +179,6 @@ async function initializeApp() {
     ui.init(elements, state.getTranslations, state.getNativeLang, saveState);
     lesson.init(elements, state, api, ui);
 
-    // --- Speech Recognition Setup ---
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
         const recognitionInstance = new SpeechRecognition();
@@ -204,13 +202,6 @@ async function initializeApp() {
 
         recognitionInstance.onerror = (event) => {
             console.error("Speech recognition error:", event.error, "for language:", recognitionInstance.lang);
-            const currentLanguage = elements.languageSelect?.value;
-            if (event.error === 'language-not-supported' && elements.micStatus) {
-                elements.micStatus.innerHTML = `Speech recognition for <strong>${currentLanguage}</strong> is not supported by your browser.`;
-                if (elements.micBtn) elements.micBtn.disabled = true;
-            } else if (elements.micStatus) {
-                elements.micStatus.textContent = `An error occurred: ${event.error}.`;
-            }
         };
 
         recognitionInstance.onresult = (event) => {
@@ -219,7 +210,6 @@ async function initializeApp() {
             lesson.verifyUserSpeech(spokenText);
         };
 
-        // Set the recognition instance in the state module
         state.setRecognition(recognitionInstance);
     } else {
         if (elements.micStatus) elements.micStatus.textContent = ui.translateText('speechNotSupported');
@@ -228,7 +218,6 @@ async function initializeApp() {
 
     // --- Event Listeners ---
     elements.startLessonBtn?.addEventListener('click', () => {
-		// FIX: Call clearState() here before initializing a new lesson.
 		clearState(); 
 		lesson.initializeLesson();
 	});
@@ -239,37 +228,25 @@ async function initializeApp() {
     elements.situationsTab?.addEventListener('click', () => ui.switchTab('situations'));
     elements.resetLessonBtn?.addEventListener('click', () => lesson.resetLesson());
     elements.confirmStartLessonBtn?.addEventListener('click', () => lesson.confirmStartLesson());
+    
     document.addEventListener('click', (event) => {
-        // For lesson topic buttons
         if (event.target.classList.contains('lesson-btn')) {
-            const topic = event.target.getAttribute('data-topic');
-            if (elements.topicInput) elements.topicInput.value = topic;
+            if (elements.topicInput) elements.topicInput.value = event.target.getAttribute('data-topic');
             saveState();
-            event.target.style.transform = 'scale(0.95)';
-            setTimeout(() => { event.target.style.transform = ''; }, 150);
         }
-        // For native language selection
         if (event.target.closest('.native-lang-option')) {
             const option = event.target.closest('.native-lang-option');
-            const langCode = option.getAttribute('data-lang');
-            const flag = option.getAttribute('data-flag');
-            const name = option.textContent.trim();
-            ui.setNativeLanguage(langCode, flag, name);
+            ui.setNativeLanguage(option.getAttribute('data-lang'), option.getAttribute('data-flag'), option.textContent.trim());
             elements.nativeLangDropdown?.classList.add('hidden');
         }
     });
 
-    // Save state on input changes
     const debouncedSave = lesson.debounce(saveState, 500);
     elements.languageSelect?.addEventListener('change', saveState);
     elements.topicInput?.addEventListener('input', debouncedSave);
     elements.audioSpeedSelect?.addEventListener('change', saveState);
 
-    // Modal listeners
     elements.closeModalBtn?.addEventListener('click', () => elements.modal?.classList.add('hidden'));
-    elements.modal?.addEventListener('click', (e) => { 
-        if (e.target === elements.modal) elements.modal.classList.add('hidden'); 
-    });
     elements.tutorialBtn?.addEventListener('click', () => ui.showTutorial());
     elements.closeTutorialBtn?.addEventListener('click', () => elements.tutorialModal?.classList.add('hidden'));
     elements.startTutorialLessonBtn?.addEventListener('click', () => {
@@ -277,55 +254,44 @@ async function initializeApp() {
         if (elements.topicInput) elements.topicInput.value = ui.translateText('beginnerExample');
     });
 
-    // Dropdown listeners
     elements.nativeLangBtn?.addEventListener('click', (e) => {
         e.stopPropagation();
         elements.nativeLangDropdown?.classList.toggle('hidden');
     });
     document.addEventListener('click', (e) => {
-        if (!elements.nativeLangBtn?.contains(e.target) && !elements.nativeLangDropdown?.contains(e.target)) {
+        if (!elements.nativeLangBtn?.contains(e.target)) {
             elements.nativeLangDropdown?.classList.add('hidden');
         }
     });
 	
 	elements.conversationContainer?.addEventListener('click', (event) => {
         const lineElement = event.target.closest('.dialogue-line');
-        if (!lineElement) return;
+        if (!lineElement || event.target.closest('.explanation-link')) return;
 
-        // Prevent audio playback if an explanation icon was clicked
-        if (event.target.closest('.explanation-link')) {
-            return;
-        }
-
-        const turnId = lineElement.id;
-        if (!turnId || !turnId.startsWith('turn-')) return;
-
-        const turnIndex = parseInt(turnId.split('-')[1], 10);
-        const currentLessonPlan = state.lessonPlan;
-
-        if (isNaN(turnIndex) || !currentLessonPlan || !currentLessonPlan.dialogue[turnIndex]) {
-            return;
-        }
-
-        const turn = currentLessonPlan.dialogue[turnIndex];
-        lesson.playLineAudioDebounced(turn.line.display, turn.party);
+        const turnIndex = parseInt(lineElement.id.split('-')[1], 10);
+        const turn = state.lessonPlan?.dialogue[turnIndex];
+        if (turn) lesson.playLineAudioDebounced(turn.line.display, turn.party);
     });
 	
 	elements.historyLessonsContainer?.addEventListener('click', (event) => {
         const card = event.target.closest('.history-card');
         if (!card) return;
-
         const lessonId = card.dataset.lessonId;
-        if (!lessonId) return;
-
         const history = ui.getLessonHistory(); 
         const lessonRecord = history.find(record => record.id === lessonId);
-
         if (lessonRecord) {
-            clearState(); // Clear old state before starting review
+            clearState();
             lesson.reviewLesson(lessonRecord);
-        } else {
-            console.error('Could not find lesson record for ID:', lessonId);
+        }
+    });
+
+    // FIX: Add a delegated event listener for the vocabulary quiz
+    elements.lessonScreen?.addEventListener('click', (event) => {
+        if (event.target.closest('#vocab-quiz-btn')) {
+            const language = elements.languageSelect?.value;
+            if (lesson.startVocabularyQuiz) {
+                lesson.startVocabularyQuiz(language);
+            }
         }
     });
 
@@ -339,25 +305,19 @@ async function initializeApp() {
         ui.startTopicRotations();
     }
     
-    // Mark app as initialized
     if (elements.appContainer) {
         elements.appContainer.dataset.initialized = 'true';
     }
 }
 
-// Initialize when DOM is ready with multiple fallback methods
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeApp);
 } else {
-    // DOM is already loaded
-    console.log('DOM already ready, initializing immediately...');
     initializeApp();
 }
 
-// Fallback timeout in case DOMContentLoaded doesn't fire
 setTimeout(() => {
     if (!document.getElementById('app-container')?.dataset.initialized) {
-        console.log('Fallback initialization...');
         initializeApp();
     }
 }, 1000);
