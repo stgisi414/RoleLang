@@ -913,6 +913,18 @@ export function playLineAudioDebounced(text, party = 'B') {
     }, 300); // 300ms delay
 }
 
+export function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
 export function resetLesson() {
     if (!stateRef.lessonPlan) return;
     stateRef.audioPlayer?.pause();
