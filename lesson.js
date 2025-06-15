@@ -511,6 +511,324 @@ function handleIncorrectSpeech(similarity, required, spoken, apiFeedback = null)
     }, 4000);
 }
 
+function extractTranslation(text) {
+    const match = text.match(/\(([^)]+)\)/);
+    return match ? match[1] : null;
+}
+
+export async function extractVocabularyFromDialogue() {
+    const language = domElements.languageSelect.value;
+
+    // AI-based extraction for English lessons
+    if (language === 'English') {
+        if (!stateRef.lessonPlan || !stateRef.lessonPlan.dialogue) return [];
+
+        const dialogueText = stateRef.lessonPlan.dialogue.map(turn => turn.line.display).join('\n');
+
+        const prompt = `
+You are a vocabulary extraction tool for an English language learner. From the following dialogue, identify 5-10 key vocabulary words or phrases that would be useful for a learner. For each item, provide the word/phrase and a simple definition or synonym in English. Your response MUST be a valid JSON array of objects, with each object having a "word" key and a "translation" key (where "translation" is the definition/synonym).
+
+Dialogue:
+---
+${dialogueText}
+---
+
+Provide the JSON array.`;
+
+        try {
+            const data = await apiRef.callGeminiAPI(prompt, { modelPreference: 'lite' });
+            const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+            const vocabulary = JSON.parse(jsonString);
+
+            return vocabulary.map(vocabItem => {
+                const contextTurn = stateRef.lessonPlan.dialogue.find(turn =>
+                    turn.line?.display?.toLowerCase().includes(vocabItem.word.toLowerCase())
+                );
+                return {
+                    ...vocabItem,
+                    context: contextTurn ? removeParentheses(contextTurn.line.display) : vocabItem.word
+                };
+            });
+        } catch (error) {
+            console.error("Failed to extract vocabulary for English lesson:", error);
+            return [];
+        }
+    } else {
+        // Parenthetical extraction for other languages
+        if (!stateRef.lessonPlan || !stateRef.lessonPlan.dialogue) return [];
+
+        const vocabulary = [];
+        const seenWords = new Set();
+
+        stateRef.lessonPlan.dialogue.forEach((turn, turnIndex) => {
+            if (turn.line && turn.line.display) {
+                const cleanText = removeParentheses(turn.line.display);
+                const translation = extractTranslation(turn.line.display);
+
+                if (translation) {
+                    const word = cleanText.trim();
+                    const translationClean = translation.replace(/[()]/g, '').trim();
+
+                    if (word && translationClean && !seenWords.has(word.toLowerCase())) {
+                        vocabulary.push({
+                            word: word,
+                            translation: translationClean,
+                            context: removeParentheses(turn.line.display)
+                        });
+                        seenWords.add(word.toLowerCase());
+                    }
+                }
+            }
+        });
+        return vocabulary.slice(0, 10);
+    }
+}
+
+export async function fallbackVocabularyExtraction() {
+    if (!stateRef.lessonPlan || !stateRef.lessonPlan.dialogue) return [];
+    const vocabulary = [];
+    const seenWords = new Set();
+
+    stateRef.lessonPlan.dialogue.forEach((turn) => {
+        if (turn.line && turn.line.display) {
+            const fullText = turn.line.display;
+            const patterns = [
+                /([^(]+)\s*\(([^)]+)\)/g,          // Standard: text (translation)
+                /([가-힣]+[^(]*)\s*\(([^)]+)\)/g,    // Korean specific
+                /([^\s]+)\s*\(([^)]+)\)/g,          // Single word
+            ];
+
+            patterns.forEach(pattern => {
+                let match;
+                while ((match = pattern.exec(fullText)) !== null) {
+                    const word = match[1].trim();
+                    const translation = match[2].trim();
+
+                    if (word && translation && word.length > 1 && !seenWords.has(word.toLowerCase())) {
+                        vocabulary.push({
+                            word: word,
+                            translation: translation,
+                            context: removeParentheses(fullText)
+                        });
+                        seenWords.add(word.toLowerCase());
+                    }
+                }
+            });
+        }
+    });
+    return vocabulary.slice(0, 10);
+}
+
+export async function forceVocabularyExtraction() {
+    if (!stateRef.lessonPlan || !stateRef.lessonPlan.dialogue) return [];
+
+    const language = domElements.languageSelect.value;
+    const dialogueText = stateRef.lessonPlan.dialogue.map(turn => turn.line.display).join('\n');
+
+    const prompt = `
+You are a vocabulary extraction tool. From the following dialogue in ${language}, extract 5-10 key vocabulary words or phrases useful for language learners. For each item, provide the original word/phrase and a simple English translation or definition. Your response MUST be a valid JSON array of objects, with each object having a "word" key (original text) and a "translation" key (English definition).
+
+Dialogue:
+---
+${dialogueText}
+---
+
+Provide the JSON array:`;
+
+    try {
+        const data = await apiRef.callGeminiAPI(prompt, { modelPreference: 'lite' });
+        const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+        const vocabulary = JSON.parse(jsonString);
+
+        return vocabulary.map(vocabItem => {
+            const contextTurn = stateRef.lessonPlan.dialogue.find(turn =>
+                turn.line?.display?.toLowerCase().includes(vocabItem.word.toLowerCase())
+            );
+            return {
+                ...vocabItem,
+                context: contextTurn ? removeParentheses(contextTurn.line.display) : vocabItem.word
+            };
+        });
+    } catch (error) {
+        console.error("Failed to force extract vocabulary:", error);
+        return [];
+    }
+}
+
+export async function startVocabularyQuiz(language) {
+    // 1. Try the primary extraction method first.
+    let vocabulary = await extractVocabularyFromDialogue();
+
+    // 2. If it returns nothing, try the more aggressive fallback.
+    if (vocabulary.length === 0) {
+        console.log('No vocabulary found with primary method, trying fallback...');
+        vocabulary = await fallbackVocabularyExtraction();
+    }
+
+    // 3. If still no vocabulary, show a special modal to the user.
+    if (vocabulary.length === 0) {
+        showVocabularyReloadModal(language);
+        return; // Stop here
+    }
+
+    // 4. If vocabulary was found, create the quiz.
+    createVocabularyQuizModal(vocabulary, language);
+}
+
+function showVocabularyReloadModal(language) {
+    const reloadModal = document.createElement('div');
+    reloadModal.id = 'vocab-reload-modal';
+    reloadModal.className = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4';
+
+    reloadModal.innerHTML = `
+        <div class="bg-gray-800 rounded-xl p-6 max-w-md w-full glassmorphism text-center">
+            <div class="text-4xl mb-4">📚</div>
+            <h3 class="text-xl font-bold text-yellow-300 mb-4">${ui.translateText('noVocabularyFound')}</h3>
+            <p class="text-gray-300 mb-6">
+                The vocabulary data for this lesson couldn't be loaded. Would you like to try a more powerful AI-based extraction?
+            </p>
+            <div class="flex space-x-3 justify-center">
+                <button id="force-extract-btn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors">
+                    <i class="fas fa-search mr-2"></i>Force Extract
+                </button>
+                <button id="cancel-vocab-btn" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors">
+                    ${ui.translateText('close')}
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(reloadModal);
+
+    // Event listener for the "Force Extract" button inside the modal
+    document.getElementById('force-extract-btn').addEventListener('click', async () => {
+        reloadModal.remove();
+        ui.showLoadingSpinner();
+        const vocabulary = await forceVocabularyExtraction();
+        ui.hideLoadingSpinner();
+
+        if (vocabulary.length > 0) {
+            createVocabularyQuizModal(vocabulary, language);
+        } else {
+            alert('AI extraction could not find any vocabulary in this lesson.');
+        }
+    });
+
+    document.getElementById('cancel-vocab-btn').addEventListener('click', () => {
+        reloadModal.remove();
+    });
+}
+
+async function createVocabularyQuizModal(vocabulary, language) {
+    const quizModal = document.createElement('div');
+    quizModal.id = 'vocab-quiz-modal';
+    quizModal.className = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4';
+    quizModal.innerHTML = `<div class="bg-gray-800 rounded-xl p-6 text-center glassmorphism"><div class="loader mx-auto mb-4"></div><p class="text-white">Generating quiz...</p></div>`;
+    document.body.appendChild(quizModal);
+
+    const shuffledVocab = [...vocabulary].sort(() => 0.5 - Math.random());
+    let currentQuestion = 0;
+    let score = 0;
+    // This function will generate the translations for the user's native language
+    const vocabularyWithNativeTranslations = await generateVocabularyTranslations(shuffledVocab, language);
+
+
+    function updateQuizContent() {
+        if (currentQuestion >= vocabularyWithNativeTranslations.length) {
+            const percentage = Math.round((score / vocabularyWithNativeTranslations.length) * 100);
+            quizModal.innerHTML = `
+            <div class="bg-gray-800 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto glassmorphism text-center">
+                <h3 class="text-2xl font-bold text-purple-300 mb-4">${ui.translateText('quizComplete')}</h3>
+                <div class="text-6xl mb-4">${percentage >= 80 ? '🎉' : '📚'}</div>
+                <p class="text-xl text-white mb-4">${ui.translateText('yourScore')}: ${score}/${vocabularyWithNativeTranslations.length} (${percentage}%)</p>
+                <div class="flex space-x-4 justify-center">
+                    <button id="retry-quiz-btn" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg">Retry Quiz</button>
+                    <button id="close-quiz-btn" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">Close</button>
+                </div>
+            </div>`;
+            document.getElementById('retry-quiz-btn').onclick = () => createVocabularyQuizModal(vocabulary, language);
+            document.getElementById('close-quiz-btn').onclick = () => quizModal.remove();
+            return;
+        }
+
+        const currentVocab = vocabularyWithNativeTranslations[currentQuestion];
+        const correctAnswer = currentVocab.nativeTranslation || currentVocab.translation;
+        const allTranslations = vocabularyWithNativeTranslations.map(v => v.nativeTranslation || v.translation).filter(t => t !== correctAnswer);
+        let wrongAnswers = [...new Set(allTranslations)].sort(() => 0.5 - Math.random()).slice(0, 3);
+        
+        if(wrongAnswers.length < 3) {
+            const generic = getGenericWrongAnswers(language, stateRef.nativeLang);
+            wrongAnswers.push(...generic.slice(0, 3 - wrongAnswers.length));
+        }
+
+        const allOptions = [correctAnswer, ...wrongAnswers].sort(() => 0.5 - Math.random());
+
+        quizModal.innerHTML = `
+            <div class="bg-gray-800 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto glassmorphism">
+                <div class="text-center mb-6">
+                    <h3 class="text-xl font-bold text-purple-300 mb-2">${ui.translateText('vocabularyQuiz')}</h3>
+                    <p class="text-gray-300 text-sm mb-2">${ui.translateText('whatDoesThisMean')}</p>
+                    <div class="text-3xl font-bold text-white mb-2">${currentVocab.word}</div>
+                    <div class="text-sm text-gray-400 italic">"${currentVocab.context}"</div>
+                </div>
+                <div class="grid grid-cols-1 gap-3 mb-6">
+                    ${allOptions.map((option, index) => `<button class="quiz-option w-full p-4 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-left" data-answer="${option}">${String.fromCharCode(65 + index)}. ${option}</button>`).join('')}
+                </div>
+                 <button id="close-quiz-btn" class="absolute top-4 right-4 text-gray-500 hover:text-white">&times;</button>
+            </div>`;
+
+        quizModal.querySelectorAll('.quiz-option').forEach(option => {
+            option.onclick = () => {
+                if (option.dataset.answer === correctAnswer) {
+                    score++;
+                    option.classList.add('bg-green-600');
+                } else {
+                    option.classList.add('bg-red-600');
+                }
+                setTimeout(() => {
+                    currentQuestion++;
+                    updateQuizContent();
+                }, 1200);
+            };
+        });
+        document.getElementById('close-quiz-btn').onclick = () => quizModal.remove();
+    }
+    updateQuizContent();
+}
+
+async function generateVocabularyTranslations(vocabulary, targetLanguage) {
+    const nativeLangCode = stateRef.nativeLang || 'en';
+    if (nativeLangCode === 'en') return vocabulary.map(v => ({...v, nativeTranslation: v.translation}));
+
+    const langCodeToName = {'en': 'English', 'es': 'Spanish', 'fr': 'French', 'de': 'German', 'it': 'Italian', 'zh': 'Chinese', 'ja': 'Japanese', 'ko': 'Korean'};
+    const nativeLangName = langCodeToName[nativeLangCode] || 'English';
+    const vocabList = vocabulary.map(v => `"${v.word}"`).join(', ');
+
+    const prompt = `Translate the following words/phrases from ${targetLanguage} into ${nativeLangName}. Return ONLY a JSON array of objects with "word" (original) and "translation" (${nativeLangName}). Words: ${vocabList}`;
+
+    try {
+        const data = await apiRef.callGeminiAPI(prompt, { modelPreference: 'lite' });
+        const translations = JSON.parse(data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim());
+        return vocabulary.map(v => ({...v, nativeTranslation: translations.find(t => t.word === v.word)?.translation || v.translation}));
+    } catch (error) {
+        return vocabulary.map(v => ({...v, nativeTranslation: v.translation}));
+    }
+}
+
+function getGenericWrongAnswers(targetLanguage, nativeLangCode) {
+    const pools = {
+      en: ['apple', 'house', 'water', 'happy'],
+      es: ['manzana', 'casa', 'agua', 'feliz'],
+      fr: ['pomme', 'maison', 'eau', 'heureux'],
+      de: ['Apfel', 'Haus', 'Wasser', 'glücklich'],
+      it: ['mela', 'casa', 'acqua', 'felice'],
+      ja: ['りんご', '家', '水', '嬉しい'],
+      ko: ['사과', '집', '물', '행복한'],
+      zh: ['苹果', '房子', '水', '快乐']
+    };
+    return pools[nativeLangCode] || pools['en'];
+}
+
 export function resetLesson() {
     if (!stateRef.lessonPlan) return;
     stateRef.audioPlayer?.pause();
