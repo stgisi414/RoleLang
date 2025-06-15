@@ -1710,50 +1710,115 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
         const currentLanguage = languageSelect.value;
         const cleanText = text.trim();
 
-        // 1. Handle very short texts immediately
+        // 1. Handle very short texts immediately - be more generous with what constitutes "short"
         const words = cleanText.split(/\s+/);
-        if (words.length <= 3) {
+        if (words.length <= 5) {
             return [cleanText];
         }
 
-        // 2. Construct the Gemini prompt
+        // 2. For longer texts, always try to split them for better practice
         const prompt = `
-You are an expert linguist specializing in splitting text for language learners to practice speaking. Your task is to split the following text into natural, speakable chunks.
+You are an expert linguist specializing in splitting text for language learners to practice speaking. Your task is to split the following text into natural, speakable chunks that are easier to practice.
 
 **Instructions:**
-1.  **Natural Chunks:** Break the text into short, complete sentences or meaningful phrases that someone would naturally pause between when speaking.
-2.  **Group Interjections:** If you see interjections (e.g., "Oh,", "Well,", "Ah,"), group them with the sentence that follows. For example, "Oh, I see" should be one chunk.
-3.  **Output Format:** Your response MUST be a valid JSON array of strings, where each string is a sentence or chunk.
-4.  **No Empty Strings:** Do not include empty strings in the array.
-5.  **Language:** The text is in **${currentLanguage}**.
+1.  **Break into Practice Chunks:** Always try to break longer texts into 2-4 shorter, meaningful chunks that learners can practice separately.
+2.  **Natural Boundaries:** Split at natural sentence boundaries, conjunctions, or logical pauses.
+3.  **Preserve Meaning:** Each chunk should be complete and meaningful on its own.
+4.  **Language-Specific Rules:**
+    - For Korean: Split at sentence endings (다, 요, 까, etc.) and conjunctions
+    - For Japanese: Split at sentence endings (だ, です, ます, etc.) and particles
+    - For Chinese: Split at punctuation and natural phrase boundaries
+    - For European languages: Split at periods, commas with conjunctions, and clause boundaries
+5.  **Output Format:** Your response MUST be a valid JSON array of strings.
+6.  **Minimum Splits:** If the text is longer than 8 words, try to split it into at least 2 chunks.
 
-**Text to Split:**
-"${cleanText}"
+**Language:** ${currentLanguage}
+**Text to Split:** "${cleanText}"
 
-**Example Response:**
-["First sentence or chunk.", "Second sentence or chunk.", "And the third one."]
+**Example for Korean:**
+Input: "잘 모르겠어. 큰 번화장아. 장단점이 있는 것 같아."
+Output: ["잘 모르겠어.", "큰 번화장아.", "장단점이 있는 것 같아."]
 
-Now, provide the JSON array for the given text.
+Now, provide the JSON array for the given text:
 `;
 
         try {
-            // 3. Call the Gemini API
+            // 3. Call the Gemini API with better splitting instructions
             const data = await callGeminiAPI(prompt, { modelPreference: 'lite' });
-            const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|/g, '').trim();
+            const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
             const sentences = JSON.parse(jsonString);
 
-            // Validate the output
-            if (Array.isArray(sentences) && sentences.every(s => typeof s === 'string')) {
+            // Validate the output and ensure we got meaningful splits
+            if (Array.isArray(sentences) && sentences.every(s => typeof s === 'string' && s.trim().length > 0)) {
+                // If we only got 1 sentence back for a longer text, try a simpler fallback split
+                if (sentences.length === 1 && words.length > 8) {
+                    console.log('Gemini returned single sentence for long text, trying fallback split');
+                    return tryFallbackSplit(cleanText, currentLanguage);
+                }
                 return sentences;
             } else {
-                console.warn('Gemini response for sentence splitting was not a valid string array. Falling back.');
-                return [cleanText]; // Fallback for invalid format
+                console.warn('Gemini response for sentence splitting was not a valid string array. Using fallback.');
+                return tryFallbackSplit(cleanText, currentLanguage);
             }
         } catch (error) {
             // 4. Fallback in case of API error
-            console.error("Gemini sentence splitting failed, falling back to original text.", error);
-            return [cleanText];
+            console.error("Gemini sentence splitting failed, using fallback split.", error);
+            return tryFallbackSplit(cleanText, currentLanguage);
         }
+    }
+
+    // Fallback sentence splitting for when AI fails
+    function tryFallbackSplit(text, language) {
+        const words = text.split(/\s+/);
+        
+        // If it's short enough, don't split
+        if (words.length <= 5) {
+            return [text];
+        }
+
+        // Try language-specific splitting patterns
+        let splitPattern;
+        switch (language) {
+            case 'Korean':
+                splitPattern = /([다요까]\s*)/;
+                break;
+            case 'Japanese':
+                splitPattern = /(です|ます|だ|である)\s*/;
+                break;
+            case 'Chinese':
+                splitPattern = /([。！？]\s*)/;
+                break;
+            default:
+                splitPattern = /([.!?]\s+)/;
+        }
+
+        const parts = text.split(splitPattern).filter(part => part.trim().length > 0);
+        
+        // Recombine split parts into complete sentences
+        const sentences = [];
+        let currentSentence = '';
+        
+        for (let i = 0; i < parts.length; i++) {
+            currentSentence += parts[i];
+            
+            // If this part ends with punctuation or is a terminator, complete the sentence
+            if (splitPattern.test(parts[i]) || i === parts.length - 1) {
+                if (currentSentence.trim()) {
+                    sentences.push(currentSentence.trim());
+                    currentSentence = '';
+                }
+            }
+        }
+        
+        // If fallback didn't work, split roughly in half
+        if (sentences.length <= 1 && words.length > 8) {
+            const midPoint = Math.ceil(words.length / 2);
+            const firstHalf = words.slice(0, midPoint).join(' ');
+            const secondHalf = words.slice(midPoint).join(' ');
+            return [firstHalf, secondHalf];
+        }
+        
+        return sentences.length > 0 ? sentences : [text];
     }
 
 	async function playAudioForTurn(party, text) {
