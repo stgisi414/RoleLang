@@ -110,33 +110,29 @@ async function restoreState(savedState) {
         elements.audioSpeedSelect.value = savedState.audioSpeed;
     }
 
-    // Restore target language selection with multiple attempts to ensure it sticks
+    // Restore target language selection - simple and direct approach
     if (savedState.selectedLanguage && elements.languageSelect) {
         console.log('Attempting to restore target language to:', savedState.selectedLanguage);
         console.log('Available options:', Array.from(elements.languageSelect.options).map(opt => opt.value));
         
-        const restoreTargetLanguage = (attempts = 0) => {
-            if (attempts > 5) {
-                console.error('Failed to restore target language after 5 attempts');
-                return;
-            }
-            
-            elements.languageSelect.value = savedState.selectedLanguage;
-            console.log(`Attempt ${attempts + 1}: Target language select value after restoration:`, elements.languageSelect.value);
-            
-            // If the value didn't stick, try again
-            if (elements.languageSelect.value !== savedState.selectedLanguage) {
-                setTimeout(() => restoreTargetLanguage(attempts + 1), 100);
-            } else {
-                // Trigger change event to ensure any listeners are notified
-                elements.languageSelect.dispatchEvent(new Event('change'));
-                console.log('Target language successfully restored to:', elements.languageSelect.value);
-            }
-        };
+        // Set the value directly
+        elements.languageSelect.value = savedState.selectedLanguage;
+        console.log('Target language select value after restoration:', elements.languageSelect.value);
         
-        // Try immediately and also with a small delay
-        restoreTargetLanguage();
-        setTimeout(() => restoreTargetLanguage(), 250);
+        // If the direct assignment didn't work, try finding and setting the option
+        if (elements.languageSelect.value !== savedState.selectedLanguage) {
+            const targetOption = Array.from(elements.languageSelect.options).find(option => option.value === savedState.selectedLanguage);
+            if (targetOption) {
+                targetOption.selected = true;
+                elements.languageSelect.value = savedState.selectedLanguage;
+                console.log('Target language restored via option selection:', elements.languageSelect.value);
+            } else {
+                console.error('Target language option not found:', savedState.selectedLanguage);
+            }
+        }
+        
+        // Verify the final state
+        console.log('Final target language value:', elements.languageSelect.value);
     }
 
     if (savedState.lessonPlan && savedState.currentScreen === 'lesson') {
@@ -403,6 +399,23 @@ async function initializeApp() {
     const savedState = loadState();
     if (savedState) {
         await restoreState(savedState);
+        
+        // Double-check target language restoration after everything else is done
+        if (savedState.selectedLanguage && elements.languageSelect && elements.languageSelect.value !== savedState.selectedLanguage) {
+            console.log('Final attempt to restore target language:', savedState.selectedLanguage);
+            elements.languageSelect.value = savedState.selectedLanguage;
+            
+            // Force the option to be selected if direct value assignment fails
+            const options = elements.languageSelect.options;
+            for (let i = 0; i < options.length; i++) {
+                if (options[i].value === savedState.selectedLanguage) {
+                    options[i].selected = true;
+                    elements.languageSelect.selectedIndex = i;
+                    console.log('Target language forced to:', savedState.selectedLanguage);
+                    break;
+                }
+            }
+        }
     } else {
         ui.startTopicRotations();
     }
