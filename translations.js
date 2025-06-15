@@ -79,6 +79,10 @@ const translations = {
     reviewModeActive: "Review mode is now active! Use the vocab quiz button above.",
     back: "Back",
     skip: "Skip",
+	tutorial: "Tutorial",
+    closeTutorial: "Close Tutorial", 
+    startTutorialLesson: "Start Tutorial Lesson",
+    beginnerExample: "Ordering coffee at a café",
     topics: {
       beginner: [
         "Introducing yourself", "Ordering food at a restaurant", "Asking for directions", "Shopping for clothes",
@@ -210,6 +214,10 @@ const translations = {
     reviewModeActive: "¡El modo de revisión está ahora activo! Usa el botón de quiz de vocabulario arriba.",
     back: "Atrás",
     skip: "Saltar",
+	tutorial: "Tutorial",
+    closeTutorial: "Close Tutorial", 
+    startTutorialLesson: "Start Tutorial Lesson",
+    beginnerExample: "Ordering coffee at a café",
     topics: {
       beginner: [
         "Presentándote", "Pidiendo comida en un restaurante", "Pidiendo direcciones", "Comprando ropa",
@@ -326,6 +334,10 @@ const translations = {
     reviewModeActive: "Le mode de révision est maintenant actif! Utilisez le bouton de quiz de vocabulaire ci-dessus.",
     back: "Retour",
     skip: "Passer",
+	tutorial: "Tutorial",
+    closeTutorial: "Close Tutorial", 
+    startTutorialLesson: "Start Tutorial Lesson",
+    beginnerExample: "Ordering coffee at a café",
     topics: {
       beginner: [
         "Se présenter", "Commander de la nourriture au restaurant", "Demander son chemin", "Acheter des vêtements",
@@ -439,6 +451,10 @@ const translations = {
     reviewModeActive: "Der Wiederholungsmodus ist jetzt aktiv! Verwenden Sie die Vokabelquiz-Schaltfläche oben.",
     back: "Zurück",
     skip: "Überspringen",
+	tutorial: "Tutorial",
+    closeTutorial: "Close Tutorial", 
+    startTutorialLesson: "Start Tutorial Lesson",
+    beginnerExample: "Ordering coffee at a café",
     topics: {
       beginner: [
         "Sich vorstellen", "Essen im Restaurant bestellen", "Nach dem Weg fragen", "Kleidung einkaufen",
@@ -553,10 +569,15 @@ const translations = {
     reviewMode: "Modalità Revisione",
     lessonCompleteReview: "Lezione Completata",
     reviewModeReady: "Modalità Revisione Pronta",
+```text
     vocabQuiz: "Quiz di Vocabolario",
     reviewModeActive: "La modalità revisione è ora attiva! Usa il pulsante del quiz di vocabolario sopra.",
     back: "Indietro",
     skip: "Salta",
+	tutorial: "Tutorial",
+    closeTutorial: "Close Tutorial", 
+    startTutorialLesson: "Start Tutorial Lesson",
+    beginnerExample: "Ordering coffee at a café",
     topics: {
       beginner: [
         "Presentarsi", "Ordinare cibo al ristorante", "Chiedere indicazioni", "Comprare vestiti",
@@ -675,6 +696,10 @@ const translations = {
     reviewModeActive: "复习模式现已激活！请使用上方的词汇测验按钮。",
     back: "返回",
     skip: "跳过",
+	tutorial: "Tutorial",
+    closeTutorial: "Close Tutorial", 
+    startTutorialLesson: "Start Tutorial Lesson",
+    beginnerExample: "Ordering coffee at a café",
     topics: {
       beginner: [
         "自我介绍", "在餐厅点餐", "问路", "买衣服",
@@ -793,6 +818,10 @@ const translations = {
     reviewModeActive: "復習モードが有効になりました！上の語彙クイズボタンをご利用ください。",
     back: "戻る",
     skip: "スキップ",
+	tutorial: "Tutorial",
+    closeTutorial: "Close Tutorial", 
+    startTutorialLesson: "Start Tutorial Lesson",
+    beginnerExample: "Ordering coffee at a café",
     topics: {
       beginner: [
         "自己紹介", "レストランで食事を注文", "道を尋ねる", "服を買う",
@@ -828,7 +857,7 @@ const translations = {
       ],
       horror: [
         "廃墟となった幽霊屋敷の探索", "停電中にエレベーターに閉じ込められる", "奇妙な音がするキャンプ旅行", "謎の停電で一人きりの家",
-        "夜の霧に覆われた森で道に迷う", "暗い秘密を持つ奇妙な隣人", "呪われた物がある古い骨董品店", "不気味な病院での夜勤"
+        "夜の霧に覆われた森で道に迷う", "暗い秘密を持つ奇妙な隣人", "呪われた物がある古い骨董品店", "在令人毛骨悚然的医院值夜班"
       ]
     }
   },
@@ -911,6 +940,10 @@ const translations = {
     reviewModeActive: "복습 모드가 활성화되었습니다! 위의 어휘 퀴즈 버튼을 사용하세요.",
     back: "뒤로",
     skip: "건너뛰기",
+	tutorial: "Tutorial",
+    closeTutorial: "Close Tutorial", 
+    startTutorialLesson: "Start Tutorial Lesson",
+    beginnerExample: "Ordering coffee at a café",
     topics: {
       beginner: [
         "자기소개하기", "식당에서 음식 주문하기", "길 묻기", "옷 쇼핑하기",
