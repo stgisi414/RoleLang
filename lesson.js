@@ -251,7 +251,7 @@ export async function advanceTurn(newTurnIndex) {
 }
 
 export async function fetchAndDisplayIllustration(prompt) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve) => {
         try {
             if (domElements.illustrationPlaceholder) domElements.illustrationPlaceholder.classList.add('hidden');
             if (domElements.imageLoader) domElements.imageLoader.classList.remove('hidden');
@@ -277,7 +277,7 @@ export async function fetchAndDisplayIllustration(prompt) {
                     };
                     domElements.illustrationImg.onerror = () => {
                         showFallbackIllustration();
-                        reject(new Error("Image failed to load from src"));
+                        resolve(); // Always resolve, don't block lesson
                     };
                 }
             } else {
@@ -286,7 +286,7 @@ export async function fetchAndDisplayIllustration(prompt) {
         } catch (error) {
             console.error("Failed to fetch illustration:", error);
             showFallbackIllustration();
-            reject(error);
+            resolve(); // Always resolve, don't block lesson
         }
     });
 }
@@ -306,7 +306,7 @@ function showFallbackIllustration() {
 }
 
 async function preFetchFirstAudio(firstTurn) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve) => {
         if (!firstTurn) {
             stateRef.preFetchedFirstAudioBlob = null;
             return resolve();
@@ -317,7 +317,7 @@ async function preFetchFirstAudio(firstTurn) {
         } catch (error) {
             console.error("Failed to pre-fetch audio:", error);
             stateRef.preFetchedFirstAudioBlob = null;
-            reject(error);
+            resolve(); // Always resolve, don't block lesson
         }
     });
 }
