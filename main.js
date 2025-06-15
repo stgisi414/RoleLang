@@ -1,10 +1,24 @@
 
-import * as api from './api.js';
-import * as ui from './ui.js';
-import * as lesson from './lesson.js';
-import * as state from './state.js';
+console.log('Importing modules...');
+
+try {
+    var api = await import('./api.js');
+    console.log('API module loaded');
+    var ui = await import('./ui.js');
+    console.log('UI module loaded');
+    var lesson = await import('./lesson.js');
+    console.log('Lesson module loaded');
+    var state = await import('./state.js');
+    console.log('State module loaded');
+} catch (error) {
+    console.error('Failed to import modules:', error);
+    alert('Failed to load application modules. Please check the console for details.');
+}
+
+console.log('main.js loaded');
 
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('DOM content loaded, initializing app...');
     // --- DOM Elements ---
     const elements = {
         landingScreen: document.getElementById('landing-screen'),
@@ -47,13 +61,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         appContainer: document.getElementById('app-container')
     };
 
+    if (!api || !ui || !lesson || !state) {
+        console.error('One or more modules failed to load');
+        return;
+    }
+
     // Initialize modules
     state.init(elements, ui, lesson);
-    
-    // Create setNativeLanguage function that calls ui.setNativeLanguage
-    /* const setNativeLanguage = (langCode, flag, name) => {
-        ui.setNativeLanguage(langCode, flag, name);
-    }; */
     
     // SIMPLIFY THE ui.init CALL
     ui.init(elements, state.getTranslations, state.getNativeLang, state.save);
