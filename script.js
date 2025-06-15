@@ -113,28 +113,44 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Event listener for the new overlay button
     confirmStartLessonBtn.addEventListener('click', () => {
-		document.getElementById('start-lesson-overlay').classList.add('hidden');
+    document.getElementById('start-lesson-overlay').classList.add('hidden');
 
 		if (preFetchedFirstAudioBlob) {
+			const firstTurn = lessonPlan.dialogue[0];
 			const audioUrl = URL.createObjectURL(preFetchedFirstAudioBlob);
 			const audio = new Audio(audioUrl);
 			audio.playbackRate = parseFloat(audioSpeedSelect.value);
-			audio.play();
+			
+			// This is a direct result of a click, so it's safe to play.
+			audio.play().catch(e => console.error("Error playing pre-fetched audio:", e));
 
-			// Set the active highlight on the first line
+			// Highlight the first line as active while it's playing
 			const firstLineEl = document.getElementById('turn-0');
 			if (firstLineEl) {
 				firstLineEl.classList.add('active');
 				firstLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 			}
 
-			// IMPORTANT: The rest of the lesson starts only after the first audio finishes.
-			audio.addEventListener('ended', () => {
+			// Add a listener for when the first audio clip finishes
+			audio.addEventListener('ended', async () => {
 				URL.revokeObjectURL(audioUrl);
-				advanceTurn(1); // Start the lesson flow from the SECOND turn (index 1)
+
+				// --- THIS IS THE FIX ---
+				// Check who the first speaker was.
+				if (firstTurn.party === 'A') {
+					// If YOU were the first speaker, we just read your line.
+					// Now, prepare and enable the microphone for you to practice.
+					const cleanText = removeParentheses(firstTurn.line.display);
+					currentSentences = await splitIntoSentences(cleanText);
+					currentSentenceIndex = 0;
+					enableUserMicForSentence();
+				} else {
+					// If the PARTNER was the first speaker, advance to the next turn (your turn).
+					advanceTurn(1);
+				}
 			});
 		} else {
-			// Fallback if pre-fetching failed for some reason
+			// Fallback if audio pre-fetching failed for any reason.
 			advanceTurn(0);
 		}
 	});
