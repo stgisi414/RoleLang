@@ -829,6 +829,46 @@ function getGenericWrongAnswers(targetLanguage, nativeLangCode) {
     return pools[nativeLangCode] || pools['en'];
 }
 
+export async function reviewLesson(lessonRecord) {
+    // 1. Set the lesson plan and reset progress
+    const plan = lessonRecord.lessonPlan;
+    if (!plan.id) {
+        plan.id = `lesson-${lessonRecord.language}-${Date.now()}`;
+    }
+    stateRef.setLessonPlan(plan);
+    stateRef.setCurrentTurnIndex(0);
+
+    // 2. Update the UI to match the selected lesson's language and topic
+    if (domElements.languageSelect) domElements.languageSelect.value = lessonRecord.language;
+    if (domElements.topicInput) domElements.topicInput.value = lessonRecord.topic;
+
+    // 3. Set the speech recognition language
+    if (stateRef.recognition) {
+        stateRef.recognition.lang = getLangCode(lessonRecord.language);
+    }
+
+    // 4. Switch from the landing page to the lesson screen
+    uiRef.showLessonScreen();
+    uiRef.stopTopicRotations();
+
+    // 5. Display the lesson content (illustration, title, etc.)
+    if (plan.illustration_url) {
+        uiRef.restoreIllustration(plan.illustration_url);
+    } else if (plan.illustration_prompt) {
+        // This function is already in lesson.js
+        fetchAndDisplayIllustration(plan.illustration_prompt);
+    }
+
+    // This function is also in lesson.js
+    await startConversation();
+
+    // 6. Show the purple "Review Mode" banner
+    uiRef.showReviewModeUI(lessonRecord.language);
+
+    // 7. Save the current state so the review session can be restored if the user refreshes
+    if (saveStateRef) saveStateRef();
+}
+
 export function resetLesson() {
     if (!stateRef.lessonPlan) return;
     stateRef.audioPlayer?.pause();
