@@ -127,11 +127,8 @@ export async function initializeLesson() {
             document.getElementById('start-lesson-overlay')?.classList.remove('hidden');
         }
 
-        // Wait for both image and audio - allow image to fail gracefully
-        const illustrationPromise = fetchAndDisplayIllustration(plan.illustration_prompt).catch(error => {
-            console.warn("Image generation failed, continuing with lesson:", error);
-            showFallbackIllustration();
-        });
+        // Wait for both image and audio
+        const illustrationPromise = fetchAndDisplayIllustration(plan.illustration_prompt);
         const audioPromise = preFetchFirstAudio(plan.dialogue[0]);
 
         await Promise.all([illustrationPromise, audioPromise]);
@@ -280,7 +277,7 @@ export async function fetchAndDisplayIllustration(prompt) {
                     };
                     domElements.illustrationImg.onerror = () => {
                         showFallbackIllustration();
-                        resolve(); // Don't reject, just show fallback
+                        reject(new Error("Image failed to load from src"));
                     };
                 }
             } else {
@@ -289,7 +286,7 @@ export async function fetchAndDisplayIllustration(prompt) {
         } catch (error) {
             console.error("Failed to fetch illustration:", error);
             showFallbackIllustration();
-            resolve(); // Don't reject, just show fallback and continue
+            reject(error);
         }
     });
 }
