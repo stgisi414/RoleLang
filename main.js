@@ -179,9 +179,8 @@ async function initializeApp() {
         return;
     }
 
-   lesson.init(elements, state, api, ui, saveState);
-ui.init(elements, state.getTranslations, state.getNativeLang, saveState, goBackToLanding); // Pass the function heres well
     lesson.init(elements, state, api, ui, saveState);
+	ui.init(elements, state.getTranslations, state.getNativeLang, saveState, goBackToLanding); // Pass the function heres well
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {

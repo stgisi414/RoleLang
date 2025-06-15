@@ -157,7 +157,7 @@ function createGeminiPrompt(language, topic, nativeLang) {
     const randomNames = window.getRandomNames(language, 5);
     const nameExamples = randomNames.map(name => `"${name[0]} ${name[1]}"`).join(', ');
     const isEnglish = language === 'English';
-    
+
     const nativeLangName = {
         'en': 'English', 'es': 'Spanish', 'fr': 'French', 'de': 'German',
         'it': 'Italian', 'zh': 'Chinese', 'ja': 'Japanese', 'ko': 'Korean'
@@ -166,24 +166,55 @@ function createGeminiPrompt(language, topic, nativeLang) {
     const translationInstruction = isEnglish
         ? "The 'display' text should not contain any parenthetical translations."
         : `The 'display' text MUST include a brief, parenthetical ${nativeLangName} translation. Example: "Bonjour (Hello)".`;
+
     let lineObjectStructure = `
         - "display": The line of dialogue in ${language}. ${translationInstruction}
-        - "clean_text": The line of dialogue in ${language} WITHOUT any parenthetical translations. THIS IS FOR SPEECH RECOGNITION.`;
+        - "clean_text": The line of dialogue in ${language} WITHOUT any parenthetical translations. THIS IS FOR SPEECH RECOGNITION.
+    `;
     if (language === 'Japanese') {
         lineObjectStructure += `
         - "hiragana": A pure hiragana version of "clean_text".`;
     }
+
     return `
-You are a language tutor...
+You are a language tutor creating a lesson for a web application. Your task is to generate a single, complete, structured lesson plan in JSON format. Do not output any text or explanation outside of the single JSON object.
+
 The user wants to learn: **${language}**
 The user's native language is: **${nativeLangName}**
 The user-provided topic for the roleplay is: **"${topic}"**
-...
-JSON STRUCTURE REQUIREMENTS:
-...
-LINE OBJECT: must contain: ${lineObjectStructure}
-NAMES: Use realistic names. Examples for ${language}: ${nameExamples}. DO NOT use placeholders.
-...
+
+Follow these steps precisely:
+
+**STEP 1: Understand the Topic**
+The user's topic above might not be in English. First, internally translate this topic to English to ensure you understand the user's intent. Do not show this translation in your output.
+
+**STEP 2: Generate the JSON Lesson Plan**
+Now, using your English understanding of the topic, create the lesson plan. The entire generated output must be only the JSON object.
+
+**JSON STRUCTURE REQUIREMENTS:**
+
+1.  **Top-Level Keys:** The JSON object must contain these keys: "title", "background_context", "scenario", "language", "illustration_prompt", "dialogue".
+
+2.  **Title:** A catchy, descriptive title for the lesson in ${nativeLangName} that captures the essence of the scenario.
+
+3.  **Background Context:** A brief paragraph in ${nativeLangName} explaining the context and setting of the roleplay scenario.
+
+4.  **Dialogue Object:** Each object in the "dialogue" array must contain:
+    - "party": "A" (the user) or "B" (the partner).
+    - "line": An object containing the text for the dialogue.
+    - "explanation" (optional): An object with a "title" and "body" for grammar tips written in the user's native language (${nativeLangName}).
+
+5.  **Line Object:** The "line" object must contain these exact fields:
+    ${lineObjectStructure}
+    
+5a. **TRANSLATION LANGUAGE:** All parenthetical translations must be in ${nativeLangName}.
+
+6.  **Character Names:** You MUST use realistic, culturally-appropriate names. Good examples for ${language}: ${nameExamples}.
+
+7.  **NO PLACEHOLDERS:** Do not use placeholders like "[USER NAME]" or "(YOUR NAME)". You must use the culturally appropriate names from RULE 6.
+
+8.  **ILLUSTRATION PROMPT:** The "illustration_prompt" should be a brief, descriptive text in English to generate an illustration. Style: highly detailed, anime-like, stylish. No text or labels in the image.
+
 Now, generate the complete JSON lesson plan.`;
 }
 
