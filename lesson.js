@@ -1,4 +1,3 @@
-
 import * as state from './state.js';
 import * as api from './api.js';
 import * as ui from './ui.js';
@@ -85,8 +84,6 @@ export async function initializeLesson() {
         alert(uiRef.translateText('enterTopic'));
         return;
     }
-
-    stateRef.clear();
     
     // Clear UI elements
     if (domElements.loadingSpinner) domElements.loadingSpinner.classList.remove('hidden');
@@ -102,7 +99,7 @@ export async function initializeLesson() {
         const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
         const plan = JSON.parse(jsonString);
         
-        if (!plan.id) plan.id = `lesson-${language}-${Date.now()}`;
+        if (!plan.id) plan.id = `lesson-<span class="math-inline">\{language\}\-</span>{Date.now()}`;
         stateRef.setLessonPlan(plan);
 
         if (stateRef.recognition) stateRef.recognition.lang = getLangCode(language);
@@ -291,8 +288,8 @@ function showFallbackIllustration() {
         domElements.illustrationPlaceholder.innerHTML = `
             <div class="text-center text-gray-400">
                 <i class="fas fa-comments text-6xl mb-4"></i>
-                <p class="text-lg">${uiRef.translateText('roleplayScenario')}</p>
-                <p class="text-sm mt-2">${uiRef.translateText('imageUnavailable')}</p>
+                <p class="text-lg"><span class="math-inline">\{uiRef\.translateText\('roleplayScenario'\)\}</p\>
+<p class\="text\-sm mt\-2"\></span>{uiRef.translateText('imageUnavailable')}</p>
             </div>
         `;
         domElements.illustrationPlaceholder.classList.remove('hidden');
@@ -396,8 +393,8 @@ function createGeminiPrompt(language, topic, nativeLangName) {
     return `
 You are a language tutor creating a lesson for a web application. Your task is to generate a single, complete, structured lesson plan in JSON format. Do not output any text or explanation outside of the single JSON object.
 
-The user wants to learn: **${language}**
-The user's native language is: **${nativeLangName}**
+The user wants to learn: **<span class="math-inline">\{language\}\*\*
+The user's native language is\: \*\*</span>{nativeLangName}**
 The user-provided topic for the roleplay is: **"${topic}"**
 
 Follow these steps precisely:
@@ -477,26 +474,23 @@ export async function verifyUserSpeech(spokenText) {
             }
 
             const verificationPrompt = `
-You are a language evaluation tool. The user's native language is ${nativeLangName}.
-
-Your task is to determine if a student's spoken text is a correct phonetic match for a given sentence, ignoring punctuation and spacing.
-
-IMPORTANT CONSIDERATIONS FOR CHINESE:
-- Chinese speech recognition often struggles with technical terms, English words, and mixed content
-- Browser speech recognition for Chinese has significant limitations with tones and pronunciation variations
-- Focus heavily on overall meaning and context rather than exact character matching
-- Be very lenient with technical vocabulary
-- If the spoken text contains any key concepts from the expected sentence, consider it a match
-- Accept partial matches if core vocabulary is present, even if grammar or word order differs
-- If more than 50% of the core meaning is captured, consider it a successful attempt
-
-Your response MUST be a simple JSON object with two fields:
-1. "is_match": a boolean (true or false). For Chinese, be VERY generous with this assessment.
-2. "feedback": A brief, encouraging explanation in the user's native language (${nativeLangName}).
+You are a language evaluation tool. The user's native language is <span class="math-inline">\{nativeLangName\}\.
+Your task is to determine if a student's spoken text is a correct phonetic match for a given sentence, ignoring punctuation and spacing\.
+IMPORTANT CONSIDERATIONS FOR CHINESE\:
+\- Chinese speech recognition often struggles with technical terms, English words, and mixed content
+\- Browser speech recognition for Chinese has significant limitations with tones and pronunciation variations
+\- Focus heavily on overall meaning and context rather than exact character matching
+\- Be very lenient with technical vocabulary
+\- If the spoken text contains any key concepts from the expected sentence, consider it a match
+\- Accept partial matches if core vocabulary is present, even if grammar or word order differs
+\- If more than 50% of the core meaning is captured, consider it a successful attempt
+Your response MUST be a simple JSON object with two fields\:
+1\. "is\_match"\: a boolean \(true or false\)\. For Chinese, be VERY generous with this assessment\.
+2\. "feedback"\: A brief, encouraging explanation in the user's native language \(</span>{nativeLangName}).
 
 Here is the information for your evaluation:
-- The student was expected to say: "${expectedLine}"
-- The student's speech recognition produced: "${spokenText}"
+- The student was expected to say: "<span class="math-inline">\{expectedLine\}"
+\- The student's speech recognition produced\: "</span>{spokenText}"
 
 Now, provide the JSON response.`;
 
@@ -661,304 +655,4 @@ function enableUserMicForSentence() {
             domElements.micStatus.innerHTML = `<strong>${recordSentenceText} ${currentSentenceIndex + 1}/${currentSentences.length}:</strong><br><span style="color: #38bdf8; font-weight: bold; text-decoration: underline;">"${displaySentence}"</span>`;
         }
     } else {
-        const singleSentenceEl = document.getElementById(`turn-${stateRef.currentTurnIndex}-sentence-0`);
-        if (singleSentenceEl) {
-            singleSentenceEl.classList.add('active-sentence');
-        }
-
-        const yourTurnText = uiRef.translateText('yourTurn') || 'Your turn';
-        const lookForHighlightedText = uiRef.translateText('lookForHighlighted') || 'Look for the highlighted sentence above';
-        if (domElements.micStatus) {
-            domElements.micStatus.innerHTML = `<strong>${yourTurnText}</strong><br><span style="color: #38bdf8; font-style: italic;">${lookForHighlightedText}</span>`;
-        }
-    }
-}
-
-async function splitIntoSentences(text) {
-    const currentLanguage = domElements.languageSelect?.value || 'English';
-    const cleanText = text.trim();
-    const words = cleanText.split(/\s+/);
-    
-    if (words.length <= 5) {
-        return [cleanText];
-    }
-
-    const prompt = `
-You are an expert linguist specializing in splitting text for language learners to practice speaking. Your task is to split the following text into natural, speakable chunks that are easier to practice.
-
-**Instructions:**
-1. **Break into Practice Chunks:** Always try to break longer texts into 2-4 shorter, meaningful chunks that learners can practice separately.
-2. **Natural Boundaries:** Split at natural sentence boundaries, conjunctions, or logical pauses.
-3. **Preserve Meaning:** Each chunk should be complete and meaningful on its own.
-4. **Language-Specific Rules:**
-   - For Korean: Split at sentence endings (다, 요, 까, etc.) and conjunctions
-   - For Japanese: Split at sentence endings (だ, です, ます, etc.) and particles
-   - For Chinese: Split at punctuation and natural phrase boundaries
-   - For European languages: Split at periods, commas with conjunctions, and clause boundaries
-5. **Output Format:** Your response MUST be a valid JSON array of strings.
-6. **Minimum Splits:** If the text is longer than 8 words, try to split it into at least 2 chunks.
-
-**Language:** ${currentLanguage}
-**Text to Split:** "${cleanText}"
-
-Now, provide the JSON array for the given text:`;
-
-    try {
-        const data = await apiRef.callGeminiAPI(prompt, { modelPreference: 'lite' });
-        const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
-        const sentences = JSON.parse(jsonString);
-
-        if (Array.isArray(sentences) && sentences.every(s => typeof s === 'string' && s.trim().length > 0)) {
-            if (sentences.length === 1 && words.length > 8) {
-                console.log('Gemini returned single sentence for long text, trying fallback split');
-                return tryFallbackSplit(cleanText, currentLanguage);
-            }
-            return sentences;
-        } else {
-            console.warn('Gemini response for sentence splitting was not a valid string array. Using fallback.');
-            return tryFallbackSplit(cleanText, currentLanguage);
-        }
-    } catch (error) {
-        console.error("Gemini sentence splitting failed, using fallback split.", error);
-        return tryFallbackSplit(cleanText, currentLanguage);
-    }
-}
-
-function tryFallbackSplit(text, language) {
-    const words = text.split(/\s+/);
-    
-    if (words.length <= 5) {
-        return [text];
-    }
-
-    let splitPattern;
-    switch (language) {
-        case 'Korean':
-            splitPattern = /([다요까]\s*)/;
-            break;
-        case 'Japanese':
-            splitPattern = /(です|ます|だ|である)\s*/;
-            break;
-        case 'Chinese':
-            splitPattern = /([。！？]\s*)/;
-            break;
-        default:
-            splitPattern = /([.!?]\s+)/;
-    }
-
-    const parts = text.split(splitPattern).filter(part => part.trim().length > 0);
-    const sentences = [];
-    let currentSentence = '';
-    
-    for (let i = 0; i < parts.length; i++) {
-        currentSentence += parts[i];
-        
-        if (splitPattern.test(parts[i]) || i === parts.length - 1) {
-            if (currentSentence.trim()) {
-                sentences.push(currentSentence.trim());
-                currentSentence = '';
-            }
-        }
-    }
-    
-    if (sentences.length <= 1 && words.length > 8) {
-        const midPoint = Math.ceil(words.length / 2);
-        const firstHalf = words.slice(0, midPoint).join(' ');
-        const secondHalf = words.slice(midPoint).join(' ');
-        return [firstHalf, secondHalf];
-    }
-    
-    return sentences.length > 0 ? sentences : [text];
-}
-
-function removeParentheses(text) {
-    return text.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
-}
-
-export function resetLesson() {
-    if (!stateRef.lessonPlan) return;
-    
-    // Stop any audio
-    if (stateRef.audioPlayer && !stateRef.audioPlayer.paused) {
-        stateRef.audioPlayer.pause();
-        stateRef.audioPlayer.src = "";
-    }
-    
-    stateRef.setCurrentTurnIndex(0);
-    
-    document.querySelectorAll('.dialogue-line.active').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
-    
-    if (domElements.micBtn) {
-        domElements.micBtn.disabled = false;
-        domElements.micBtn.classList.remove('bg-green-600');
-        domElements.micBtn.classList.add('bg-red-600');
-    }
-    
-    if (domElements.micStatus) {
-        domElements.micStatus.textContent = uiRef.translateText('micStatus');
-    }
-    
-    if (stateRef.isRecognizing && stateRef.recognition) {
-        stateRef.recognition.stop();
-    }
-    
-    const existingReviewIndicator = domElements.lessonScreen?.querySelector('.review-mode-indicator');
-    if (existingReviewIndicator) {
-        existingReviewIndicator.remove();
-    }
-    
-    advanceTurn(0);
-}
-
-export function confirmStartLesson() {
-    const startLessonOverlay = document.getElementById('start-lesson-overlay');
-    if (startLessonOverlay) startLessonOverlay.classList.add('hidden');
-
-    if (stateRef.preFetchedFirstAudioBlob) {
-        const firstTurn = stateRef.lessonPlan.dialogue[0];
-        const audioUrl = URL.createObjectURL(stateRef.preFetchedFirstAudioBlob);
-        const audio = new Audio(audioUrl);
-        audio.playbackRate = parseFloat(domElements.audioSpeedSelect?.value || '1');
-
-        audio.play().catch(e => console.error("Error playing pre-fetched audio:", e));
-
-        const firstLineEl = document.getElementById('turn-0');
-        if (firstLineEl) {
-            firstLineEl.classList.add('active');
-            firstLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-
-        audio.addEventListener('ended', async () => {
-            URL.revokeObjectURL(audioUrl);
-
-            if (firstTurn.party === 'A') {
-                const cleanText = removeParentheses(firstTurn.line.display);
-                currentSentences = await splitIntoSentences(cleanText);
-                currentSentenceIndex = 0;
-                enableUserMicForSentence();
-            } else {
-                advanceTurn(1);
-            }
-        });
-    } else {
-        advanceTurn(0);
-    }
-}
-
-function addBackToLandingButton() {
-    if (document.getElementById('lesson-header')) return;
-
-    const headerContainer = document.createElement('div');
-    headerContainer.id = 'lesson-header';
-
-    const backBtn = document.createElement('button');
-    backBtn.id = 'back-to-landing-btn';
-    backBtn.className = 'back-button bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-colors text-sm';
-    backBtn.innerHTML = `<i class="fas fa-arrow-left mr-2"></i>${uiRef.translateText('back')}`;
-    backBtn.onclick = () => {
-        stateRef.clear();
-        stateRef.setLessonPlan(null);
-        stateRef.setCurrentTurnIndex(0);
-
-        const existingReviewIndicator = domElements.lessonScreen?.querySelector('.absolute.top-16.left-4');
-        if (existingReviewIndicator) {
-            existingReviewIndicator.remove();
-        }
-
-        if (domElements.landingScreen) domElements.landingScreen.classList.remove('hidden');
-        if (domElements.lessonScreen) domElements.lessonScreen.classList.add('hidden');
-        uiRef.startTopicRotations();
-    };
-
-    const titleContainer = document.getElementById('lesson-title-container');
-    
-    headerContainer.appendChild(backBtn);
-    if (titleContainer) {
-        headerContainer.appendChild(titleContainer);
-    }
-
-    if (domElements.lessonScreen) {
-        domElements.lessonScreen.insertBefore(headerContainer, domElements.lessonScreen.firstChild);
-    }
-}
-
-function saveLessonToHistory(lessonPlan, selectedLanguage, originalTopic) {
-    try {
-        let history = getLessonHistory();
-        const lessonId = lessonPlan.id;
-
-        const existingLessonIndex = history.findIndex(record => record.lessonPlan.id === lessonId);
-
-        if (existingLessonIndex > -1) {
-            const [existingRecord] = history.splice(existingLessonIndex, 1);
-            existingRecord.completedAt = new Date().toLocaleDateString(undefined, {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-            history.unshift(existingRecord);
-        } else {
-            const newLessonRecord = {
-                id: lessonId,
-                timestamp: new Date().toISOString(),
-                language: selectedLanguage,
-                topic: originalTopic,
-                scenario: lessonPlan.scenario,
-                completedAt: new Date().toLocaleDateString(undefined, {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                }),
-                lessonPlan: lessonPlan,
-                languageTopicKey: `${selectedLanguage}-${originalTopic}`
-            };
-            history.unshift(newLessonRecord);
-        }
-
-        if (history.length > state.MAX_LESSON_HISTORY) {
-            history.splice(state.MAX_LESSON_HISTORY);
-        }
-
-        localStorage.setItem(state.LESSON_HISTORY_KEY, JSON.stringify(history));
-
-        if (!document.getElementById('history-container')?.classList.contains('hidden')) {
-            uiRef.displayLessonHistory();
-        }
-    } catch (error) {
-        console.warn('Failed to save lesson to history:', error);
-    }
-}
-
-function getLessonHistory() {
-    try {
-        const history = localStorage.getItem(state.LESSON_HISTORY_KEY);
-        if (!history) return [];
-
-        const parsedHistory = JSON.parse(history);
-        const validHistory = parsedHistory.filter(record => {
-            return record && 
-                   record.lessonPlan &&
-                   record.lessonPlan.dialogue &&
-                   Array.isArray(record.lessonPlan.dialogue) &&
-                   record.lessonPlan.dialogue.length > 0 &&
-                   record.language &&
-                   record.topic;
-        });
-
-        if (validHistory.length !== parsedHistory.length) {
-            localStorage.setItem(state.LESSON_HISTORY_KEY, JSON.stringify(validHistory));
-            console.log(`Cleaned lesson history: removed ${parsedHistory.length - validHistory.length} invalid entries`);
-        }
-
-        return validHistory;
-    } catch (error) {
-        console.warn('Failed to load lesson history:', error);
-        localStorage.removeItem(state.LESSON_HISTORY_KEY);
-        return [];
-    }
-}
+        const singleSentenceEl =
