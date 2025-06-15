@@ -51,11 +51,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     state.init(elements, ui, lesson);
     
     // Create setNativeLanguage function that calls ui.setNativeLanguage
-    const setNativeLanguage = (langCode, flag, name) => {
+    /* const setNativeLanguage = (langCode, flag, name) => {
         ui.setNativeLanguage(langCode, flag, name);
-    };
+    }; */
     
-    ui.init(elements, state.getTranslations, state.getNativeLang, setNativeLanguage, state.save);
+    // SIMPLIFY THE ui.init CALL
+    ui.init(elements, state.getTranslations, state.getNativeLang, state.save);
     lesson.init(elements, state, api, ui);
 
     // --- Speech Recognition Setup ---
@@ -110,9 +111,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     elements.situationsTab?.addEventListener('click', () => ui.switchTab('situations'));
     elements.resetLessonBtn?.addEventListener('click', () => lesson.resetLesson());
     elements.confirmStartLessonBtn?.addEventListener('click', () => lesson.confirmStartLesson());
-
-    document.addEventListener('click', (event) => {</old_str>
-
     document.addEventListener('click', (event) => {
         // For lesson topic buttons
         if (event.target.classList.contains('lesson-btn')) {

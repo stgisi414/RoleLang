@@ -51,35 +51,21 @@ function getVoiceConfig(language, party = 'A') {
 }
 
 function getRandomNames(language, count = 5) {
-    const namesByLanguage = {
-        'English': [
-            ['James', 'Smith'], ['Mary', 'Johnson'], ['Robert', 'Williams'], ['Patricia', 'Brown'], ['John', 'Jones']
-        ],
-        'Spanish': [
-            ['Carlos', 'García'], ['María', 'Rodríguez'], ['Antonio', 'González'], ['Carmen', 'Fernández'], ['José', 'López']
-        ],
-        'French': [
-            ['Pierre', 'Martin'], ['Marie', 'Bernard'], ['Jean', 'Dubois'], ['Françoise', 'Thomas'], ['Michel', 'Robert']
-        ],
-        'German': [
-            ['Hans', 'Müller'], ['Anna', 'Schmidt'], ['Peter', 'Schneider'], ['Maria', 'Fischer'], ['Wolfgang', 'Weber']
-        ],
-        'Italian': [
-            ['Marco', 'Rossi'], ['Giulia', 'Russo'], ['Andrea', 'Ferrari'], ['Francesca', 'Esposito'], ['Alessandro', 'Bianchi']
-        ],
-        'Japanese': [
-            ['田中', '太郎'], ['佐藤', '花子'], ['山田', '次郎'], ['鈴木', '美咲'], ['高橋', '健一']
-        ],
-        'Chinese': [
-            ['王', '小明'], ['李', '小红'], ['张', '小强'], ['刘', '小丽'], ['陈', '小华']
-        ],
-        'Korean': [
-            ['김', '민수'], ['이', '지은'], ['박', '준호'], ['최', '수연'], ['정', '현우']
-        ]
-    };
-    
-    const names = namesByLanguage[language] || namesByLanguage['English'];
-    return names.slice(0, count);
+    // Access the global characterNames object from names.js
+    const namesByLanguage = window.characterNames;
+
+    if (!namesByLanguage || !namesByLanguage[language]) {
+        console.warn(`Names not found for language: ${language}. Falling back to English.`);
+        language = 'English';
+    }
+
+    const langNames = namesByLanguage[language];
+    // Combine male and female names
+    const allNames = [...langNames.female, ...langNames.male];
+
+    // Shuffle and return the requested number of names
+    const shuffled = [...allNames].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
 }
 
 export async function initializeLesson() {

@@ -4,14 +4,14 @@ import * as state from './state.js';
 let domElements = {};
 let getTranslationsFunc;
 let getNativeLangFunc;
-let setNativeLanguageFunc;
+// REMOVE THIS -> let setNativeLanguageFunc;
 let saveStateFunc;
 
-export function init(elements, getTranslations, getNativeLang, setNativeLanguage, save) {
+export function init(elements, getTranslations, getNativeLang, save) { // Removed setNativeLanguage from parameters
     domElements = elements;
     getTranslationsFunc = getTranslations;
     getNativeLangFunc = getNativeLang;
-    setNativeLanguageFunc = setNativeLanguage;
+    // REMOVE THIS -> setNativeLanguageFunc = setNativeLanguage;
     saveStateFunc = save;
 }
 
