@@ -721,9 +721,15 @@ export async function reviewLesson(lessonRecord) {
     
     uiRef.showReviewModeUI(lessonRecord.language);
     
-    if (saveStateRef) saveStateRef();
+    // Mark as review mode - don't auto-play
+    plan.isReviewMode = true;
     
-    advanceTurn(0);
+    // Just highlight the first line, don't start audio
+    uiRef.highlightActiveLine(0);
+    uiRef.updateMicStatus('reviewModeReady');
+    uiRef.enableMicButton(false);
+    
+    if (saveStateRef) saveStateRef();
 }
 
 export async function playLineAudio(text, party = 'B') {
@@ -783,6 +789,12 @@ export function resetLesson() {
     uiRef.resetMic();
     stateRef.recognition?.stop();
     uiRef.hideReviewModeBanner?.();
+    
+    // Clear review mode flag when resetting
+    if (stateRef.lessonPlan.isReviewMode) {
+        delete stateRef.lessonPlan.isReviewMode;
+    }
+    
     advanceTurn(0);
 }
 
