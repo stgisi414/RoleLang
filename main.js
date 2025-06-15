@@ -163,7 +163,12 @@ async function initializeApp() {
         historyLessonsContainer: document.getElementById('history-lessons-container'),
         startLessonOverlay: document.getElementById('start-lesson-overlay'),
         confirmStartLessonBtn: document.getElementById('confirm-start-lesson-btn'),
-        appContainer: document.getElementById('app-container')
+        appContainer: document.getElementById('app-container'),
+        // --- ADD THESE MISSING ELEMENTS ---
+        lessonTitleContainer: document.getElementById('lesson-title-container'),
+        lessonTitle: document.getElementById('lesson-title'),
+        backgroundContextContainer: document.getElementById('background-context-container'),
+        backgroundContext: document.getElementById('background-context')
     };
 
     if (!api || !ui || !lesson || !state) {

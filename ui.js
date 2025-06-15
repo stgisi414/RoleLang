@@ -252,3 +252,25 @@ export function restoreIllustration(imageUrl) {
     domElements.illustrationImg.src = imageUrl;
     domElements.illustrationImg.classList.remove('hidden');
 }
+
+export function addBackToLandingButton() {
+    if (document.getElementById('lesson-header')) return;
+
+    const headerContainer = document.createElement('div');
+    headerContainer.id = 'lesson-header';
+
+    const backBtn = document.createElement('button');
+    backBtn.id = 'back-to-landing-btn';
+    backBtn.className = 'back-button bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-colors text-sm';
+    backBtn.innerHTML = `<i class="fas fa-arrow-left mr-2"></i>${translateText('back')}`;
+    backBtn.onclick = () => {
+        // This needs to be adapted to the module structure
+        window.location.reload(); // Simple reload to go back to the landing page
+    };
+
+    if (domElements.lessonTitleContainer) {
+        headerContainer.appendChild(backBtn);
+        headerContainer.appendChild(domElements.lessonTitleContainer);
+        domElements.lessonScreen.insertBefore(headerContainer, domElements.lessonScreen.firstChild);
+    }
+}

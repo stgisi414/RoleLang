@@ -140,7 +140,8 @@ export function startConversation() {
     stateRef.setCurrentTurnIndex(0);
     uiRef.restoreConversation(stateRef.lessonPlan);
     uiRef.displayLessonTitleAndContext(stateRef.lessonPlan);
-    addBackToLandingButton();
+    // FIX: Call the function via the uiRef object
+    uiRef.addBackToLandingButton();
 }
 
 export async function advanceTurn(newTurnIndex) {
