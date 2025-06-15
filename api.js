@@ -1,3 +1,4 @@
+
 // --- API & State ---
 // IMPORTANT: Replace with your actual Gemini API Key.
 const GEMINI_API_KEY = 'AIzaSyDIFeql6HUpkZ8JJlr_kuN0WDFHUyOhijA';
@@ -12,9 +13,6 @@ const IMAGE_API_URL = 'https://ainovel.site/api/generate-image';
 
 /**
  * A robust, central function for calling the Gemini API with retries and model fallbacks.
- * @param {string} prompt The prompt to send to the API.
- * @param {object} options Configuration options for the API call.
- * @returns {Promise<object>} The JSON response from the API.
  */
 export async function callGeminiAPI(prompt, options = {}) {
     const {
@@ -75,9 +73,6 @@ export async function callGeminiAPI(prompt, options = {}) {
 
 /**
  * Fetches audio from the ElevenLabs TTS API.
- * @param {string} text The text to convert to speech.
- * @param {object} voiceConfig The voice configuration object.
- * @returns {Promise<Blob>} The audio data as a Blob.
  */
 export async function fetchPartnerAudio(text, voiceConfig) {
     const cleanText = text.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
@@ -85,7 +80,7 @@ export async function fetchPartnerAudio(text, voiceConfig) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer wsec_81c54a71adb28dff26425889f84fbdfee3b446707529b33bd0e2a54eb3a43944', // Replace with your key
+            'Authorization': 'Bearer wsec_81c54a71adb28dff26425889f84fbdfee3b446707529b33bd0e2a54eb3a43944',
             'Origin': 'https://rolelang.xyz'
         },
         body: JSON.stringify({
@@ -102,9 +97,6 @@ export async function fetchPartnerAudio(text, voiceConfig) {
 
 /**
  * Generates an image using your custom image generation API.
- * @param {string} prompt The prompt for the image.
- * @param {object} options Additional options for image generation.
- * @returns {Promise<object>} The JSON response from the image API.
  */
 export async function generateImage(prompt, options = {}) {
     const response = await fetch(IMAGE_API_URL, {
