@@ -16,6 +16,105 @@ try {
 
 console.log('main.js loaded');
 
+// --- DOM Elements (global to main.js) ---
+let elements = {};
+
+// --- State Persistence Functions (Moved from state.js) ---
+function saveState() {
+    const appState = {
+        lessonPlan: state.lessonPlan,
+        currentTurnIndex: state.currentTurnIndex,
+        currentScreen: state.lessonPlan ? 'lesson' : 'landing',
+        selectedLanguage: elements.languageSelect?.value,
+        topicInput: elements.topicInput?.value,
+        nativeLang: state.nativeLang,
+        lessonsVisible: !elements.lessonsContainer?.classList.contains('hidden'),
+        audioSpeed: elements.audioSpeedSelect ? elements.audioSpeedSelect.value : '1',
+        lastSaved: Date.now()
+    };
+
+    try {
+        localStorage.setItem(state.STATE_KEY, JSON.stringify(appState));
+    } catch (error) {
+        console.warn('Failed to save state to localStorage:', error);
+    }
+}
+
+function loadState() {
+    try {
+        const savedState = localStorage.getItem(state.STATE_KEY);
+        if (!savedState) return null;
+
+        const parsedState = JSON.parse(savedState);
+        const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+        if (parsedState.lastSaved < sevenDaysAgo) {
+            localStorage.removeItem(state.STATE_KEY);
+            return null;
+        }
+        return parsedState;
+    } catch (error) {
+        console.warn('Failed to load state from localStorage:', error);
+        localStorage.removeItem(state.STATE_KEY);
+        return null;
+    }
+}
+
+function clearState() {
+    localStorage.removeItem(state.STATE_KEY);
+    if (ui) {
+        ui.hideReviewModeBanner();
+    }
+}
+
+async function restoreState(savedState) {
+    if (savedState.selectedLanguage && elements.languageSelect) elements.languageSelect.value = savedState.selectedLanguage;
+    if (savedState.topicInput && elements.topicInput) elements.topicInput.value = savedState.topicInput;
+    if (savedState.lessonsVisible && ui) ui.toggleLessonsVisibility(true);
+    if (savedState.audioSpeed && elements.audioSpeedSelect) elements.audioSpeedSelect.value = savedState.audioSpeed;
+
+    if (savedState.lessonPlan && savedState.currentScreen === 'lesson') {
+        state.setLessonPlan(savedState.lessonPlan);
+        state.setCurrentTurnIndex(savedState.currentTurnIndex);
+
+        if (!state.lessonPlan.dialogue || state.lessonPlan.dialogue.length === 0) {
+            clearState();
+            return;
+        }
+
+        if (state.recognition && lesson) {
+            state.recognition.lang = lesson.getLangCode(savedState.selectedLanguage);
+        }
+
+        elements.landingScreen?.classList.add('hidden');
+        elements.lessonScreen?.classList.remove('hidden');
+
+        if (ui) {
+            await ui.restoreConversation(state.lessonPlan);
+            ui.displayLessonTitleAndContext(state.lessonPlan);
+
+            if (state.lessonPlan.illustration_url) {
+                ui.restoreIllustration(state.lessonPlan.illustration_url);
+            } else if (state.lessonPlan.illustration_prompt && lesson) {
+                lesson.fetchAndDisplayIllustration(state.lessonPlan.illustration_prompt);
+            }
+        }
+
+        const isCompleted = state.currentTurnIndex >= state.lessonPlan.dialogue.length;
+        if (isCompleted) {
+            if (elements.micStatus) elements.micStatus.textContent = ui.translateText('lessonComplete');
+            if (elements.micBtn) elements.micBtn.disabled = true;
+            state.lessonPlan.isCompleted = true;
+            if (ui) ui.showReviewModeUI(savedState.selectedLanguage, state.lessonPlan);
+        } else {
+            state.lessonPlan.isCompleted = false;
+            if (lesson) lesson.advanceTurn(state.currentTurnIndex);
+        }
+        
+        if (ui) ui.stopTopicRotations();
+    }
+}
+
+
 async function initializeApp() {
     console.log('Initializing app...');
     
@@ -25,8 +124,8 @@ async function initializeApp() {
         return;
     }
     
-    // --- DOM Elements ---
-    const elements = {
+    // Populate DOM elements object
+    elements = {
         landingScreen: document.getElementById('landing-screen'),
         lessonScreen: document.getElementById('lesson-screen'),
         startLessonBtn: document.getElementById('start-lesson-btn'),
@@ -73,10 +172,7 @@ async function initializeApp() {
     }
 
     // Initialize modules
-    state.init(elements, ui, lesson);
-
-    // SIMPLIFY THE ui.init CALL
-    ui.init(elements, state.getTranslations, state.getNativeLang, state.save);
+    ui.init(elements, state.getTranslations, state.getNativeLang, saveState);
     lesson.init(elements, state, api, ui);
 
     // --- Speech Recognition Setup ---
@@ -118,7 +214,7 @@ async function initializeApp() {
             lesson.verifyUserSpeech(spokenText);
         };
 
-        // Set the recognition instance in state
+        // Set the recognition instance in the state module
         state.setRecognition(recognitionInstance);
     } else {
         if (elements.micStatus) elements.micStatus.textContent = ui.translateText('speechNotSupported');
@@ -139,7 +235,7 @@ async function initializeApp() {
         if (event.target.classList.contains('lesson-btn')) {
             const topic = event.target.getAttribute('data-topic');
             if (elements.topicInput) elements.topicInput.value = topic;
-            state.save();
+            saveState();
             event.target.style.transform = 'scale(0.95)';
             setTimeout(() => { event.target.style.transform = ''; }, 150);
         }
@@ -155,10 +251,10 @@ async function initializeApp() {
     });
 
     // Save state on input changes
-    const debouncedSave = lesson.debounce(state.save, 500);
-    elements.languageSelect?.addEventListener('change', state.save);
+    const debouncedSave = lesson.debounce(saveState, 500);
+    elements.languageSelect?.addEventListener('change', saveState);
     elements.topicInput?.addEventListener('input', debouncedSave);
-    elements.audioSpeedSelect?.addEventListener('change', state.save);
+    elements.audioSpeedSelect?.addEventListener('change', saveState);
 
     // Modal listeners
     elements.closeModalBtn?.addEventListener('click', () => elements.modal?.classList.add('hidden'));
@@ -186,9 +282,9 @@ async function initializeApp() {
     // --- Initialization ---
     ui.initializeNativeLanguage();
     ui.updateTranslations();
-    const savedState = state.load();
+    const savedState = loadState();
     if (savedState) {
-        await state.restore(savedState);
+        await restoreState(savedState);
     } else {
         ui.startTopicRotations();
     }
