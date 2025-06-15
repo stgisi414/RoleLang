@@ -1894,7 +1894,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
             // Create the base content with speaker name (using emojis for display)
             const speakerIcon = turn.party === 'A' ? '👤' : '🤖'; // Human for user, robot for partner
-            let lineContent = `<strong>${speakerIcon}:</strong> `;
+            let lineContent = `<strong>${speakerIcon}</strong> `;
 
             if (turn.party === 'A') {
                 const displayText = removeParentheses(turn.line.display); // Use line.display
