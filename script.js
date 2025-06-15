@@ -1118,7 +1118,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 					const translation = extractTranslation(turn.line.display);
 
 					if (translation) {
-						const word = cleanText.replace(/[.,!?;:"'`´''""。！？]/g, '').trim();
+						const word = cleanText.trim(); // Keep punctuation in the display word
 						const translationClean = translation.replace(/[()]/g, '').trim();
 
 						if (word && translationClean && !seenWords.has(word.toLowerCase())) {
