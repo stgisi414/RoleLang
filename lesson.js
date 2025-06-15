@@ -346,7 +346,7 @@ export async function fetchanddisplayillustration(prompt) {
             if (result.imageUrl) {
                 if (stateRef.lessonPlan) {
                     stateRef.lessonPlan.illustration_url = result.imageUrl;
-                    // FIX: Called the correct save function reference
+                    // THE FIX: This now calls the correct reference to your save function.
                     if (saveStateRef) saveStateRef();
                 }
                 
@@ -354,7 +354,7 @@ export async function fetchanddisplayillustration(prompt) {
                     domElements.illustrationImg.src = result.imageUrl;
                     domElements.illustrationImg.onload = () => {
                         if (domElements.imageLoader) domElements.imageLoader.classList.add('hidden');
-                        domElements.illustrationImg.classList.remove('hidden');
+                        if (domElements.illustrationImg) domElements.illustrationImg.classList.remove('hidden');
                         resolve();
                     };
                     domElements.illustrationImg.onerror = () => {
