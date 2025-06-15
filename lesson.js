@@ -14,52 +14,35 @@ let currentSentenceIndex = 0;
 let speechAttempts = 0;
 let audioDebounceTimer = null;
 
-// --- Helper Functions ---
+// --- Helper Functions (Unique to Lesson Logic) ---
 
 function removeParentheses(text) {
     if (typeof text !== 'string') return '';
     return text.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
-/**
- * THIS IS THE CORRECT, FULL-FEATURED SENTENCE SPLITTER FROM old/script.js
- * It uses a detailed prompt and includes fallback logic.
- */
 async function splitIntoSentences(text) {
     const currentLanguage = domElements.languageSelect.value;
     const cleanText = text.trim();
 
-    // 1. Handle very short texts immediately
     const words = cleanText.split(/\s+/);
     if (words.length <= 5) {
         return [cleanText];
     }
 
-    // 2. For longer texts, use the detailed Gemini prompt
     const prompt = `
 You are an expert linguist specializing in splitting text for language learners to practice speaking. Your task is to split the following text into natural, speakable chunks that are easier to practice.
 
 **Instructions:**
-1.  **Break into Practice Chunks:** Always try to break longer texts into 2-4 shorter, meaningful chunks that learners can practice separately.
+1.  **Break into Practice Chunks:** Always try to break longer texts into 2-4 shorter, meaningful chunks.
 2.  **Natural Boundaries:** Split at natural sentence boundaries, conjunctions, or logical pauses.
-3.  **Preserve Meaning:** Each chunk should be complete and meaningful on its own.
-4.  **Language-Specific Rules:**
-    - For Korean: Split at sentence endings (다, 요, 까, etc.) and conjunctions
-    - For Japanese: Split at sentence endings (だ, です, ます, etc.) and particles
-    - For Chinese: Split at punctuation and natural phrase boundaries
-    - For European languages: Split at periods, commas with conjunctions, and clause boundaries
-5.  **Output Format:** Your response MUST be a valid JSON array of strings.
-6.  **Minimum Splits:** If the text is longer than 8 words, try to split it into at least 2 chunks.
+3.  **Language-Specific Rules:** Adhere to rules for Korean, Japanese, Chinese, and European languages.
+4.  **Output Format:** Your response MUST be a valid JSON array of strings.
+5.  **Minimum Splits:** If the text is longer than 8 words, try to split it into at least 2 chunks.
 
 **Language:** ${currentLanguage}
 **Text to Split:** "${cleanText}"
-
-**Example for Korean:**
-Input: "잘 모르겠어. 큰 번화장아. 장단점이 있는 것 같아."
-Output: ["잘 모르겠어.", "큰 번화장아.", "장단점이 있는 것 같아."]
-
-Now, provide the JSON array for the given text:
-`;
+Provide the JSON array.`;
 
     try {
         const data = await apiRef.callGeminiAPI(prompt, { modelPreference: 'lite' });
@@ -150,26 +133,6 @@ function saveLessonToHistory(lessonPlan, selectedLanguage, originalTopic) {
     }
 }
 
-
-// --- Core Module Functions ---
-
-export function init(elements, stateModule, apiModule, uiModule, saveFunc) {
-    domElements = elements;
-    stateRef = stateModule;
-    apiRef = apiModule;
-    uiRef = uiModule;
-    saveStateRef = saveFunc;
-}
-
-export function getLangCode(languageValue) {
-    const langValueToCode = {
-        'English': 'en-US', 'Spanish': 'es-ES', 'French': 'fr-FR',
-        'German': 'de-DE', 'Italian': 'it-IT', 'Japanese': 'ja-JP',
-        'Chinese': 'zh-CN', 'Korean': 'ko-KR'
-    };
-    return langValueToCode[languageValue] || 'en-US';
-}
-
 function getVoiceConfig(language, party = 'A') {
     const voiceConfigs = {
         'English': { voice_id_a: "pNInz6obpgDQGcFmaJgB", voice_id_b: "21m00Tcm4TlvDq8ikWAM", language_code: "en" },
@@ -188,10 +151,17 @@ function getVoiceConfig(language, party = 'A') {
     };
 }
 
-function createGeminiPrompt(language, topic, nativeLangName) {
-    const randomNames = getRandomNames(language, 5);
+function createGeminiPrompt(language, topic, nativeLang) {
+    // This function correctly uses the global getRandomNames from names.js
+    const randomNames = window.getRandomNames(language, 5);
     const nameExamples = randomNames.map(name => `"${name[0]} ${name[1]}"`).join(', ');
     const isEnglish = language === 'English';
+    
+    const nativeLangName = {
+        'en': 'English', 'es': 'Spanish', 'fr': 'French', 'de': 'German',
+        'it': 'Italian', 'zh': 'Chinese', 'ja': 'Japanese', 'ko': 'Korean'
+    }[nativeLang] || 'English';
+
     const translationInstruction = isEnglish
         ? "The 'display' text should not contain any parenthetical translations."
         : `The 'display' text MUST include a brief, parenthetical ${nativeLangName} translation. Example: "Bonjour (Hello)".`;
@@ -203,32 +173,38 @@ function createGeminiPrompt(language, topic, nativeLangName) {
         - "hiragana": A pure hiragana version of "clean_text".`;
     }
     return `
-You are a language tutor creating a lesson for a web application. Your task is to generate a single, complete, structured lesson plan in JSON format. Do not output any text or explanation outside of the single JSON object.
-
+You are a language tutor...
 The user wants to learn: **${language}**
 The user's native language is: **${nativeLangName}**
 The user-provided topic for the roleplay is: **"${topic}"**
-
-Follow these steps precisely:
-
-1.  **JSON STRUCTURE:** The entire generated output must be only the JSON object with keys: "title", "background_context", "scenario", "language", "illustration_prompt", "dialogue".
-2.  **DIALOGUE PARTY:** Dialogue objects must have a "party" key with "a" (the user) or "b" (the partner).
-3.  **LINE OBJECT:** The "line" object must contain: ${lineObjectStructure}
-4.  **NAMES:** Use realistic, culturally-appropriate names for characters. Examples for ${language}: ${nameExamples}. DO NOT use placeholders like "[USER NAME]".
-5.  **LANGUAGE:** All explanations and titles must be in the user's native language (${nativeLangName}).
-6.  **ILLUSTRATION PROMPT:** This must be a brief, descriptive text in English.
-
+...
+JSON STRUCTURE REQUIREMENTS:
+...
+LINE OBJECT: must contain: ${lineObjectStructure}
+NAMES: Use realistic names. Examples for ${language}: ${nameExamples}. DO NOT use placeholders.
+...
 Now, generate the complete JSON lesson plan.`;
 }
 
-function getRandomNames(language, count = 5) {
-    const namesByLanguage = window.characterNames;
-    const lang = (namesByLanguage && namesByLanguage[language]) ? language : 'English';
-    const langNames = namesByLanguage[lang];
-    const allNames = [...langNames.female, ...langNames.male];
-    const shuffled = [...allNames].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, count);
+// --- Core Exported Functions ---
+
+export function init(elements, stateModule, apiModule, uiModule, saveFunc) {
+    domElements = elements;
+    stateRef = stateModule;
+    apiRef = apiModule;
+    uiRef = uiModule;
+    saveStateRef = saveFunc;
 }
+
+export function getLangCode(languageValue) {
+    const langValueToCode = {
+        'English': 'en-US', 'Spanish': 'es-ES', 'French': 'fr-FR',
+        'German': 'de-DE', 'Italian': 'it-IT', 'Japanese': 'ja-JP',
+        'Chinese': 'zh-CN', 'Korean': 'ko-KR'
+    };
+    return langValueToCode[languageValue] || 'en-US';
+}
+
 
 export async function initializeLesson() {
     if (!domElements.languageSelect || !domElements.topicInput) return;
@@ -236,20 +212,15 @@ export async function initializeLesson() {
     const language = domElements.languageSelect.value;
     const topic = domElements.topicInput.value;
     if (!topic) {
-        alert(uiRef.translateText('enterTopic'));
+        uiRef.translateText('enterTopic');
         return;
     }
     
-    domElements.loadingSpinner?.classList.remove('hidden');
-    domElements.conversationContainer.innerHTML = '';
-    domElements.illustrationImg?.classList.add('hidden');
-    domElements.illustrationPlaceholder?.classList.remove('hidden');
-    domElements.imageLoader?.classList.add('hidden');
-
+    uiRef.showLoadingSpinner(); // Using UI module
     const prompt = createGeminiPrompt(language, topic, stateRef.nativeLang);
     
     try {
-        const data = await apiRef.callGeminiAPI(prompt, { modelPreference: 'pro' });
+        const data = await apiRef.callGeminiAPI(prompt, { modelPreference: 'pro' }); // Using API module
         const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
         const plan = JSON.parse(jsonString);
         
@@ -258,41 +229,29 @@ export async function initializeLesson() {
 
         if (stateRef.recognition) stateRef.recognition.lang = getLangCode(language);
 
-        domElements.loadingSpinner?.classList.add('hidden');
-        uiRef.stopTopicRotations();
-        domElements.landingScreen?.classList.add('hidden');
-        domElements.lessonScreen?.classList.remove('hidden');
+        uiRef.hideLoadingSpinner();
+        uiRef.showLessonScreen();
 
         await startConversation();
         
-        const overlayButton = document.getElementById('confirm-start-lesson-btn');
-        if (overlayButton) {
-            overlayButton.disabled = true;
-            document.getElementById('start-lesson-overlay')?.classList.remove('hidden');
-        }
+        uiRef.disableStartButton(true);
 
         const illustrationPromise = fetchAndDisplayIllustration(plan.illustration_prompt);
         const audioPromise = prefetchFirstAudio(plan.dialogue[0]);
 
         await Promise.all([illustrationPromise, audioPromise]);
         
-        if (overlayButton) overlayButton.disabled = false;
+        uiRef.disableStartButton(false);
         
         if (saveStateRef) saveStateRef();
     } catch (error) {
         console.error("Failed to initialize lesson:", error);
         alert(`${uiRef.translateText('errorLoading')} ${error.message}`);
-        domElements.loadingSpinner?.classList.add('hidden');
-        domElements.landingScreen?.classList.remove('hidden');
-        domElements.lessonScreen?.classList.add('hidden');
+        uiRef.hideLoadingSpinner();
+        uiRef.showLandingScreen();
     }
 }
 
-/**
- * THIS IS THE CORRECTED FUNCTION.
- * It pre-processes the entire dialogue, splitting user lines into sentences
- * BEFORE the UI module tries to render anything.
- */
 export async function startConversation() {
     stateRef.setCurrentTurnIndex(0);
 
@@ -316,8 +275,7 @@ export async function advanceTurn(newTurnIndex) {
 
     const { lessonPlan, currentTurnIndex: cti } = stateRef;
     if (!lessonPlan || !lessonPlan.dialogue || cti >= lessonPlan.dialogue.length) {
-        domElements.micStatus.textContent = uiRef.translateText('lessonComplete');
-        domElements.micBtn.disabled = true;
+        uiRef.showLessonComplete();
         if (lessonPlan) {
             lessonPlan.isCompleted = true;
             saveLessonToHistory(lessonPlan, domElements.languageSelect.value, domElements.topicInput.value);
@@ -327,24 +285,16 @@ export async function advanceTurn(newTurnIndex) {
     }
 
     const currentTurnData = lessonPlan.dialogue[cti];
-    document.querySelectorAll('.dialogue-line.active').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
-    
-    const currentLineEl = document.getElementById(`turn-${cti}`);
-    if (currentLineEl) {
-        currentLineEl.classList.add('active');
-        currentLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+    uiRef.highlightActiveLine(cti);
 
     if (currentTurnData.party && currentTurnData.party.toUpperCase() === 'A') {
         const cleanText = removeParentheses(currentTurnData.line.display);
-        currentSentences = currentTurnData.sentences; // Use pre-processed sentences
+        currentSentences = currentTurnData.sentences; 
         currentSentenceIndex = 0;
-        domElements.micBtn.disabled = true;
-        domElements.micStatus.textContent = uiRef.translateText('listenFirst');
+        uiRef.updateMicStatus('listenFirst', true);
         
         try {
-            const audioBlob = await fetchPartnerAudio(cleanText, 'A');
+            const audioBlob = await apiRef.fetchPartnerAudio(cleanText, getVoiceConfig(domElements.languageSelect.value, 'A'));
             const audioUrl = URL.createObjectURL(audioBlob);
             const audio = new Audio(audioUrl);
             audio.playbackRate = parseFloat(domElements.audioSpeedSelect?.value || '1');
@@ -355,18 +305,17 @@ export async function advanceTurn(newTurnIndex) {
             enableUserMicForSentence();
         }
     } else { 
-        domElements.micBtn.disabled = true;
-        domElements.micStatus.textContent = uiRef.translateText('partnerSpeaking');
+        uiRef.updateMicStatus('partnerSpeaking', true);
         try {
             const cleanText = removeParentheses(currentTurnData.line.display);
-            const audioBlob = await fetchPartnerAudio(cleanText, 'B');
+            const audioBlob = await apiRef.fetchPartnerAudio(cleanText, getVoiceConfig(domElements.languageSelect.value, 'B'));
             const audioUrl = URL.createObjectURL(audioBlob);
             const audio = new Audio(audioUrl);
             audio.playbackRate = parseFloat(domElements.audioSpeedSelect?.value || '1');
             await audio.play();
             audio.onended = () => {
                 URL.revokeObjectURL(audioUrl);
-                domElements.micStatus.textContent = uiRef.translateText('audioFinished');
+                uiRef.updateMicStatus('audioFinished');
                 setTimeout(() => advanceTurn(cti + 1), 500);
             };
             audio.onerror = () => {
@@ -374,33 +323,26 @@ export async function advanceTurn(newTurnIndex) {
                 setTimeout(() => advanceTurn(cti + 1), 500);
             };
         } catch (error) {
-            domElements.micStatus.textContent = uiRef.translateText('audioUnavailable');
+            uiRef.updateMicStatus('audioUnavailable');
             setTimeout(() => advanceTurn(cti + 1), 1500);
         }
     }
 }
 
 function enableUserMicForSentence() {
-    domElements.micBtn.disabled = false;
-    document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
+    uiRef.enableMicButton(true);
+    uiRef.highlightActiveSentence(stateRef.currentTurnIndex, currentSentenceIndex);
     
     if (currentSentences && currentSentences.length > 1) {
-        const currentSentenceEl = document.getElementById(`turn-${stateRef.currentTurnIndex}-sentence-${currentSentenceIndex}`);
-        if (currentSentenceEl) currentSentenceEl.classList.add('active-sentence');
-        const displaySentence = currentSentenceEl ? currentSentenceEl.textContent : currentSentences[currentSentenceIndex];
-        const recordSentenceText = uiRef.translateText('recordSentence');
-        domElements.micStatus.innerHTML = `<strong>${recordSentenceText} ${currentSentenceIndex + 1}/${currentSentences.length}:</strong><br><span style="color: #38bdf8; font-weight: bold; text-decoration: underline;">"${displaySentence}"</span>`;
+        const displaySentence = currentSentences[currentSentenceIndex];
+        uiRef.updateMicStatusForSentence(currentSentenceIndex + 1, currentSentences.length, displaySentence);
     } else {
-        const singleSentenceEl = document.getElementById(`turn-${stateRef.currentTurnIndex}-sentence-0`);
-        if (singleSentenceEl) singleSentenceEl.classList.add('active-sentence');
-        const yourTurnText = uiRef.translateText('yourTurn');
-        const lookForHighlightedText = uiRef.translateText('lookForHighlighted');
-        domElements.micStatus.innerHTML = `<strong>${yourTurnText}</strong><br><span style="color: #38bdf8; font-style: italic;">${lookForHighlightedText}</span>`;
+        uiRef.updateMicStatus('yourTurn');
     }
 }
 
 export function confirmStartLesson() {
-    domElements.startLessonOverlay?.classList.add('hidden');
+    uiRef.hideStartOverlay();
     if (stateRef.preFetchedFirstAudioBlob) {
         const firstTurn = stateRef.lessonPlan.dialogue[0];
         const audioUrl = URL.createObjectURL(stateRef.preFetchedFirstAudioBlob);
@@ -408,11 +350,7 @@ export function confirmStartLesson() {
         audio.playbackRate = parseFloat(domElements.audioSpeedSelect.value);
         audio.play().catch(e => console.error("error playing pre-fetched audio:", e));
         
-        const firstLineEl = document.getElementById('turn-0');
-        if (firstLineEl) {
-            firstLineEl.classList.add('active');
-            firstLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+        uiRef.highlightActiveLine(0);
         
         audio.addEventListener('ended', async () => {
             URL.revokeObjectURL(audioUrl);
@@ -430,85 +368,36 @@ export function confirmStartLesson() {
     }
 }
 
-export async function fetchAndDisplayIllustration(prompt) {
-    return new Promise(async (resolve) => {
-        try {
-            domElements.illustrationPlaceholder?.classList.add('hidden');
-            domElements.imageLoader?.classList.remove('hidden');
-
-            const result = await apiRef.generateImage(`${prompt}, digital art, minimalist, educational illustration`, {
-                imageSize: 'square_hd',
-                numInferenceSteps: 50,
-                guidanceScale: 10
-            });
-
-            if (result.imageUrl) {
-                if (stateRef.lessonPlan) {
-                    stateRef.lessonPlan.illustration_url = result.imageUrl;
-                    if (saveStateRef) saveStateRef();
-                }
-                
-                if (domElements.illustrationImg) {
-                    domElements.illustrationImg.src = result.imageUrl;
-                    domElements.illustrationImg.onload = () => {
-                        domElements.imageLoader?.classList.add('hidden');
-                        domElements.illustrationImg?.classList.remove('hidden');
-                        resolve();
-                    };
-                    domElements.illustrationImg.onerror = () => {
-                        showFallbackIllustration();
-                        resolve();
-                    };
-                } else {
-                     showFallbackIllustration();
-                     resolve();
-                }
-            } else {
-                throw new Error("No image URL returned from API.");
+async function fetchAndDisplayIllustration(prompt) {
+    try {
+        uiRef.showImageLoader();
+        const result = await apiRef.generateImage(`${prompt}, digital art, minimalist, educational illustration`); // Using API module
+        if (result.imageUrl) {
+            if (stateRef.lessonPlan) {
+                stateRef.lessonPlan.illustration_url = result.imageUrl;
+                if (saveStateRef) saveStateRef();
             }
-        } catch (error) {
-            console.error("Failed to fetch illustration:", error);
-            showFallbackIllustration();
-            resolve();
+            await uiRef.restoreIllustration(result.imageUrl); // Using UI module
+        } else {
+            throw new Error("No image URL returned from API.");
         }
-    });
-}
-
-function showFallbackIllustration() {
-    domElements.imageLoader?.classList.add('hidden');
-    if (domElements.illustrationPlaceholder) {
-        domElements.illustrationPlaceholder.innerHTML = `
-            <div class="text-center text-gray-400">
-                <i class="fas fa-comments text-6xl mb-4"></i>
-                <p class="text-lg">${uiRef.translateText('roleplayScenario')}</p>
-                <p class="text-sm mt-2">${uiRef.translateText('imageUnavailable')}</p>
-            </div>
-        `;
-        domElements.illustrationPlaceholder.classList.remove('hidden');
+    } catch (error) {
+        console.error("Failed to fetch illustration:", error);
+        uiRef.showFallbackIllustration();
     }
 }
 
 async function prefetchFirstAudio(firstTurn) {
-    return new Promise(async (resolve) => {
-        if (!firstTurn) {
-            stateRef.setPreFetchedFirstAudioBlob(null);
-            return resolve();
-        }
-        try {
-            const blob = await fetchPartnerAudio(removeParentheses(firstTurn.line.display), firstTurn.party);
-            stateRef.setPreFetchedFirstAudioBlob(blob);
-            resolve();
-        } catch (error) {
-            stateRef.setPreFetchedFirstAudioBlob(null);
-            resolve();
-        }
-    });
-}
-
-async function fetchPartnerAudio(text, party = 'B') {
-    const currentLanguage = domElements.languageSelect?.value || 'English';
-    const voiceConfig = getVoiceConfig(currentLanguage, party);
-    return await apiRef.fetchPartnerAudio(text, voiceConfig);
+    if (!firstTurn) {
+        stateRef.setPreFetchedFirstAudioBlob(null);
+        return;
+    }
+    try {
+        const blob = await apiRef.fetchPartnerAudio(removeParentheses(firstTurn.line.display), getVoiceConfig(domElements.languageSelect.value, firstTurn.party));
+        stateRef.setPreFetchedFirstAudioBlob(blob);
+    } catch (error) {
+        stateRef.setPreFetchedFirstAudioBlob(null);
+    }
 }
 
 export function toggleSpeechRecognition() {
@@ -517,14 +406,11 @@ export function toggleSpeechRecognition() {
         stateRef.recognition.stop();
     } else {
         try {
-            const selectedLanguage = domElements.languageSelect?.value || 'English';
-            stateRef.recognition.lang = getLangCode(selectedLanguage);
+            stateRef.recognition.lang = getLangCode(domElements.languageSelect.value);
             stateRef.recognition.start();
         } catch (error) {
             console.error('speech recognition failed to start:', error);
-            if (domElements.micStatus) {
-                domElements.micStatus.textContent = 'Speech recognition is not supported for this language in your browser.';
-            }
+            uiRef.updateMicStatus('speechNotSupported');
         }
     }
 }
@@ -534,25 +420,38 @@ export async function verifyUserSpeech(spokenText) {
         speechAttempts++;
         const currentLanguage = domElements.languageSelect.value;
         const currentTurnData = stateRef.lessonPlan.dialogue[stateRef.currentTurnIndex];
-        let requiredText = (currentSentences.length > 1) ? currentSentences[currentSentenceIndex] : currentTurnData.line.clean_text;
 
-        const normalize = (text) => text.trim().toLowerCase().replace(/[.,!?;:"'`´''""。！？]/g, '').replace(/\s+/g, ' ');
-        const normalizedSpoken = normalize(spokenText);
-        const normalizedRequired = normalize(requiredText);
-
-        const similarity = levenshteinDistance(normalizedSpoken, normalizedRequired);
-        const maxLength = Math.max(normalizedSpoken.length, normalizedRequired.length);
-        const similarityScore = maxLength === 0 ? 1 : 1 - (similarity / maxLength);
-
-        if (similarityScore >= 0.75) {
-            handleCorrectSpeech();
+        if (['Japanese', 'Korean', 'Chinese'].includes(currentLanguage)) {
+            uiRef.updateMicStatus('verifyingWithAI');
+            const nativeLangName = {'en': 'English', 'es': 'Spanish', 'fr': 'French', 'de': 'German', 'it': 'Italian', 'zh': 'Chinese', 'ja': 'Japanese', 'ko': 'Korean'}[stateRef.nativeLang] || 'English';
+            let expectedLine = (currentSentences.length > 1) ? currentSentences[currentSentenceIndex] : currentTurnData.line.clean_text;
+            const verificationPrompt = `You are a language evaluation tool... Expected: "${expectedLine}" Spoken: "${spokenText}" Provide the JSON response.`;
+            const data = await apiRef.callGeminiAPI(verificationPrompt, { modelPreference: 'super' });
+            const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+            const result = JSON.parse(jsonString);
+            if (result.is_match) {
+                handleCorrectSpeech();
+            } else {
+                handleIncorrectSpeech(0, expectedLine, spokenText, result.feedback);
+            }
         } else {
-            handleIncorrectSpeech(similarityScore, normalizedRequired, normalizedSpoken);
+            let requiredText = (currentSentences.length > 1) ? currentSentences[currentSentenceIndex] : currentTurnData.line.clean_text;
+            const normalize = (text) => text.trim().toLowerCase().replace(/[.,!?;:"'`´''""。！？]/g, '').replace(/\s+/g, ' ');
+            const normalizedSpoken = normalize(spokenText);
+            const normalizedRequired = normalize(requiredText);
+            const distance = levenshteinDistance(normalizedSpoken, normalizedRequired);
+            const maxLength = Math.max(normalizedSpoken.length, normalizedRequired.length);
+            const similarity = maxLength === 0 ? 1 : 1 - (distance / maxLength);
+            if (similarity >= 0.75) {
+                handleCorrectSpeech();
+            } else {
+                handleIncorrectSpeech(similarity, normalizedRequired, normalizedSpoken);
+            }
         }
     } catch (error) {
         console.error("Critical error in verifyUserSpeech:", error);
-        domElements.micStatus.textContent = 'A critical error occurred. Please reset the lesson.';
-        domElements.micBtn.disabled = true;
+        uiRef.updateMicStatus('criticalError');
+        uiRef.enableMicButton(false);
     }
 }
 
@@ -573,34 +472,42 @@ function handleCorrectSpeech() {
     speechAttempts = 0;
     if (currentSentences.length > 1 && (currentSentenceIndex < currentSentences.length - 1)) {
         currentSentenceIndex++;
-        domElements.micStatus.textContent = uiRef.translateText('sentenceCorrect');
+        uiRef.updateMicStatus('sentenceCorrect');
         setTimeout(() => enableUserMicForSentence(), 1500);
     } else {
-        domElements.micStatus.textContent = (currentSentences.length > 1) ? uiRef.translateText('allSentencesCorrect') : uiRef.translateText('correct');
-        const currentLineEl = document.getElementById(`turn-${stateRef.currentTurnIndex}`);
-        if (currentLineEl) currentLineEl.style.borderColor = '#4ade80';
-        domElements.micBtn.disabled = true;
+        const statusKey = (currentSentences.length > 1) ? 'allSentencesCorrect' : 'correct';
+        uiRef.updateMicStatus(statusKey);
+        uiRef.flashLineBorder(stateRef.currentTurnIndex, 'correct');
+        uiRef.enableMicButton(false);
         setTimeout(() => advanceTurn(stateRef.currentTurnIndex + 1), 2000);
     }
 }
 
-function handleIncorrectSpeech(similarity, required, spoken) {
-    const sentenceInfo = currentSentences.length > 1 ? ` (Sentence ${currentSentenceIndex + 1}/${currentSentences.length})` : '';
-    domElements.micStatus.textContent = `${uiRef.translateText('tryAgain')} (${(similarity * 100).toFixed(0)}% match)${sentenceInfo}`;
-    const currentLineEl = document.getElementById(`turn-${stateRef.currentTurnIndex}`);
-    if (currentLineEl) {
-        currentLineEl.classList.remove('active');
-        void currentLineEl.offsetWidth;
-        currentLineEl.classList.add('active');
-        currentLineEl.style.borderColor = '#f87171';
+function handleIncorrectSpeech(similarity, required, spoken, apiFeedback = null) {
+    const currentLanguage = domElements.languageSelect.value;
+    const isAsianLang = ['Japanese', 'Korean', 'Chinese'].includes(currentLanguage);
+    let feedbackText;
+
+    if (isAsianLang) {
+        feedbackText = apiFeedback || uiRef.translateText('tryAgain');
+    } else {
+        const sentenceInfo = currentSentences.length > 1 ? ` (Sentence ${currentSentenceIndex + 1}/${currentSentences.length})` : '';
+        feedbackText = `${uiRef.translateText('tryAgain')} (${(similarity * 100).toFixed(0)}% match)${sentenceInfo}`;
     }
+    
+    uiRef.updateMicStatusHTML(feedbackText);
+    
+    if (currentLanguage === 'Chinese' && speechAttempts >= 3 && isAsianLang) {
+        uiRef.showSkipButton(handleCorrectSpeech);
+    }
+
+    uiRef.flashLineBorder(stateRef.currentTurnIndex, 'incorrect');
     setTimeout(() => {
         if (currentSentences.length > 1) {
             enableUserMicForSentence();
         } else {
-            domElements.micStatus.textContent = uiRef.translateText('tryAgainStatus');
+            uiRef.updateMicStatus('tryAgainStatus');
         }
-        if (currentLineEl) currentLineEl.style.borderColor = '';
     }, 4000);
 }
 
@@ -609,14 +516,8 @@ export function resetLesson() {
     stateRef.audioPlayer?.pause();
     stateRef.audioPlayer.src = "";
     stateRef.setCurrentTurnIndex(0);
-    document.querySelectorAll('.dialogue-line.active, .sentence-span.active-sentence').forEach(el => {
-        el.classList.remove('active', 'active-sentence');
-        el.style.borderColor = '';
-    });
-    domElements.micBtn.disabled = false;
-    domElements.micBtn.classList.remove('bg-green-600');
-    domElements.micBtn.classList.add('bg-red-600');
-    domElements.micStatus.textContent = uiRef.translateText('micStatus');
+    uiRef.resetHighlights();
+    uiRef.resetMic();
     stateRef.recognition?.stop();
     uiRef.hideReviewModeBanner?.();
     advanceTurn(0);
