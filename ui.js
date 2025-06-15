@@ -184,13 +184,73 @@ export function showReviewModeUI(language, lessonPlan) {
     lessonScreen.insertBefore(reviewBanner, lessonScreen.firstChild);
 }
 
+export function populateLessonTopics() {
+    // This function would populate the lesson topic buttons
+    // For now, we'll add some basic topics to test the functionality
+    const containers = {
+        'beginner-container': ['Ordering Coffee', 'Introducing Yourself', 'Asking for Directions', 'Shopping for Groceries'],
+        'intermediate-container': ['Job Interview', 'Booking a Hotel', 'At the Doctor', 'Making Friends'],
+        'advanced-container': ['Business Meeting', 'Academic Discussion', 'Debating Politics', 'Cultural Exchange'],
+        'realistic-container': ['Airport Check-in', 'Restaurant Order', 'Taxi Ride', 'Phone Call'],
+        'futuristic-container': ['AI Assistant', 'Space Travel', 'Virtual Reality', 'Robot Companion'],
+        'historical-container': ['Medieval Market', 'Ancient Rome', 'Wild West', 'Victorian Era'],
+        'drama-container': ['Family Conflict', 'Love Triangle', 'Betrayal', 'Reconciliation'],
+        'comedy-container': ['Funny Mishap', 'Awkward Date', 'Silly Mix-up', 'Comedy Show'],
+        'horror-container': ['Haunted House', 'Mystery Solver', 'Scary Story', 'Thriller Plot']
+    };
+
+    Object.entries(containers).forEach(([containerId, topics]) => {
+        const container = document.getElementById(containerId);
+        if (container && container.children.length === 0) {
+            topics.forEach(topic => {
+                const button = document.createElement('button');
+                button.className = 'lesson-btn bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded text-sm transition-all';
+                button.setAttribute('data-topic', topic);
+                button.textContent = topic;
+                container.appendChild(button);
+            });
+        }
+    });
+}
+
 export function displayLessonHistory() {
-    // Implementation for displaying lesson history
-    console.log('Display lesson history called');
+    if (!domElements.historyLessonsContainer) return;
+    
+    // Clear existing content
+    domElements.historyLessonsContainer.innerHTML = '';
+    
+    // Try to get lesson history from localStorage
+    try {
+        const history = JSON.parse(localStorage.getItem('rolelang_lesson_history') || '[]');
+        
+        if (history.length === 0) {
+            const noHistoryMsg = document.createElement('div');
+            noHistoryMsg.className = 'col-span-2 text-center text-gray-500 py-4';
+            noHistoryMsg.textContent = translateText('noLessonHistory') || 'No previous lessons found';
+            domElements.historyLessonsContainer.appendChild(noHistoryMsg);
+            return;
+        }
+
+        // Display recent lessons (last 8)
+        const recentLessons = history.slice(-8).reverse();
+        recentLessons.forEach((lesson, index) => {
+            const lessonCard = document.createElement('button');
+            lessonCard.className = 'history-card bg-amber-800/20 hover:bg-amber-700/30 border border-amber-600/30 rounded-lg p-3 text-left transition-all';
+            lessonCard.innerHTML = `
+                <div class="text-white font-medium text-sm line-clamp-2 mb-1">${lesson.topic}</div>
+                <div class="text-amber-300 text-xs">${lesson.language}</div>
+                <div class="text-gray-400 text-xs">${lesson.completedAt}</div>
+            `;
+            domElements.historyLessonsContainer.appendChild(lessonCard);
+        });
+    } catch (error) {
+        console.error('Error loading lesson history:', error);
+    }
 }
 
 export function startTopicRotations() {
-    // Implementation for topic rotations
+    // Populate topics when starting rotations
+    populateLessonTopics();
     console.log('Starting topic rotations');
 }
 
@@ -228,6 +288,8 @@ export function toggleLessonsVisibility(forceShow = false) {
     if (isHidden || forceShow) {
         domElements.lessonsContainer.classList.remove('hidden');
         if (chevronIcon) chevronIcon.style.transform = 'rotate(180deg)';
+        // Populate lesson topics if not already done
+        populateLessonTopics();
     } else if (!forceShow) {
         domElements.lessonsContainer.classList.add('hidden');
         if (chevronIcon) chevronIcon.style.transform = 'rotate(0deg)';

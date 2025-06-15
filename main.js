@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     elements.difficultyTab?.addEventListener('click', () => ui.switchTab('difficulty'));
     elements.situationsTab?.addEventListener('click', () => ui.switchTab('situations'));
     elements.resetLessonBtn?.addEventListener('click', () => lesson.resetLesson());
-    elements.confirmStartLessonBtn?.addEventListener('click', () => lesson.confirmStartLesson());
+    elements.confirmStartLessonBtn?.addEventListener('click', () => lesson.confirmStartLesson());</old_str>
 
     document.addEventListener('click', (event) => {
         // For lesson topic buttons
