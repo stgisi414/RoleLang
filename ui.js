@@ -325,13 +325,15 @@ export async function restoreConversation(lessonPlan) {
     }
 }
 
-// FIX: Updated to include grammar explanation icon logic
 function createDialogueLine(turn, index) {
     const lineDiv = document.createElement('div');
-    lineDiv.className = `dialogue-line text-white cursor-pointer ${turn.party === 'A' ? 'user-line' : 'partner-line'}`;
+    // **THE FIX: Make the party check case-insensitive**
+    const party = turn.party ? turn.party.toUpperCase() : 'B';
+
+    lineDiv.className = `dialogue-line text-white cursor-pointer ${party === 'A' ? 'user-line' : 'partner-line'}`;
     lineDiv.id = `turn-${index}`;
 
-    const speakerIcon = turn.party === 'A' ? '👤' : '🤖';
+    const speakerIcon = party === 'A' ? '👤' : '🤖';
     let lineContent = `<strong>${speakerIcon}</strong> ${turn.line.display} <i class="fas fa-volume-up text-gray-400 ml-2 hover:text-sky-300"></i>`;
     
     lineDiv.innerHTML = lineContent;
