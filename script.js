@@ -2787,9 +2787,9 @@ Now, provide the JSON array for the given text:
 
     1.  **Top-Level Keys:** The JSON object must contain these keys: "title", "background_context", "scenario", "language", "illustration_prompt", "dialogue".
 
-    2.  **Title:** A catchy, descriptive title for the lesson in English that captures the essence of the scenario.
+    2.  **Title:** A catchy, descriptive title for the lesson in ${language} that captures the essence of the scenario.
 
-    3.  **Background Context:** A brief paragraph in English explaining the context and setting of the roleplay scenario. This should help learners understand the situation they're entering.
+    3.  **Background Context:** A brief paragraph in ${language} explaining the context and setting of the roleplay scenario. This should help learners understand the situation they're entering.
 
     4.  **Dialogue Object:** Each object in the "dialogue" array must contain:
         - "party": "A" (the user) or "B" (the partner).
