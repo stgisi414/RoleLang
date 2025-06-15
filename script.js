@@ -166,80 +166,78 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function restoreState(state) {
-        // Restore form values
-        if (state.selectedLanguage) {
-            languageSelect.value = state.selectedLanguage;
-        }
-        if (state.topicInput) {
-            topicInput.value = state.topicInput;
-        }
+		// Restore form values
+		if (state.selectedLanguage) {
+			languageSelect.value = state.selectedLanguage;
+		}
+		if (state.topicInput) {
+			topicInput.value = state.topicInput;
+		}
 
-        // Restore lessons visibility
-        if (state.lessonsVisible) {
-            lessonsContainer.classList.remove('hidden');
-            const chevronIcon = toggleLessonsBtn.querySelector('i');
-            chevronIcon.style.transform = 'rotate(180deg)';
-        }
+		// Restore lessons visibility
+		if (state.lessonsVisible) {
+			lessonsContainer.classList.remove('hidden');
+			const chevronIcon = toggleLessonsBtn.querySelector('i');
+			chevronIcon.style.transform = 'rotate(180deg)';
+		}
 
-        // Restore audio speed
-        if (state.audioSpeed && audioSpeedSelect) {
-            audioSpeedSelect.value = state.audioSpeed;
-        }
+		// Restore audio speed
+		if (state.audioSpeed && audioSpeedSelect) {
+			audioSpeedSelect.value = state.audioSpeed;
+		}
 
-        // Restore lesson if it exists
-        if (state.lessonPlan && state.currentScreen === 'lesson') {
-            lessonPlan = state.lessonPlan;
-            currentTurnIndex = state.currentTurnIndex;
+		// Restore lesson if it exists
+		if (state.lessonPlan && state.currentScreen === 'lesson') {
+			lessonPlan = state.lessonPlan;
+			currentTurnIndex = state.currentTurnIndex;
 
-            // Validate lesson plan structure
-            if (!lessonPlan.dialogue || !Array.isArray(lessonPlan.dialogue) || lessonPlan.dialogue.length === 0) {
-                console.warn('Invalid lesson plan detected in saved state, clearing state');
-                clearState();
-                return;
-            }
+			// Validate lesson plan structure
+			if (!lessonPlan.dialogue || !Array.isArray(lessonPlan.dialogue) || lessonPlan.dialogue.length === 0) {
+				console.warn('Invalid lesson plan detected in saved state, clearing state');
+				clearState();
+				return;
+			}
 
-            // Set speech recognition language
-            if (recognition) {
-                const selectedLanguage = languageSelect.value;
-                recognition.lang = getLangCode(selectedLanguage);
-            }
+			// Set speech recognition language
+			if (recognition) {
+				recognition.lang = getLangCode(state.selectedLanguage);
+			}
 
-            // Switch to lesson screen
-            landingScreen.classList.add('hidden');
-            lessonScreen.classList.remove('hidden');
+			// Switch to lesson screen
+			landingScreen.classList.add('hidden');
+			lessonScreen.classList.remove('hidden');
 
-            // Restore conversation
-            await restoreConversation();
+			// Restore conversation and illustration
+			await restoreConversation();
+			if (lessonPlan.illustration_url) {
+				restoreIllustration(lessonPlan.illustration_url);
+			} else if (lessonPlan.illustration_prompt) {
+				fetchAndDisplayIllustration(lessonPlan.illustration_prompt);
+			}
 
-            // Restore illustration
-            if (lessonPlan.illustration_url) {
-                restoreIllustration(lessonPlan.illustration_url);
-            } else if (lessonPlan.illustration_prompt) {
-                fetchAndDisplayIllustration(lessonPlan.illustration_prompt);
-            }
+			const isActuallyCompleted = currentTurnIndex >= lessonPlan.dialogue.length;
+			
+			if (isActuallyCompleted) {
+				// Lesson is completed, show review mode
+				micStatus.textContent = translateText('lessonComplete');
+				micBtn.disabled = true;
+				lessonPlan.isCompleted = true;
+				showReviewModeUI(state.selectedLanguage);
+			} else {
+				// Lesson is in progress, resume from the correct turn
+				lessonPlan.isCompleted = false;
+				
+				// --- THIS IS THE FIX ---
+				// We now pass the restored 'currentTurnIndex' to the function,
+				// so the lesson resumes from the correct point.
+				advanceTurn(currentTurnIndex);
+			}
 
-            // Only check for completion based on actual progress, not stored completion flag
-            const isActuallyCompleted = currentTurnIndex >= lessonPlan.dialogue.length;
-            
-            if (isActuallyCompleted) {
-                // Lesson is actually completed, show review mode
-                micStatus.textContent = translateText('lessonComplete');
-                micBtn.disabled = true;
-                // Ensure the lesson is marked as completed
-                lessonPlan.isCompleted = true;
-                showReviewModeUI(state.selectedLanguage);
-                // Don't call advanceTurn() for completed lessons
-            } else {
-                // Clear any incorrect completion flag and resume from current turn
-                lessonPlan.isCompleted = false;
-                advanceTurn();
-            }
-
-            // Stop topic rotations when in lesson
-            stopTopicRotations();
-        }
-    }
-
+			// Stop topic rotations when in lesson
+			stopTopicRotations();
+		}
+	}
+	
     // Translation function
     function translateText(key) {
         return currentTranslations[key] || translations.en[key] || key;
