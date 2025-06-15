@@ -2735,22 +2735,8 @@ Now, provide the JSON array for the given text:
 
     function createGeminiPrompt(language, topic) {
         const isEnglish = language === 'English';
-        const translationInstruction = isEnglish
-            ? "The 'display' text should not contain any parenthetical translations."
-            : `The 'display' text MUST include a brief, parenthetical English translation. Example: "Bonjour (Hello)".`;
-
-        let lineObjectStructure = `
-              - "display": The line of dialogue in ${language}. ${translationInstruction}
-              - "clean_text": The line of dialogue in ${language} WITHOUT any parenthetical translations. THIS IS FOR SPEECH RECOGNITION. It must be identical to the "display" text, just without the translation part.
-          `;
-
-        if (language === 'Japanese') {
-            // Japanese gets a third field for hiragana
-            lineObjectStructure += `
-              - "hiragana": A pure hiragana version of "clean_text".`;
-        }
-
-        // Get user's native language for explanations
+        
+        // Get user's native language for parenthetical translations
         const nativeLangCode = nativeLang || 'en';
         const langCodeToName = {
             'en': 'English',
@@ -2763,6 +2749,23 @@ Now, provide the JSON array for the given text:
             'ko': 'Korean'
         };
         const nativeLangName = langCodeToName[nativeLangCode] || 'English';
+        
+        const translationInstruction = isEnglish
+            ? "The 'display' text should not contain any parenthetical translations."
+            : `The 'display' text MUST include a brief, parenthetical ${nativeLangName} translation. Example: "Bonjour (${nativeLangName === 'Korean' ? '안녕하세요' : nativeLangName === 'Spanish' ? 'Hola' : nativeLangName === 'French' ? 'Salut' : nativeLangName === 'German' ? 'Hallo' : nativeLangName === 'Italian' ? 'Ciao' : nativeLangName === 'Chinese' ? '你好' : nativeLangName === 'Japanese' ? 'こんにちは' : 'Hello'})".`;
+
+        let lineObjectStructure = `
+              - "display": The line of dialogue in ${language}. ${translationInstruction}
+              - "clean_text": The line of dialogue in ${language} WITHOUT any parenthetical translations. THIS IS FOR SPEECH RECOGNITION. It must be identical to the "display" text, just without the translation part.
+          `;
+
+        if (language === 'Japanese') {
+            // Japanese gets a third field for hiragana
+            lineObjectStructure += `
+              - "hiragana": A pure hiragana version of "clean_text".`;
+        }
+
+        
 
         // Get random culturally appropriate names for the target language
         const randomNames = getRandomNames(language, 5);
@@ -2798,6 +2801,8 @@ Now, provide the JSON array for the given text:
 
     5.  **Line Object:** The "line" object must contain these exact fields:
         ${lineObjectStructure}
+        
+    5a. **TRANSLATION LANGUAGE:** All parenthetical translations in the dialogue must be in ${nativeLangName}, NOT English. For example, if learning Japanese and the user's native language is Korean, "こんにちは (안녕하세요)" NOT "こんにちは (Hello)".
 
     6.  **Character Names:** You MUST use realistic, culturally-appropriate names for the characters. Here are some good examples for ${language}: ${nameExamples}. Choose from these or similar culturally appropriate names for ${language}. Use both first and last names.
 
