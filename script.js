@@ -225,6 +225,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 			// Restore conversation and illustration
 			await restoreConversation();
+			displayLessonTitleAndContext();
 			if (lessonPlan.illustration_url) {
 				restoreIllustration(lessonPlan.illustration_url);
 			} else if (lessonPlan.illustration_prompt) {
@@ -1898,6 +1899,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 		// Audio and turn advancement is handled by the overlay button click.
 		currentTurnIndex = 0;
 		restoreConversation();
+		displayLessonTitleAndContext();
 		addBackToLandingButton();
 	}
 
@@ -2583,6 +2585,27 @@ Now, provide the JSON array for the given text:
         illustrationPlaceholder.classList.remove('hidden');
     }
 
+    function displayLessonTitleAndContext() {
+        const titleContainer = document.getElementById('lesson-title-container');
+        const titleElement = document.getElementById('lesson-title');
+        const contextContainer = document.getElementById('background-context-container');
+        const contextElement = document.getElementById('background-context');
+
+        if (lessonPlan && lessonPlan.title) {
+            titleElement.textContent = lessonPlan.title;
+            titleContainer.classList.remove('hidden');
+        } else {
+            titleContainer.classList.add('hidden');
+        }
+
+        if (lessonPlan && lessonPlan.background_context) {
+            contextElement.textContent = lessonPlan.background_context;
+            contextContainer.classList.remove('hidden');
+        } else {
+            contextContainer.classList.add('hidden');
+        }
+    }
+
     function showExplanation(content) {
         modalBody.innerHTML = `<h3 class="text-xl font-bold mb-2 text-cyan-300">${content.title}</h3><p class="text-gray-300">${content.body}</p>`;
         modal.classList.remove('hidden');
@@ -2762,23 +2785,27 @@ Now, provide the JSON array for the given text:
 
     **JSON STRUCTURE REQUIREMENTS:**
 
-    1.  **Top-Level Keys:** The JSON object must contain these keys: "scenario", "language", "illustration_prompt", "dialogue".
+    1.  **Top-Level Keys:** The JSON object must contain these keys: "title", "background_context", "scenario", "language", "illustration_prompt", "dialogue".
 
-    2.  **Dialogue Object:** Each object in the "dialogue" array must contain:
+    2.  **Title:** A catchy, descriptive title for the lesson in English that captures the essence of the scenario.
+
+    3.  **Background Context:** A brief paragraph in English explaining the context and setting of the roleplay scenario. This should help learners understand the situation they're entering.
+
+    4.  **Dialogue Object:** Each object in the "dialogue" array must contain:
         - "party": "A" (the user) or "B" (the partner).
         - "line": An object containing the text for the dialogue.
         - "explanation" (optional): An object with a "title" and "body" for grammar tips. IMPORTANT: Both "title" and "body" must be written in the user's native language (${nativeLangName}).
 
-    3.  **Line Object:** The "line" object must contain these exact fields:
+    5.  **Line Object:** The "line" object must contain these exact fields:
         ${lineObjectStructure}
 
-    4.  **Character Names:** You MUST use realistic, culturally-appropriate names for the characters. Here are some good examples for ${language}: ${nameExamples}. Choose from these or similar culturally appropriate names for ${language}. Use both first and last names.
+    6.  **Character Names:** You MUST use realistic, culturally-appropriate names for the characters. Here are some good examples for ${language}: ${nameExamples}. Choose from these or similar culturally appropriate names for ${language}. Use both first and last names.
 
-    5.  **NO PLACEHOLDERS:** This is a critical rule. Under no circumstances should you use placeholders like "[USER NAME]", "(YOUR NAME)", "<NAME>", or any similar variants. You must use the culturally appropriate names as specified in RULE 4.
+    7.  **NO PLACEHOLDERS:** This is a critical rule. Under no circumstances should you use placeholders like "[USER NAME]", "(YOUR NAME)", "<NAME>", or any similar variants. You must use the culturally appropriate names as specified in RULE 6.
 
-    6.  **EXPLANATION LANGUAGE:** All explanations (title and body) must be written in ${nativeLangName}, not English.
+    8.  **EXPLANATION LANGUAGE:** All explanations (title and body) must be written in ${nativeLangName}, not English.
 
-    7.  **ILLUSTRATION PROMPT:** The "illustration_prompt" should be a brief, descriptive text in English to generate an appropriate illustration for the scenario. The style should be highly detailed, anime-like and stylish. The image should have absolutely no text or labels, only the visual representation of the scenario.
+    9.  **ILLUSTRATION PROMPT:** The "illustration_prompt" should be a brief, descriptive text in English to generate an appropriate illustration for the scenario. The style should be highly detailed, anime-like and stylish. The image should have absolutely no text or labels, only the visual representation of the scenario.
 
     Now, generate the complete JSON lesson plan.`;
     }
