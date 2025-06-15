@@ -1057,14 +1057,48 @@ document.addEventListener('DOMContentLoaded', async () => {
 				const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
 				const vocabulary = JSON.parse(jsonString);
 
-				// Add context to each vocabulary item
+				// Add enhanced context to each vocabulary item
 				return vocabulary.map(vocabItem => {
-					const contextTurn = lessonPlan.dialogue.find(turn =>
+					const contextTurnIndex = lessonPlan.dialogue.findIndex(turn =>
 						turn.line && turn.line.display && turn.line.display.toLowerCase().includes(vocabItem.word.toLowerCase())
 					);
+					
+					if (contextTurnIndex !== -1) {
+						// Get surrounding context for better quiz experience
+						const contextParts = [];
+						
+						// Add preceding turn if available
+						if (contextTurnIndex > 0) {
+							const precedingTurn = lessonPlan.dialogue[contextTurnIndex - 1];
+							if (precedingTurn && precedingTurn.line && precedingTurn.line.display) {
+								contextParts.push(removeParentheses(precedingTurn.line.display));
+							}
+						}
+						
+						// Add current turn (without the word itself to avoid giving away the answer)
+						const currentTurn = lessonPlan.dialogue[contextTurnIndex];
+						const currentText = removeParentheses(currentTurn.line.display);
+						const wordRegex = new RegExp(vocabItem.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+						const contextWithoutWord = currentText.replace(wordRegex, '___');
+						contextParts.push(contextWithoutWord);
+						
+						// Add following turn if available
+						if (contextTurnIndex < lessonPlan.dialogue.length - 1) {
+							const followingTurn = lessonPlan.dialogue[contextTurnIndex + 1];
+							if (followingTurn && followingTurn.line && followingTurn.line.display) {
+								contextParts.push(removeParentheses(followingTurn.line.display));
+							}
+						}
+						
+						return {
+							...vocabItem,
+							context: contextParts.join(' ... ')
+						};
+					}
+					
 					return {
 						...vocabItem,
-						context: contextTurn ? contextTurn.line.display : vocabItem.word
+						context: vocabItem.word
 					};
 				});
 			} catch (error) {
@@ -1072,13 +1106,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 				return [];
 			}
 		} else {
-			// Original logic for all other languages (parsing parentheses)
+			// Enhanced logic for other languages with better context
 			if (!lessonPlan || !lessonPlan.dialogue) return [];
 
 			const vocabulary = [];
 			const seenWords = new Set();
 
-			lessonPlan.dialogue.forEach(turn => {
+			lessonPlan.dialogue.forEach((turn, turnIndex) => {
 				if (turn.line && turn.line.display) {
 					const cleanText = removeParentheses(turn.line.display);
 					const translation = extractTranslation(turn.line.display);
@@ -1088,10 +1122,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 						const translationClean = translation.replace(/[()]/g, '').trim();
 
 						if (word && translationClean && !seenWords.has(word.toLowerCase())) {
+							// Create enhanced context with surrounding turns
+							const contextParts = [];
+							
+							// Add preceding turn if available
+							if (turnIndex > 0) {
+								const precedingTurn = lessonPlan.dialogue[turnIndex - 1];
+								if (precedingTurn && precedingTurn.line && precedingTurn.line.display) {
+									contextParts.push(removeParentheses(precedingTurn.line.display));
+								}
+							}
+							
+							// Add current turn without parenthetical translation
+							contextParts.push(cleanText);
+							
+							// Add following turn if available
+							if (turnIndex < lessonPlan.dialogue.length - 1) {
+								const followingTurn = lessonPlan.dialogue[turnIndex + 1];
+								if (followingTurn && followingTurn.line && followingTurn.line.display) {
+									contextParts.push(removeParentheses(followingTurn.line.display));
+								}
+							}
+
 							vocabulary.push({
 								word: word,
 								translation: translationClean,
-								context: turn.line.display
+								context: contextParts.join(' ... ')
 							});
 							seenWords.add(word.toLowerCase());
 						}
