@@ -1164,6 +1164,242 @@ document.addEventListener('DOMContentLoaded', async () => {
         return match ? match[1] : null;
     }
 
+    // Fallback vocabulary extraction with more aggressive pattern matching
+    async function fallbackVocabularyExtraction() {
+        if (!lessonPlan || !lessonPlan.dialogue) return [];
+
+        console.log('Starting fallback vocabulary extraction...');
+        const vocabulary = [];
+        const seenWords = new Set();
+
+        lessonPlan.dialogue.forEach((turn, turnIndex) => {
+            if (turn.line && turn.line.display) {
+                const fullText = turn.line.display;
+                console.log(`Processing turn ${turnIndex}: ${fullText}`);
+
+                // More aggressive pattern matching for translations
+                const patterns = [
+                    /([^(]+)\s*\(([^)]+)\)/g,  // Standard pattern: text (translation)
+                    /([가-힣]+[^(]*)\s*\(([^)]+)\)/g,  // Korean specific pattern
+                    /([^\s]+)\s*\(([^)]+)\)/g,  // Single word pattern
+                ];
+
+                patterns.forEach(pattern => {
+                    let match;
+                    while ((match = pattern.exec(fullText)) !== null) {
+                        const word = match[1].trim();
+                        const translation = match[2].trim();
+                        
+                        // Filter out obvious non-vocabulary items
+                        if (word && translation && 
+                            !translation.toLowerCase().includes('speaking') &&
+                            !translation.toLowerCase().includes('thinking') &&
+                            translation.length > 1 && 
+                            word.length > 1 &&
+                            !seenWords.has(word.toLowerCase())) {
+                            
+                            console.log(`Found vocabulary: "${word}" -> "${translation}"`);
+                            
+                            // Create enhanced context
+                            const contextParts = [];
+                            if (turnIndex > 0 && lessonPlan.dialogue[turnIndex - 1].line) {
+                                contextParts.push(removeParentheses(lessonPlan.dialogue[turnIndex - 1].line.display));
+                            }
+                            contextParts.push(removeParentheses(fullText));
+                            if (turnIndex < lessonPlan.dialogue.length - 1 && lessonPlan.dialogue[turnIndex + 1].line) {
+                                contextParts.push(removeParentheses(lessonPlan.dialogue[turnIndex + 1].line.display));
+                            }
+
+                            vocabulary.push({
+                                word: word,
+                                translation: translation,
+                                context: contextParts.join(' ... ')
+                            });
+                            seenWords.add(word.toLowerCase());
+                        }
+                    }
+                });
+            }
+        });
+
+        console.log(`Fallback extraction found ${vocabulary.length} vocabulary items`);
+        return vocabulary.slice(0, 10); // Limit to 10 items
+    }
+
+    function showVocabularyReloadModal(language) {
+        // Create reload modal
+        const reloadModal = document.createElement('div');
+        reloadModal.id = 'vocab-reload-modal';
+        reloadModal.className = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4';
+
+        const reloadContent = document.createElement('div');
+        reloadContent.className = 'bg-gray-800 rounded-xl p-6 max-w-md w-full glassmorphism';
+
+        reloadContent.innerHTML = `
+            <div class="text-center">
+                <div class="text-4xl mb-4">📚</div>
+                <h3 class="text-xl font-bold text-yellow-300 mb-4">
+                    ${translateText('noVocabularyFound') || 'No vocabulary found'}
+                </h3>
+                <p class="text-gray-300 mb-6">
+                    The vocabulary data for this lesson couldn't be loaded. This sometimes happens with the sentence splitting process. Would you like to try reloading the vocabulary data?
+                </p>
+                <div class="flex space-x-3 justify-center">
+                    <button id="reload-vocab-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-redo mr-2"></i>Reload Vocabulary
+                    </button>
+                    <button id="force-extract-btn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-search mr-2"></i>Force Extract
+                    </button>
+                    <button id="cancel-vocab-btn" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors">
+                        ${translateText('close') || 'Close'}
+                    </button>
+                </div>
+            </div>
+        `;
+
+        reloadModal.appendChild(reloadContent);
+        document.body.appendChild(reloadModal);
+
+        // Add event listeners
+        document.getElementById('reload-vocab-btn').addEventListener('click', async () => {
+            document.body.removeChild(reloadModal);
+            
+            // Show loading
+            const loadingModal = document.createElement('div');
+            loadingModal.className = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4';
+            loadingModal.innerHTML = `
+                <div class="bg-gray-800 rounded-xl p-6 text-center glassmorphism">
+                    <div class="loader mx-auto mb-4"></div>
+                    <p class="text-white">Reloading vocabulary data...</p>
+                </div>
+            `;
+            document.body.appendChild(loadingModal);
+
+            try {
+                // Force a fresh extraction by clearing any cached data
+                let vocabulary = await fallbackVocabularyExtraction();
+                
+                // If still no vocabulary, try a more aggressive approach
+                if (vocabulary.length === 0) {
+                    vocabulary = await forceVocabularyExtraction();
+                }
+
+                document.body.removeChild(loadingModal);
+
+                if (vocabulary.length > 0) {
+                    createVocabularyQuizModal(vocabulary, language);
+                } else {
+                    alert('Still no vocabulary found. The lesson dialogue may not contain parenthetical translations.');
+                }
+            } catch (error) {
+                document.body.removeChild(loadingModal);
+                console.error('Error reloading vocabulary:', error);
+                alert('Error reloading vocabulary data. Please try again.');
+            }
+        });
+
+        document.getElementById('force-extract-btn').addEventListener('click', async () => {
+            document.body.removeChild(reloadModal);
+            
+            try {
+                const vocabulary = await forceVocabularyExtraction();
+                if (vocabulary.length > 0) {
+                    createVocabularyQuizModal(vocabulary, language);
+                } else {
+                    alert('No vocabulary could be extracted from this lesson.');
+                }
+            } catch (error) {
+                console.error('Error force extracting vocabulary:', error);
+                alert('Error extracting vocabulary. Please try again.');
+            }
+        });
+
+        document.getElementById('cancel-vocab-btn').addEventListener('click', () => {
+            document.body.removeChild(reloadModal);
+        });
+
+        // Close modal when clicking outside
+        reloadModal.addEventListener('click', (e) => {
+            if (e.target === reloadModal) {
+                document.body.removeChild(reloadModal);
+            }
+        });
+    }
+
+    // Force vocabulary extraction using AI for any language
+    async function forceVocabularyExtraction() {
+        if (!lessonPlan || !lessonPlan.dialogue) return [];
+
+        const language = languageSelect.value;
+        const dialogueText = lessonPlan.dialogue.map(turn => turn.line.display).join('\n');
+
+        const prompt = `
+You are a vocabulary extraction tool. From the following dialogue in ${language}, extract 5-10 key vocabulary words or phrases that would be useful for language learners.
+
+For each item, provide the original word/phrase and a simple English translation or definition.
+
+Your response MUST be a valid JSON array of objects, with each object having a "word" key (original text) and a "translation" key (English definition).
+
+Example:
+[
+  {"word": "originalWord1", "translation": "English translation 1"},
+  {"word": "originalWord2", "translation": "English translation 2"}
+]
+
+Dialogue:
+---
+${dialogueText}
+---
+
+Extract vocabulary and provide the JSON array:`;
+
+        try {
+            const data = await callGeminiAPI(prompt, { modelPreference: 'lite' });
+            const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+            const vocabulary = JSON.parse(jsonString);
+
+            // Add context to each vocabulary item
+            return vocabulary.map(vocabItem => {
+                const contextTurnIndex = lessonPlan.dialogue.findIndex(turn =>
+                    turn.line && turn.line.display && turn.line.display.toLowerCase().includes(vocabItem.word.toLowerCase())
+                );
+                
+                let context = vocabItem.word;
+                if (contextTurnIndex !== -1) {
+                    const contextParts = [];
+                    
+                    if (contextTurnIndex > 0) {
+                        const precedingTurn = lessonPlan.dialogue[contextTurnIndex - 1];
+                        if (precedingTurn && precedingTurn.line && precedingTurn.line.display) {
+                            contextParts.push(removeParentheses(precedingTurn.line.display));
+                        }
+                    }
+                    
+                    const currentTurn = lessonPlan.dialogue[contextTurnIndex];
+                    contextParts.push(removeParentheses(currentTurn.line.display));
+                    
+                    if (contextTurnIndex < lessonPlan.dialogue.length - 1) {
+                        const followingTurn = lessonPlan.dialogue[contextTurnIndex + 1];
+                        if (followingTurn && followingTurn.line && followingTurn.line.display) {
+                            contextParts.push(removeParentheses(followingTurn.line.display));
+                        }
+                    }
+                    
+                    context = contextParts.join(' ... ');
+                }
+                
+                return {
+                    ...vocabItem,
+                    context: context
+                };
+            });
+        } catch (error) {
+            console.error("Failed to force extract vocabulary:", error);
+            return [];
+        }
+    }
+
     async function generateVocabularyTranslations(vocabulary, targetLanguage) {
         const nativeLangCode = nativeLang || 'en';
         const langCodeToName = {
@@ -1224,10 +1460,17 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     }
 
     async function startVocabularyQuiz(language) {
-		const vocabulary = await extractVocabularyFromDialogue();
+		let vocabulary = await extractVocabularyFromDialogue();
+
+		// If no vocabulary found, try fallback extraction methods
+		if (vocabulary.length === 0) {
+			console.log('No vocabulary found with primary method, trying fallback extraction...');
+			vocabulary = await fallbackVocabularyExtraction();
+		}
 
 		if (vocabulary.length === 0) {
-			alert(translateText('noVocabularyFound') || 'No vocabulary with translations found in this lesson.');
+			// Show modal with option to reload vocabulary data
+			showVocabularyReloadModal(language);
 			return;
 		}
 
