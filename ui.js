@@ -450,10 +450,6 @@ export function hideStartOverlay() {
     domElements.startLessonOverlay?.classList.add('hidden');
 }
 
-export function showImageLoader() {
-    //... function content
-}
-
 export function updateMicStatus(key, isHtml = false) {
     if (domElements.micStatus) {
         const text = translateText(key);
