@@ -492,10 +492,6 @@ export function highlightActiveSentence(turnIndex, sentenceIndex) {
     }
 }
 
-export function hideStartOverlay() {
-    domElements.startLessonOverlay?.classList.add('hidden');
-}
-
 export function showImageLoader() {
     domElements.illustrationPlaceholder?.classList.add('hidden');
     domElements.imageLoader?.classList.remove('hidden');
