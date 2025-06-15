@@ -129,10 +129,7 @@
     <!-- Resource Hints -->
     <link rel="prefetch" href="translations.js">
     <link rel="prefetch" href="names.js">
-    <link rel="prefetch" href="main.js"> <link rel="prefetch" href="translations.js">
-    <link rel="prefetch" href="names.js">
-    <script type="module" src="main.js"></script> </body>
-</html>
+    <link rel="prefetch" href="main.js">
 
 
     <!-- Tailwind CSS -->
@@ -568,18 +565,18 @@
         </div>
     </footer>
 
+    <!-- Start Lesson Overlay -->
+    <div id="start-lesson-overlay" class="fixed inset-0 bg-gray-900/90 backdrop-blur-sm flex items-center justify-center z-30 rounded-xl hidden">
+        <div class="text-center p-8 bg-gray-800 rounded-lg shadow-xl border border-gray-700 animate-pulse">
+            <h2 class="text-2xl font-bold text-white mb-6" data-translate="lessonReady">Lesson Ready!</h2>
+            <button id="confirm-start-lesson-btn" class="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-8 rounded-lg transition-all focus:outline-none focus:ring-4 focus:ring-cyan-700 disabled:bg-gray-600 disabled:cursor-not-allowed" disabled>
+                <i class="fas fa-play mr-2"></i>
+                <span data-translate="startLesson">Start Lesson</span>
+            </button>
+        </div>
+    </div>
+
     <!-- Custom JavaScript -->
     <script type="module" src="main.js"></script>
-
-	<div id="start-lesson-overlay" class="fixed inset-0 bg-gray-900/90 backdrop-blur-sm flex items-center justify-center z-30 rounded-xl hidden">
-		<div class="text-center p-8 bg-gray-800 rounded-lg shadow-xl border border-gray-700 animate-pulse">
-			<h2 class="text-2xl font-bold text-white mb-6" data-translate="lessonReady">Lesson Ready!</h2>
-			<button id="confirm-start-lesson-btn" class="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-8 rounded-lg transition-all focus:outline-none focus:ring-4 focus:ring-cyan-700 disabled:bg-gray-600 disabled:cursor-not-allowed" disabled>
-				<i class="fas fa-play mr-2"></i>
-				<span data-translate="startLesson">Start Lesson</span>
-			</button>
-		</div>
-	</div>
-
 </body>
 </html>
