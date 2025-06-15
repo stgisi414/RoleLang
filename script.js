@@ -1738,40 +1738,35 @@ Now, provide the JSON array for the given text.
 		}
 	}
 
-    async function advanceTurn(startIndex = -1) {
-		// FIX: Only update the turn index if a specific start index is passed.
-		// This prevents the lesson from resetting to 0 every time.
-		if (startIndex !== -1) {
-			currentTurnIndex = startIndex;
-		}
+    async function advanceTurn(newTurnIndex) {
+		// The function now requires a specific turn index. It no longer defaults to 0.
+		currentTurnIndex = newTurnIndex;
+		saveState(); // Save the correct index immediately.
 
 		if (!lessonPlan || !lessonPlan.dialogue) {
 			console.error('Invalid lesson plan structure detected');
 			return;
 		}
 
-		// Check for lesson completion
 		if (currentTurnIndex >= lessonPlan.dialogue.length) {
 			micStatus.textContent = translateText('lessonComplete');
 			micBtn.disabled = true;
 			lessonPlan.isCompleted = true;
 			saveLessonToHistory(lessonPlan, languageSelect.value, topicInput.value);
 			showReviewModeUI(languageSelect.value);
-			saveState();
 			return;
 		}
 
 		const currentTurnData = lessonPlan.dialogue[currentTurnIndex];
 
-		// Highlight the current line
 		document.querySelectorAll('.dialogue-line.active').forEach(el => el.classList.remove('active'));
 		document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
 		const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
-		currentLineEl.classList.add('active');
-		currentLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-		saveState();
-
-		// The rest of the function proceeds as normal, handling subsequent turns
+		if (currentLineEl) {
+			currentLineEl.classList.add('active');
+			currentLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		}
+		
 		if (currentTurnData.party === 'A') { // User's turn
 			const cleanText = removeParentheses(currentTurnData.line.display);
 			currentSentences = await splitIntoSentences(cleanText);
@@ -1785,6 +1780,11 @@ Now, provide the JSON array for the given text.
 				audio.playbackRate = parseFloat(audioSpeedSelect.value);
 				await audio.play();
 				audio.onended = () => {
+					URL.revokeObjectURL(audioUrl);
+					enableUserMicForSentence();
+				};
+				audio.onerror = () => {
+					console.error("Audio playback error for user line.");
 					URL.revokeObjectURL(audioUrl);
 					enableUserMicForSentence();
 				};
@@ -1806,23 +1806,27 @@ Now, provide the JSON array for the given text.
 					URL.revokeObjectURL(audioUrl);
 					micStatus.textContent = translateText('audioFinished');
 					setTimeout(() => {
-						// This now works correctly because the global currentTurnIndex isn't being reset
-						currentTurnIndex++;
-						advanceTurn();
+						advanceTurn(currentTurnIndex + 1); // Always pass the explicit next index
+					}, 500);
+				};
+				 audio.onerror = () => {
+					console.error("Audio playback error for partner line.");
+					URL.revokeObjectURL(audioUrl);
+					setTimeout(() => {
+						advanceTurn(currentTurnIndex + 1);
 					}, 500);
 				};
 			} catch (error) {
 				console.error("Failed to fetch partner audio:", error);
 				micStatus.textContent = translateText('audioUnavailable');
 				setTimeout(() => {
-					currentTurnIndex++;
-					advanceTurn();
+					advanceTurn(currentTurnIndex + 1); // Always pass the explicit next index
 				}, 1500);
 			}
 		}
 	}
 	
-    function enableUserMicForSentence() {
+	function enableUserMicForSentence() {
         micBtn.disabled = false;
 
         // Clear previous sentence highlighting
@@ -2019,45 +2023,35 @@ Now, provide the JSON array for the given text.
     }
 
     function handleCorrectSpeech() {
-        speechAttempts = 0; // Reset attempts when correct
-        if (currentSentences.length > 1) {
-            // Multi-sentence mode
-            currentSentenceIndex++;
+		speechAttempts = 0; // Reset attempts on success
 
-            if (currentSentenceIndex >= currentSentences.length) {
-                // All sentences completed
-                const allSentencesCorrectText = currentTranslations.allSentencesCorrect || translations.en.allSentencesCorrect || 'All sentences correct! Well done.';
-                micStatus.textContent = allSentencesCorrectText;
-                const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
-                currentLineEl.style.borderColor = '#4ade80'; // green-400
-                micBtn.disabled = true;
-                currentTurnIndex++;
-                saveState();
-                setTimeout(() => {
-                    advanceTurn();
-                }, 3000); // CHANGED FROM 1500
-            } else {
-                // Move to next sentence
-                const sentenceCorrectText = currentTranslations.sentenceCorrect || translations.en.sentenceCorrect || 'Correct! Next sentence...';
-                micStatus.textContent = sentenceCorrectText;
-                setTimeout(() => {
-                    enableUserMicForSentence();
-                }, 2500); // CHANGED FROM 1000
-            }
-        } else {
-            // Single sentence mode
-            const correctText = currentTranslations.correct || translations.en.correct || 'Correct! Well done.';
-            micStatus.textContent = correctText;
-            const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
-            currentLineEl.style.borderColor = '#4ade80'; // green-400
-            micBtn.disabled = true;
-            currentTurnIndex++;
-            saveState();
-            setTimeout(() => {
-                advanceTurn();
-            }, 3000); // CHANGED FROM 1500
-        }
-    }
+		// Check if there are more sentences to record IN THIS SAME TURN
+		if (currentSentences.length > 1 && (currentSentenceIndex < currentSentences.length - 1)) {
+			// If yes, move to the next sentence within this turn
+			currentSentenceIndex++;
+			const sentenceCorrectText = currentTranslations.sentenceCorrect || translations.en.sentenceCorrect || 'Correct! Next sentence...';
+			micStatus.textContent = sentenceCorrectText;
+			setTimeout(() => {
+				enableUserMicForSentence();
+			}, 1500);
+		} else {
+			// If not, this turn is complete. Advance to the NEXT turn in the dialogue.
+			const correctText = (currentSentences.length > 1) 
+				? (currentTranslations.allSentencesCorrect || translations.en.allSentencesCorrect)
+				: (currentTranslations.correct || translations.en.correct);
+			
+			micStatus.textContent = correctText;
+			const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
+			if(currentLineEl) currentLineEl.style.borderColor = '#4ade80'; // green-400
+			micBtn.disabled = true;
+
+			// Explicitly calculate and pass the index for the next turn
+			const nextTurnIndex = currentTurnIndex + 1;
+			setTimeout(() => {
+				advanceTurn(nextTurnIndex);
+			}, 2000);
+		}
+	}
 
     function handleIncorrectSpeech(similarity, normalizedRequired, normalizedSpoken) {
         // Show debug info to help troubleshoot
