@@ -3,6 +3,7 @@ let domElements = {};
 let getTranslations;
 let getNativeLang;
 let saveState;
+let backToLandingCallback = () => window.location.reload(); // Default fallback
 
 // --- Constants ---
 const LESSON_HISTORY_KEY = 'rolelang_lesson_history';
@@ -59,15 +60,13 @@ export function initializeNativeLanguage() {
 }
 
 export function setNativeLanguage(langCode, flag, name) {
-    // This function now correctly calls the getNativeLang function passed during init
-    // which updates the state in the main state.js module.
     if (typeof getNativeLang === 'function') {
         getNativeLang(langCode);
     }
     domElements.nativeFlagEl.textContent = flag;
     domElements.nativeLangTextEl.textContent = name;
     updateTranslations();
-    updateBackButton(); // <-- ADD THIS LINE
+    updateBackButton(); 
     stopTopicRotations();
     startTopicRotations();
     localStorage.setItem('rolelang_native_lang', JSON.stringify({ code: langCode, flag, name }));
@@ -332,11 +331,6 @@ export async function restoreConversation(lessonPlan) {
     }
 }
 
-/**
- * THIS IS THE CORRECTED FUNCTION.
- * It now correctly reads the `turn.sentences` array (prepared by lesson.js)
- * and renders each sentence in its own `<span>` so it can be highlighted.
- */
 function createDialogueLine(turn, index) {
     const lineDiv = document.createElement('div');
     const party = turn.party ? turn.party.toUpperCase() : 'B';
@@ -347,7 +341,6 @@ function createDialogueLine(turn, index) {
     const speakerIcon = party === 'A' ? '👤' : '🤖';
     let lineContent = `<strong>${speakerIcon}</strong> `;
 
-    // Render pre-split sentences for user lines
     if (party === 'A' && turn.sentences && turn.sentences.length > 0) {
         turn.sentences.forEach((sentence, sentenceIndex) => {
             lineContent += `<span class="sentence-span" id="turn-${index}-sentence-${sentenceIndex}">${sentence}</span> `;
@@ -359,7 +352,6 @@ function createDialogueLine(turn, index) {
             lineContent += `<span class="translation-part text-gray-400">${translationPart}</span>`;
         }
     } else {
-        // Render partner lines or non-split user lines as before
         lineContent += turn.line.display;
     }
 
@@ -387,7 +379,6 @@ export function restoreIllustration(imageUrl) {
     domElements.illustrationImg.classList.remove('hidden');
 }
 
-let backToLandingCallback = () => window.location.reload(); // Default fallback
 
 export function addBackToLandingButton() {
     if (document.getElementById('lesson-header')) return;
@@ -400,7 +391,6 @@ export function addBackToLandingButton() {
     backBtn.className = 'back-button bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-colors text-sm';
     backBtn.innerHTML = `<i class="fas fa-arrow-left mr-2"></i>${translateText('back')}`;
 
-    // --- THIS IS THE KEY CHANGE ---
     backBtn.onclick = backToLandingCallback;
 
     if (domElements.lessonTitleContainer) {
@@ -425,4 +415,139 @@ export function showLandingScreen() {
 export function showLessonScreen() {
     domElements.lessonScreen?.classList.remove('hidden');
     domElements.landingScreen?.classList.add('hidden');
+}
+
+// --- NEWLY ADDED UI FUNCTIONS ---
+
+export function showLoadingSpinner() {
+    domElements.loadingSpinner?.classList.remove('hidden');
+}
+
+export function hideLoadingSpinner() {
+    domElements.loadingSpinner?.classList.add('hidden');
+}
+
+export function disableStartButton(disabled) {
+    if (domElements.confirmStartLessonBtn) {
+        domElements.confirmStartLessonBtn.disabled = disabled;
+    }
+}
+
+export function highlightActiveLine(turnIndex) {
+    document.querySelectorAll('.dialogue-line.active').forEach(el => el.classList.remove('active'));
+    const lineEl = document.getElementById(`turn-${turnIndex}`);
+    if (lineEl) {
+        lineEl.classList.add('active');
+        lineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+export function updateMicStatus(key, isHtml = false) {
+    if (domElements.micStatus) {
+        const text = translateText(key);
+        if (isHtml) {
+            domElements.micStatus.innerHTML = text;
+        } else {
+            domElements.micStatus.textContent = text;
+        }
+    }
+}
+
+export function updateMicStatusHTML(htmlContent) {
+    if (domElements.micStatus) {
+        domElements.micStatus.innerHTML = htmlContent;
+    }
+}
+
+export function updateMicStatusForSentence(current, total, sentenceText) {
+    if (domElements.micStatus) {
+        const text = translateText('recordSentence');
+        domElements.micStatus.innerHTML = `<strong>${text} ${current}/${total}:</strong><br><span class="text-cyan-400 font-bold">"${sentenceText}"</span>`;
+    }
+}
+
+export function enableMicButton(enabled) {
+    if (domElements.micBtn) {
+        domElements.micBtn.disabled = !enabled;
+    }
+}
+
+export function highlightActiveSentence(turnIndex, sentenceIndex) {
+    document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
+    const sentenceEl = document.getElementById(`turn-${turnIndex}-sentence-${sentenceIndex}`);
+    if (sentenceEl) {
+        sentenceEl.classList.add('active-sentence');
+    }
+}
+
+export function hideStartOverlay() {
+    domElements.startLessonOverlay?.classList.add('hidden');
+}
+
+export function showImageLoader() {
+    domElements.illustrationPlaceholder?.classList.add('hidden');
+    domElements.imageLoader?.classList.remove('hidden');
+    domElements.illustrationImg?.classList.add('hidden');
+}
+
+export function showFallbackIllustration() {
+    domElements.imageLoader?.classList.add('hidden');
+    if (domElements.illustrationPlaceholder) {
+        domElements.illustrationPlaceholder.innerHTML = `
+          <div class="text-center text-gray-500">
+              <i class="fas fa-comments text-4xl mb-2"></i>
+              <p>${translateText('roleplayScenario')}</p>
+              <p class="text-sm mt-1">${translateText('imageUnavailable')}</p>
+          </div>
+      `;
+        domElements.illustrationPlaceholder.classList.remove('hidden');
+    }
+    domElements.illustrationImg?.classList.add('hidden');
+}
+
+export function flashLineBorder(turnIndex, status) {
+    const lineEl = document.getElementById(`turn-${turnIndex}`);
+    if (lineEl) {
+        const color = status === 'correct' ? '#4ade80' : '#f87171';
+        lineEl.style.transition = 'border-color 0.3s ease';
+        lineEl.style.borderColor = color;
+        setTimeout(() => {
+            lineEl.style.borderColor = '';
+        }, 1500);
+    }
+}
+
+export function showSkipButton(callback) {
+    if (domElements.micStatus) {
+        const skipBtn = document.createElement('button');
+        skipBtn.className = 'ml-2 bg-yellow-500 hover:bg-yellow-600 text-white font-bold px-3 py-1 rounded text-sm';
+        skipBtn.textContent = translateText('skip');
+        skipBtn.onclick = () => {
+            callback();
+            skipBtn.remove();
+        };
+        domElements.micStatus.appendChild(document.createElement('br'));
+        domElements.micStatus.appendChild(skipBtn);
+    }
+}
+
+export function resetHighlights() {
+    document.querySelectorAll('.dialogue-line.active').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
+}
+
+export function resetMic() {
+    if (domElements.micBtn) {
+        domElements.micBtn.disabled = true;
+        domElements.micBtn.classList.remove('bg-green-600');
+        domElements.micBtn.classList.add('bg-red-600');
+    }
+    if (domElements.micStatus) {
+        domElements.micStatus.textContent = translateText('micStatus');
+    }
+}
+
+export function showLessonComplete() {
+    updateMicStatus('lessonComplete');
+    enableMicButton(false);
 }
