@@ -481,17 +481,24 @@ header img[alt="RoleLang Logo"] {
     box-shadow: 0 4px 12px rgba(139, 69, 19, 0.2);
 }
 
-/* Lesson title container positioning to avoid back button overlap */
-#lesson-title-container {
-    margin-left: 120px; /* Make space for back button */
-    margin-right: 20px;
-    margin-top: 4px; /* Small top margin for better spacing */
+/* Lesson header layout with flexbox */
+#lesson-header {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 1rem;
 }
 
-/* Back button specific positioning */
+/* Back button takes 30% width */
 .back-button {
-    position: absolute;
-    top: 1rem;
-    left: 1rem;
+    width: 30%;
+    margin-right: 5%;
     z-index: 20;
+    flex-shrink: 0;
+}
+
+/* Lesson title container takes 65% width */
+#lesson-title-container {
+    width: 65%;
+    flex-shrink: 0;
 }

@@ -2886,12 +2886,17 @@ Now, provide the JSON array for the given text:
 
     // Add back to landing button functionality
     function addBackToLandingButton() {
-        // Check if button already exists
-        if (document.getElementById('back-to-landing-btn')) return;
+        // Check if header already exists
+        if (document.getElementById('lesson-header')) return;
 
+        // Create header container
+        const headerContainer = document.createElement('div');
+        headerContainer.id = 'lesson-header';
+
+        // Create back button
         const backBtn = document.createElement('button');
         backBtn.id = 'back-to-landing-btn';
-        backBtn.className = 'back-button absolute top-4 left-4 bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-colors text-sm z-20';
+        backBtn.className = 'back-button bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-colors text-sm';
         backBtn.innerHTML = `<i class="fas fa-arrow-left mr-2"></i>${translateText('back')}`;
         backBtn.onclick = () => {
             // Clear lesson state and return to landing
@@ -2910,7 +2915,17 @@ Now, provide the JSON array for the given text:
             startTopicRotations();
         };
 
-        lessonScreen.appendChild(backBtn);
+        // Get existing title container
+        const titleContainer = document.getElementById('lesson-title-container');
+        
+        // Add back button and title to header
+        headerContainer.appendChild(backBtn);
+        if (titleContainer) {
+            headerContainer.appendChild(titleContainer);
+        }
+
+        // Insert header at the beginning of lesson screen
+        lessonScreen.insertBefore(headerContainer, lessonScreen.firstChild);
     }
 
     // Function to update back button text when language changes
