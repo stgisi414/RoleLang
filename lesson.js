@@ -372,27 +372,36 @@ function enableUserMicForSentence() {
 
 export function confirmStartLesson() {
     uiRef.hideStartOverlay();
+
     if (stateRef.preFetchedFirstAudioBlob) {
         const firstTurn = stateRef.lessonPlan.dialogue[0];
         const audioUrl = URL.createObjectURL(stateRef.preFetchedFirstAudioBlob);
-        const audio = new Audio(audioUrl);
-        audio.playbackRate = parseFloat(domElements.audioSpeedSelect.value);
-        audio.play().catch(e => console.error("error playing pre-fetched audio:", e));
         
+        // Use the shared audioPlayer from the state module
+        stateRef.audioPlayer.src = audioUrl;
+        stateRef.audioPlayer.playbackRate = parseFloat(domElements.audioSpeedSelect.value);
+        
+        stateRef.audioPlayer.play().catch(e => console.error("Error playing pre-fetched audio:", e));
+
         uiRef.highlightActiveLine(0);
-        
-        audio.addEventListener('ended', async () => {
-            URL.revokeObjectURL(audioUrl);
+
+        // Use { once: true } to ensure the event listener is automatically removed after firing
+        stateRef.audioPlayer.addEventListener('ended', async () => {
+            URL.revokeObjectURL(audioUrl); // Clean up blob URL
+
             if (firstTurn.party && firstTurn.party.toUpperCase() === 'A') {
+                // If the user speaks first, prepare their line for practice
                 const cleanText = removeParentheses(firstTurn.line.display);
                 currentSentences = await splitIntoSentences(cleanText);
                 currentSentenceIndex = 0;
                 enableUserMicForSentence();
             } else {
+                // If the partner speaks first, advance to the next turn (which will be the user's turn)
                 advanceTurn(1);
             }
-        });
+        }, { once: true });
     } else {
+        // Fallback if audio pre-fetching failed for any reason
         advanceTurn(0);
     }
 }
