@@ -494,8 +494,10 @@ function getRandomNamesByGender(language, gender, count = 3) {
   return shuffled.slice(0, count);
 }
 
-// Make characterNames available globally
-window.characterNames = characterNames;
+// Make characterNames available globally - ensure it's available immediately
+if (typeof window !== 'undefined') {
+  window.characterNames = characterNames;
+}
 
 // Export for use in other files
 if (typeof module !== 'undefined' && module.exports) {

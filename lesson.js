@@ -54,7 +54,15 @@ function getRandomNames(language, count = 5) {
     // Access the global characterNames object from names.js
     const namesByLanguage = window.characterNames;
 
-    if (!namesByLanguage || !namesByLanguage[language]) {
+    if (!namesByLanguage) {
+        console.warn('Character names not loaded yet. Using fallback names.');
+        return [
+            ["John", "Smith"], ["Jane", "Doe"], ["Mike", "Johnson"], 
+            ["Sarah", "Williams"], ["David", "Brown"]
+        ].slice(0, count);
+    }
+
+    if (!namesByLanguage[language]) {
         console.warn(`Names not found for language: ${language}. Falling back to English.`);
         language = 'English';
     }
