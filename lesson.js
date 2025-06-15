@@ -659,15 +659,33 @@ function createVocabularyQuizModal(vocabulary, language) {
 
         quizModal.querySelectorAll('.quiz-option').forEach(option => {
             option.onclick = () => {
-                const isCorrect = option.dataset.answer === correctAnswer;
-                option.classList.add(isCorrect ? 'bg-green-600' : 'bg-red-600');
-                quizModal.querySelectorAll('.quiz-option').forEach(opt => opt.disabled = true);
-                if (isCorrect) score++;
+                const selectedAnswer = option.dataset.answer;
+                const isCorrect = selectedAnswer === correctAnswer;
+
+                // Disable all options and remove hover effects
+                quizModal.querySelectorAll('.quiz-option').forEach(opt => {
+                    opt.classList.remove('hover:bg-gray-600');
+                    opt.disabled = true;
+
+                    // Color the buttons to give feedback
+                    if (opt.dataset.answer === correctAnswer) {
+                        opt.classList.remove('bg-gray-700');
+                        opt.classList.add('bg-green-600'); // Correct answer is always green
+                    } else if (opt === option && !isCorrect) {
+                        opt.classList.remove('bg-gray-700');
+                        opt.classList.add('bg-red-600'); // User's wrong choice is red
+                    }
+                });
+
+                if (isCorrect) {
+                    score++;
+                }
                 
+                // Move to the next question after a delay
                 setTimeout(() => {
                     currentQuestion++;
                     updateQuizContent();
-                }, 1200);
+                }, 1500); // Increased delay to allow user to see feedback
             };
         });
         document.getElementById('close-quiz-btn').onclick = () => quizModal.remove();
