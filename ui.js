@@ -85,6 +85,61 @@ function detectNativeLanguage() {
     setNativeLanguage(lang.code, lang.flag, lang.name);
 }
 
+// --- History Functions (Moved Up) ---
+export function getLessonHistory() {
+    try {
+        const history = localStorage.getItem(LESSON_HISTORY_KEY);
+        if (!history) return [];
+        const parsedHistory = JSON.parse(history);
+        const validHistory = parsedHistory.filter(record =>
+            record && record.lessonPlan && record.lessonPlan.dialogue &&
+            Array.isArray(record.lessonPlan.dialogue) && record.lessonPlan.dialogue.length > 0 &&
+            record.language && record.topic && record.id
+        );
+        if (validHistory.length !== parsedHistory.length) {
+            localStorage.setItem(LESSON_HISTORY_KEY, JSON.stringify(validHistory));
+        }
+        return validHistory;
+    } catch (error) {
+        console.warn('Failed to load lesson history:', error);
+        localStorage.removeItem(LESSON_HISTORY_KEY);
+        return [];
+    }
+}
+
+export function displayLessonHistory() {
+    const historyContainer = domElements.historyLessonsContainer;
+    if (!historyContainer) return;
+
+    const history = getLessonHistory();
+    historyContainer.innerHTML = '';
+
+    if (history.length === 0) {
+        historyContainer.innerHTML = `
+            <div class="col-span-2 flex flex-col items-center justify-center py-8 text-gray-400">
+                <i class="fas fa-history text-3xl mb-2"></i>
+                <p>${translateText('noCompletedLessons')}</p>
+            </div>`;
+        return;
+    }
+
+    const recentLessons = history.slice(0, 6);
+    recentLessons.forEach((lesson, index) => {
+        const lessonCard = document.createElement('div');
+        lessonCard.className = 'history-card bg-purple-600/20 hover:bg-purple-600/30 border border-purple-600/30 rounded-lg p-3 cursor-pointer transition-all';
+        lessonCard.dataset.lessonId = lesson.id; // Store ID for the click handler in main.js
+
+        lessonCard.innerHTML = `
+            <div class="text-purple-300 text-xs mb-1">${lesson.language}</div>
+            <div class="text-white text-sm font-medium mb-1 line-clamp-2">${lesson.topic}</div>
+            <div class="text-gray-400 text-xs">${lesson.completedAt || ''}</div>
+        `;
+
+        lessonCard.style.opacity = '0';
+        lessonCard.classList.add(`topic-animate-in-${(index % 6) + 1}`);
+        historyContainer.appendChild(lessonCard);
+    });
+}
 
 // --- Visibility & UI Toggles ---
 export function toggleLessonsVisibility(forceShow = null) {
@@ -275,60 +330,4 @@ export function addBackToLandingButton() {
         headerContainer.appendChild(domElements.lessonTitleContainer);
         domElements.lessonScreen.insertBefore(headerContainer, domElements.lessonScreen.firstChild);
     }
-}
-
-// --- History Functions ---
-export function getLessonHistory() {
-    try {
-        const history = localStorage.getItem(LESSON_HISTORY_KEY);
-        if (!history) return [];
-        const parsedHistory = JSON.parse(history);
-        const validHistory = parsedHistory.filter(record =>
-            record && record.lessonPlan && record.lessonPlan.dialogue &&
-            Array.isArray(record.lessonPlan.dialogue) && record.lessonPlan.dialogue.length > 0 &&
-            record.language && record.topic && record.id
-        );
-        if (validHistory.length !== parsedHistory.length) {
-            localStorage.setItem(LESSON_HISTORY_KEY, JSON.stringify(validHistory));
-        }
-        return validHistory;
-    } catch (error) {
-        console.warn('Failed to load lesson history:', error);
-        localStorage.removeItem(LESSON_HISTORY_KEY);
-        return [];
-    }
-}
-
-export function displayLessonHistory() {
-    const historyContainer = domElements.historyLessonsContainer;
-    if (!historyContainer) return;
-
-    const history = getLessonHistory();
-    historyContainer.innerHTML = '';
-
-    if (history.length === 0) {
-        historyContainer.innerHTML = `
-            <div class="col-span-2 flex flex-col items-center justify-center py-8 text-gray-400">
-                <i class="fas fa-history text-3xl mb-2"></i>
-                <p>${translateText('noCompletedLessons')}</p>
-            </div>`;
-        return;
-    }
-
-    const recentLessons = history.slice(0, 6);
-    recentLessons.forEach((lesson, index) => {
-        const lessonCard = document.createElement('div');
-        lessonCard.className = 'history-card bg-purple-600/20 hover:bg-purple-600/30 border border-purple-600/30 rounded-lg p-3 cursor-pointer transition-all';
-        lessonCard.dataset.lessonId = lesson.id; // Store ID for the click handler in main.js
-
-        lessonCard.innerHTML = `
-            <div class="text-purple-300 text-xs mb-1">${lesson.language}</div>
-            <div class="text-white text-sm font-medium mb-1 line-clamp-2">${lesson.topic}</div>
-            <div class="text-gray-400 text-xs">${lesson.completedAt || ''}</div>
-        `;
-
-        lessonCard.style.opacity = '0';
-        lessonCard.classList.add(`topic-animate-in-${(index % 6) + 1}`);
-        historyContainer.appendChild(lessonCard);
-    });
 }
