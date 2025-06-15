@@ -9,6 +9,9 @@ try {
     console.log('Lesson module loaded');
     var state = await import('./state.js');
     console.log('State module loaded');
+    
+    // Expose state globally for cross-module access
+    window.state = state;
 } catch (error) {
     console.error('Failed to import modules:', error);
     alert('Failed to load application modules. Please check the console for details.');
@@ -35,6 +38,7 @@ function saveState() {
 
     try {
         localStorage.setItem(state.STATE_KEY, JSON.stringify(appState));
+        console.log('State saved successfully:', appState);
     } catch (error) {
         console.warn('Failed to save state to localStorage:', error);
     }
@@ -70,6 +74,12 @@ function clearState() {
 }
 
 async function restoreState(savedState) {
+    // Restore native language first if saved
+    if (savedState.nativeLang) {
+        state.setNativeLang(savedState.nativeLang);
+        state.setCurrentTranslations(window.translations[savedState.nativeLang] || window.translations.en);
+    }
+
     if (savedState.selectedLanguage && elements.languageSelect) elements.languageSelect.value = savedState.selectedLanguage;
     if (savedState.topicInput && elements.topicInput) elements.topicInput.value = savedState.topicInput;
     if (savedState.lessonsVisible && ui) ui.toggleLessonsVisibility(true);
@@ -247,10 +257,19 @@ async function initializeApp() {
         if (event.target.closest('.native-lang-option')) {
             const option = event.target.closest('.native-lang-option');
             const langCode = option.getAttribute('data-lang');
+            const flag = option.getAttribute('data-flag');
+            const name = option.textContent.trim();
+            
+            // Update state
             state.setNativeLang(langCode);
             state.setCurrentTranslations(window.translations[langCode] || window.translations.en);
-            ui.setNativeLanguage(langCode, option.getAttribute('data-flag'), option.textContent.trim());
+            
+            // Update UI
+            ui.setNativeLanguage(langCode, flag, name);
             elements.nativeLangDropdown?.classList.add('hidden');
+            
+            // Save state
+            saveState();
         }
     });
 

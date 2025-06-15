@@ -60,11 +60,8 @@ export function initializeNativeLanguage() {
 }
 
 export function setNativeLanguage(langCode, flag, name) {
-    if (typeof getNativeLang === 'function') {
-        getNativeLang(langCode);
-    }
-    domElements.nativeFlagEl.textContent = flag;
-    domElements.nativeLangTextEl.textContent = name;
+    if (domElements.nativeFlagEl) domElements.nativeFlagEl.textContent = flag;
+    if (domElements.nativeLangTextEl) domElements.nativeLangTextEl.textContent = name;
     updateTranslations();
     updateBackButton(); 
     stopTopicRotations();
