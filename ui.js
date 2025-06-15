@@ -3,14 +3,12 @@ import * as state from './state.js';
 let domElements = {};
 let getTranslationsFunc;
 let getNativeLangFunc;
-// REMOVE THIS -> let setNativeLanguageFunc;
 let saveStateFunc;
 
-export function init(elements, getTranslations, getNativeLang, save) { // Removed setNativeLanguage from parameters
+export function init(elements, getTranslations, getNativeLang, save) {
     domElements = elements;
     getTranslationsFunc = getTranslations;
     getNativeLangFunc = getNativeLang;
-    // REMOVE THIS -> setNativeLanguageFunc = setNativeLanguage;
     saveStateFunc = save;
 }
 
@@ -184,15 +182,15 @@ export function showReviewModeUI(language, lessonPlan) {
 }
 
 export function populateLessonTopics() {
-    const translations = getTranslationsFunc();
-    const nativeLang = getNativeLangFunc() || 'en';
-    
-    if (!translations || !translations[nativeLang] || !translations[nativeLang].topics) {
+    const translations = getTranslationsFunc(); // This gets the object for the current language
+
+    // The check should be on the 'translations' object itself
+    if (!translations || !translations.topics) {
         console.warn('Topics not available for current language');
         return;
     }
 
-    const topics = translations[nativeLang].topics;
+    const topics = translations.topics; // Directly access topics
     
     const containers = {
         'beginner-container': topics.beginner || [],
@@ -223,14 +221,11 @@ export function populateLessonTopics() {
     });
 }
 
-
 export function displayLessonHistory() {
     if (!domElements.historyLessonsContainer) return;
     
-    // Clear existing content
     domElements.historyLessonsContainer.innerHTML = '';
     
-    // Try to get lesson history from localStorage
     try {
         const history = JSON.parse(localStorage.getItem('rolelang_lesson_history') || '[]');
         
@@ -242,31 +237,45 @@ export function displayLessonHistory() {
             return;
         }
 
-        // Display recent lessons (last 8)
-        const recentLessons = history.slice(-8).reverse();
-        recentLessons.forEach((lesson, index) => {
+        history.slice(0, 6).forEach((lessonRecord, index) => {
             const lessonCard = document.createElement('button');
-            lessonCard.className = 'history-card bg-amber-800/20 hover:bg-amber-700/30 border border-amber-600/30 rounded-lg p-3 text-left transition-all';
+            lessonCard.className = 'history-card bg-gradient-to-r from-amber-600/20 to-orange-600/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/30 hover:border-amber-400/50 text-white p-3 rounded-lg text-left transition-all transform hover:scale-105 backdrop-blur-sm';
+            
             lessonCard.innerHTML = `
-                <div class="text-white font-medium text-sm line-clamp-2 mb-1">${lesson.topic}</div>
-                <div class="text-amber-300 text-xs">${lesson.language}</div>
-                <div class="text-gray-400 text-xs">${lesson.completedAt}</div>
+                <div class="font-medium text-sm mb-1 line-clamp-1">${lessonRecord.topic}</div>
+                <div class="text-xs text-gray-400 mb-1">${lessonRecord.language}</div>
+                <div class="text-xs text-gray-500">${lessonRecord.completedAt}</div>
             `;
+            
+            lessonCard.style.opacity = '0';
+            lessonCard.style.animation = `gentleFadeIn 0.5s ease-out ${index * 0.1}s forwards`;
+            
+            lessonCard.onclick = () => {
+                if (lessonRecord.lessonPlan && domElements.topicInput) {
+                    domElements.topicInput.value = lessonRecord.topic;
+                    if (domElements.languageSelect) {
+                        domElements.languageSelect.value = lessonRecord.language;
+                    }
+                }
+            };
+            
             domElements.historyLessonsContainer.appendChild(lessonCard);
         });
     } catch (error) {
-        console.error('Error loading lesson history:', error);
+        console.warn('Failed to load lesson history:', error);
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'col-span-2 text-center text-red-400 py-4';
+        errorMsg.textContent = 'Error loading lesson history';
+        domElements.historyLessonsContainer.appendChild(errorMsg);
     }
 }
 
 export function startTopicRotations() {
-    // Populate topics when starting rotations
     populateLessonTopics();
     console.log('Starting topic rotations');
 }
 
 export function stopTopicRotations() {
-    // Implementation to stop topic rotations
     console.log('Stopping topic rotations');
 }
 
@@ -299,7 +308,6 @@ export function toggleLessonsVisibility(forceShow = false) {
     if (isHidden || forceShow) {
         domElements.lessonsContainer.classList.remove('hidden');
         if (chevronIcon) chevronIcon.style.transform = 'rotate(180deg)';
-        // Populate lesson topics if not already done
         populateLessonTopics();
     } else if (!forceShow) {
         domElements.lessonsContainer.classList.add('hidden');
