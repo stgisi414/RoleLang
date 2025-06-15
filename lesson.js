@@ -32,17 +32,12 @@ async function splitIntoSentences(text) {
     }
 
     const prompt = `
-You are an expert linguist specializing in splitting text for language learners to practice speaking. Your task is to split the following text into natural, speakable chunks that are easier to practice.
-
-**Instructions:**
-1.  **Break into Practice Chunks:** Always try to break longer texts into 2-4 shorter, meaningful chunks.
-2.  **Natural Boundaries:** Split at natural sentence boundaries, conjunctions, or logical pauses.
-3.  **Language-Specific Rules:** Adhere to rules for Korean, Japanese, Chinese, and European languages.
-4.  **Output Format:** Your response MUST be a valid JSON array of strings.
-5.  **Minimum Splits:** If the text is longer than 8 words, try to split it into at least 2 chunks.
-
-**Language:** ${currentLanguage}
-**Text to Split:** "${cleanText}"
+You are an expert linguist. Split the following text into natural, speakable chunks for a language learner.
+- Break long texts into 2-4 shorter, meaningful chunks.
+- Split at natural sentence boundaries or logical pauses.
+- Your response MUST be a valid JSON array of strings.
+Language: ${currentLanguage}
+Text to Split: "${cleanText}"
 Provide the JSON array.`;
 
     try {
@@ -181,35 +176,16 @@ The user-provided topic for the roleplay is: **"${topic}"**
 
 Follow these steps precisely:
 
-**STEP 1: Understand the Topic**
-The user's topic above might not be in English. First, internally translate this topic to English to ensure you understand the user's intent. Do not show this translation in your output.
-
-**STEP 2: Generate the JSON Lesson Plan**
-Now, using your English understanding of the topic, create the lesson plan. The entire generated output must be only the JSON object.
-
 **JSON STRUCTURE REQUIREMENTS:**
-
-1.  **Top-Level Keys:** The JSON object must contain these keys: "title", "background_context", "scenario", "language", "illustration_prompt", "dialogue".
-
-2.  **Title:** A catchy, descriptive title for the lesson in ${nativeLangName} that captures the essence of the scenario.
-
-3.  **Background Context:** A brief paragraph in ${nativeLangName} explaining the context and setting of the roleplay scenario.
-
-4.  **Dialogue Object:** Each object in the "dialogue" array must contain:
-    - "party": "A" (the user) or "B" (the partner).
-    - "line": An object containing the text for the dialogue.
-    - "explanation" (optional): An object with a "title" and "body" for grammar tips written in the user's native language (${nativeLangName}).
-
-5.  **Line Object:** The "line" object must contain these exact fields:
-    ${lineObjectStructure}
-    
-5a. **TRANSLATION LANGUAGE:** All parenthetical translations must be in ${nativeLangName}.
-
-6.  **Character Names:** You MUST use realistic, culturally-appropriate names. Good examples for ${language}: ${nameExamples}.
-
-7.  **NO PLACEHOLDERS:** Do not use placeholders like "[USER NAME]" or "(YOUR NAME)". You must use the culturally appropriate names from RULE 6.
-
-8.  **ILLUSTRATION PROMPT:** The "illustration_prompt" should be a brief, descriptive text in English to generate an illustration. Style: highly detailed, anime-like, stylish. No text or labels in the image.
+1.  **Top-Level Keys:** "title", "background_context", "scenario", "language", "illustration_prompt", "dialogue".
+2.  **Title:** A catchy title for the lesson in ${nativeLangName}.
+3.  **Background Context:** A brief paragraph in ${nativeLangName} explaining the context.
+4.  **Dialogue Object:** Each object in the "dialogue" array must contain "party" ('A' or 'B'), "line" (an object), and optional "explanation" (with "title" and "body" in ${nativeLangName}).
+5.  **Line Object:** The "line" object must contain these fields: ${lineObjectStructure}.
+6.  **Translation Language:** All parenthetical translations must be in ${nativeLangName}.
+7.  **Character Names:** Use realistic, culturally-appropriate names for ${language}. Examples: ${nameExamples}.
+8.  **NO PLACEHOLDERS:** Do not use placeholders like "[USER NAME]".
+9.  **Illustration Prompt:** A brief, descriptive prompt in English for an illustration (style: highly detailed, anime-like, stylish, no text).
 
 Now, generate the complete JSON lesson plan.`;
 }
@@ -439,7 +415,6 @@ export function toggleSpeechRecognition() {
         stateRef.recognition.stop();
     } else {
         try {
-            // FIX: Set language right before starting
             const langCode = getLangCode(domElements.languageSelect.value);
             stateRef.recognition.lang = langCode;
             console.log(`Speech recognition language set to: ${langCode}`);
@@ -545,6 +520,190 @@ function handleIncorrectSpeech(similarity, required, spoken, apiFeedback = null)
             uiRef.updateMicStatus('tryAgainStatus');
         }
     }, 4000);
+}
+
+
+export async function startVocabularyQuiz(language) {
+    const quizModal = document.createElement('div');
+    quizModal.id = 'vocab-quiz-modal';
+    quizModal.className = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4';
+    quizModal.innerHTML = `<div class="bg-gray-800 rounded-xl p-6 text-center glassmorphism"><div class="loader mx-auto mb-4"></div><p class="text-white">Generating quiz...</p></div>`;
+    document.body.appendChild(quizModal);
+
+    try {
+        const dialogueText = stateRef.lessonPlan.dialogue.map(turn => turn.line.display).join('\n');
+        const nativeLangName = {'en': 'English', 'es': 'Spanish', 'fr': 'French', 'de': 'German', 'it': 'Italian', 'zh': 'Chinese', 'ja': 'Japanese', 'ko': 'Korean'}[stateRef.nativeLang] || 'English';
+
+        const prompt = `
+        You are a quiz generation tool for a language learner.
+        The user is learning ${language} and their native language is ${nativeLangName}.
+        From the following dialogue, extract 5 key vocabulary words/phrases.
+        For each word/phrase, provide:
+        1. The original "word".
+        2. The correct "translation" in ${nativeLangName}.
+        3. A "context" sentence from the dialogue where the word was used.
+        4. An array of three plausible but incorrect "wrongAnswers" in ${nativeLangName}.
+
+        Your response MUST be a valid JSON array of objects with the keys: "word", "translation", "context", "wrongAnswers".
+
+        Dialogue:
+        ---
+        ${dialogueText}
+        ---
+
+        Provide ONLY the JSON array.`;
+
+        const data = await apiRef.callGeminiAPI(prompt);
+        const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+        const vocabulary = JSON.parse(jsonString);
+
+        if (!vocabulary || vocabulary.length === 0) {
+            throw new Error("AI did not return any vocabulary.");
+        }
+
+        createVocabularyQuizModal(vocabulary, language);
+
+    } catch (error) {
+        console.error("Failed to generate vocabulary quiz:", error);
+        quizModal.innerHTML = `
+            <div class="bg-gray-800 rounded-xl p-6 max-w-md w-full glassmorphism text-center">
+                <h3 class="text-xl font-bold text-red-400 mb-4">Error</h3>
+                <p class="text-gray-300 mb-6">Could not generate a vocabulary quiz for this lesson.</p>
+                <button id="close-quiz-error-btn" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">Close</button>
+            </div>
+        `;
+        document.getElementById('close-quiz-error-btn').onclick = () => quizModal.remove();
+    }
+}
+
+
+function createVocabularyQuizModal(vocabulary, language) {
+    const quizModal = document.getElementById('vocab-quiz-modal');
+    const shuffledVocab = [...vocabulary].sort(() => 0.5 - Math.random());
+    let currentQuestion = 0;
+    let score = 0;
+
+    function updateQuizContent() {
+        if (currentQuestion >= shuffledVocab.length) {
+            const percentage = Math.round((score / shuffledVocab.length) * 100);
+            quizModal.innerHTML = `
+            <div class="bg-gray-800 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto glassmorphism text-center">
+                <h3 class="text-2xl font-bold text-purple-300 mb-4">${ui.translateText('quizComplete')}</h3>
+                <div class="text-6xl mb-4">${percentage >= 80 ? '🎉' : '📚'}</div>
+                <p class="text-xl text-white mb-4">${ui.translateText('yourScore')}: ${score}/${shuffledVocab.length} (${percentage}%)</p>
+                <div class="flex space-x-4 justify-center">
+                    <button id="retry-quiz-btn" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg">Retry Quiz</button>
+                    <button id="close-quiz-btn" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">Close</button>
+                </div>
+            </div>`;
+            document.getElementById('retry-quiz-btn').onclick = () => createVocabularyQuizModal(vocabulary, language);
+            document.getElementById('close-quiz-btn').onclick = () => quizModal.remove();
+            return;
+        }
+
+        const currentVocab = shuffledVocab[currentQuestion];
+        const correctAnswer = currentVocab.translation;
+        const allOptions = [correctAnswer, ...currentVocab.wrongAnswers].sort(() => 0.5 - Math.random());
+
+        quizModal.innerHTML = `
+            <div class="bg-gray-800 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto glassmorphism relative">
+                 <button id="close-quiz-btn" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
+                <div class="text-center mb-6">
+                    <h3 class="text-xl font-bold text-purple-300 mb-2">${ui.translateText('vocabularyQuiz')}</h3>
+                    <p class="text-gray-300 text-sm mb-2">${ui.translateText('whatDoesThisMean')}</p>
+                    <div class="text-3xl font-bold text-white mb-2">${currentVocab.word}</div>
+                    <div class="text-sm text-gray-400 italic">"${currentVocab.context}"</div>
+                </div>
+                <div class="grid grid-cols-1 gap-3 mb-6">
+                    ${allOptions.map((option, index) => `<button class="quiz-option w-full p-4 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-left" data-answer="${option}">${String.fromCharCode(65 + index)}. ${option}</button>`).join('')}
+                </div>
+            </div>`;
+
+        quizModal.querySelectorAll('.quiz-option').forEach(option => {
+            option.onclick = () => {
+                const isCorrect = option.dataset.answer === correctAnswer;
+                option.classList.add(isCorrect ? 'bg-green-600' : 'bg-red-600');
+                quizModal.querySelectorAll('.quiz-option').forEach(opt => opt.disabled = true);
+                if (isCorrect) score++;
+                
+                setTimeout(() => {
+                    currentQuestion++;
+                    updateQuizContent();
+                }, 1200);
+            };
+        });
+        document.getElementById('close-quiz-btn').onclick = () => quizModal.remove();
+    }
+    updateQuizContent();
+}
+
+export async function reviewLesson(lessonRecord) {
+    const plan = lessonRecord.lessonPlan;
+    if (!plan.id) {
+        plan.id = `lesson-${lessonRecord.language}-${Date.now()}`;
+    }
+    stateRef.setLessonPlan(plan);
+    stateRef.setCurrentTurnIndex(0);
+
+    if (domElements.languageSelect) domElements.languageSelect.value = lessonRecord.language;
+    if (domElements.topicInput) domElements.topicInput.value = lessonRecord.topic;
+
+    if (stateRef.recognition) {
+        stateRef.recognition.lang = getLangCode(lessonRecord.language);
+    }
+
+    uiRef.showLessonScreen();
+    uiRef.stopTopicRotations();
+
+    if (plan.illustration_url) {
+        uiRef.restoreIllustration(plan.illustration_url);
+    } else if (plan.illustration_prompt) {
+        fetchAndDisplayIllustration(plan.illustration_prompt);
+    }
+    
+    await startConversation();
+    
+    uiRef.showReviewModeUI(lessonRecord.language);
+    
+    if (saveStateRef) saveStateRef();
+    
+    advanceTurn(0);
+}
+
+export async function playLineAudio(text, party = 'B') {
+    stateRef.audioController.abort();
+    stateRef.audioController = new AbortController();
+
+    try {
+        const cleanText = removeParentheses(text);
+        const voiceConfig = getVoiceConfig(domElements.languageSelect.value, party);
+        const audioBlob = await apiRef.fetchPartnerAudio(cleanText, voiceConfig);
+        const audioUrl = URL.createObjectURL(audioBlob);
+
+        if (stateRef.audioPlayer.src) {
+            URL.revokeObjectURL(stateRef.audioPlayer.src);
+        }
+        stateRef.audioPlayer.src = audioUrl;
+        stateRef.audioPlayer.playbackRate = parseFloat(domElements.audioSpeedSelect.value);
+        
+        await stateRef.audioPlayer.play();
+        
+    } catch (error) {
+        console.error("Failed to fetch audio for manual playback:", error);
+    }
+}
+
+export function playLineAudioDebounced(text, party = 'B') {
+    if (audioDebounceTimer) {
+        clearTimeout(audioDebounceTimer);
+    }
+    if (!stateRef.audioPlayer.paused) {
+        stateRef.audioPlayer.pause();
+    }
+    audioDebounceTimer = setTimeout(() => {
+        playLineAudio(text, party);
+        audioDebounceTimer = null;
+    }, 300);
 }
 
 export function debounce(func, wait) {

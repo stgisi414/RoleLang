@@ -19,7 +19,7 @@ console.log('main.js loaded');
 // --- DOM Elements (global to main.js) ---
 let elements = {};
 
-// --- State Persistence Functions (Moved from state.js) ---
+// --- State Persistence Functions ---
 function saveState() {
     const appState = {
         lessonPlan: state.lessonPlan,
@@ -94,6 +94,7 @@ async function restoreState(savedState) {
         if (ui) {
             await ui.restoreConversation(state.lessonPlan);
             ui.displayLessonTitleAndContext(state.lessonPlan);
+            ui.addBackToLandingButton();
 
             if (state.lessonPlan.illustration_url) {
                 ui.restoreIllustration(state.lessonPlan.illustration_url);
@@ -107,7 +108,7 @@ async function restoreState(savedState) {
             if (elements.micStatus) elements.micStatus.textContent = ui.translateText('lessonComplete');
             if (elements.micBtn) elements.micBtn.disabled = true;
             state.lessonPlan.isCompleted = true;
-            if (ui) ui.showReviewModeUI(savedState.selectedLanguage, state.lessonPlan);
+            if (ui) ui.showReviewModeUI(savedState.selectedLanguage);
         } else {
             state.lessonPlan.isCompleted = false;
             if (lesson) lesson.advanceTurn(state.currentTurnIndex);
@@ -176,7 +177,7 @@ async function initializeApp() {
     }
 
     lesson.init(elements, state, api, ui, saveState);
-	ui.init(elements, state.getTranslations, state.getNativeLang, saveState, goBackToLanding);
+	ui.init(elements, state.getTranslations, () => state.nativeLang, saveState, goBackToLanding);
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
@@ -190,7 +191,7 @@ async function initializeApp() {
             state.setIsRecognizing(true);
             elements.micBtn?.classList.add('bg-green-600');
             elements.micBtn?.classList.remove('bg-red-600');
-            if (elements.micStatus) elements.micStatus.textContent = ui.translateText('listening');
+            if (ui) ui.updateMicStatus('listening');
         };
 
         recognitionInstance.onend = () => {
@@ -201,17 +202,18 @@ async function initializeApp() {
 
         recognitionInstance.onerror = (event) => {
             console.error("Speech recognition error:", event.error, "for language:", recognitionInstance.lang);
+             if (ui) ui.updateMicStatus('speechNotSupported');
         };
 
         recognitionInstance.onresult = (event) => {
             const spokenText = event.results[0][0].transcript;
-            if (elements.micStatus) elements.micStatus.textContent = `${ui.translateText('youSaid')} "${spokenText}"`;
-            lesson.verifyUserSpeech(spokenText);
+            if (ui) ui.updateMicStatusHTML(`${ui.translateText('youSaid')} "${spokenText}"`);
+            if (lesson) lesson.verifyUserSpeech(spokenText);
         };
 
         state.setRecognition(recognitionInstance);
     } else {
-        if (elements.micStatus) elements.micStatus.textContent = ui.translateText('speechNotSupported');
+        if (ui) ui.updateMicStatus('speechNotSupported');
         if (elements.micBtn) elements.micBtn.disabled = true;
     }
 
@@ -234,7 +236,10 @@ async function initializeApp() {
         }
         if (event.target.closest('.native-lang-option')) {
             const option = event.target.closest('.native-lang-option');
-            ui.setNativeLanguage(option.getAttribute('data-lang'), option.getAttribute('data-flag'), option.textContent.trim());
+            const langCode = option.getAttribute('data-lang');
+            state.setNativeLang(langCode);
+            state.setCurrentTranslations(window.translations[langCode] || window.translations.en);
+            ui.setNativeLanguage(langCode, option.getAttribute('data-flag'), option.textContent.trim());
             elements.nativeLangDropdown?.classList.add('hidden');
         }
     });
@@ -257,7 +262,7 @@ async function initializeApp() {
         elements.nativeLangDropdown?.classList.toggle('hidden');
     });
     document.addEventListener('click', (e) => {
-        if (!elements.nativeLangBtn?.contains(e.target)) {
+        if (!elements.nativeLangBtn?.contains(e.target) && !elements.nativeLangDropdown?.contains(e.target)) {
             elements.nativeLangDropdown?.classList.add('hidden');
         }
     });
@@ -312,7 +317,6 @@ function goBackToLanding() {
     state.setCurrentTurnIndex(0);
 
     ui.showLandingScreen();
-
     ui.startTopicRotations();
 }
 
