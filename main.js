@@ -14,7 +14,7 @@ try {
     console.log('Lesson module loaded');
     var state = await import('./state.js');
     console.log('State module loaded');
-    
+
     // Expose state globally for cross-module access
     window.state = state;
 } catch (error) {
@@ -36,7 +36,7 @@ function saveState() {
         console.log('Skipping saveState during restoration');
         return;
     }
-    
+
     const selectedLang = elements.languageSelect?.value;
     const appState = {
         lessonPlan: state.lessonPlan,
@@ -99,16 +99,16 @@ function clearState() {
 
 async function restoreState(savedState) {
     isRestoring = true; // Prevent saveState from being called during restoration
-    
+
     // Restore target language FIRST before anything else
     if (savedState.selectedLanguage && elements.languageSelect) {
         console.log('Attempting to restore target language to:', savedState.selectedLanguage);
         console.log('Available options:', Array.from(elements.languageSelect.options).map(opt => opt.value));
-        
+
         // Set the value directly
         elements.languageSelect.value = savedState.selectedLanguage;
         console.log('Target language select value after restoration:', elements.languageSelect.value);
-        
+
         // If the direct assignment didn't work, try finding and setting the option
         if (elements.languageSelect.value !== savedState.selectedLanguage) {
             const targetOption = Array.from(elements.languageSelect.options).find(option => option.value === savedState.selectedLanguage);
@@ -120,11 +120,11 @@ async function restoreState(savedState) {
                 console.error('Target language option not found:', savedState.selectedLanguage);
             }
         }
-        
+
         // Verify the final state
         console.log('Final target language value:', elements.languageSelect.value);
     }
-    
+
     // Restore native language (UI language) if saved
     if (savedState.nativeLang) {
         state.setNativeLang(savedState.nativeLang);
@@ -146,7 +146,7 @@ async function restoreState(savedState) {
     }
 
     if (savedState.lessonPlan && savedState.currentScreen === 'lesson') {
-        
+
         // --- START OF FIX ---
         // Pre-process the lesson plan to add the 'sentences' array to user turns.
         // This ensures the UI can render correctly from a saved state.
@@ -194,20 +194,20 @@ async function restoreState(savedState) {
             state.lessonPlan.isCompleted = false;
             if (lesson) lesson.advanceTurn(state.currentTurnIndex);
         }
-        
+
         if (ui) ui.stopTopicRotations();
     }
-    
+
     isRestoring = false; // Allow saveState to work normally again
 }
 
 async function initializeApp() {
     console.log('Initializing app...');
-    
+
     if (document.getElementById('app-container')?.dataset.initialized) {
         return;
     }
-    
+
     elements = {
         landingScreen: document.getElementById('landing-screen'),
         lessonScreen: document.getElementById('lesson-screen'),
@@ -300,103 +300,105 @@ async function initializeApp() {
     }
 
     // --- Event Listeners ---
-    elements.startLessonBtn?.addEventListener('click', () => {
-		lesson.initializeLesson();
-	});
-    elements.micBtn?.addEventListener('click', () => lesson.toggleSpeechRecognition());
-    elements.toggleLessonsBtn?.addEventListener('click', () => ui.toggleLessonsVisibility());
-    elements.toggleHistoryBtn?.addEventListener('click', ui.toggleHistoryVisibility);
-    elements.difficultyTab?.addEventListener('click', () => ui.switchTab('difficulty'));
-    elements.situationsTab?.addEventListener('click', () => ui.switchTab('situations'));
-    elements.resetLessonBtn?.addEventListener('click', () => lesson.resetLesson());
-    elements.confirmStartLessonBtn?.addEventListener('click', () => lesson.confirmStartLesson());
-    
-    document.addEventListener('click', (event) => {
-        if (event.target.classList.contains('lesson-btn')) {
-            if (elements.topicInput) {
-                elements.topicInput.value = event.target.getAttribute('data-topic');
-                saveState();
-            }
-        }
-        if (event.target.closest('.native-lang-option')) {
-            const option = event.target.closest('.native-lang-option');
-            const langCode = option.getAttribute('data-lang');
-            const flag = option.getAttribute('data-flag');
-            const name = option.textContent.trim();
-            
-            // Update state
-            state.setNativeLang(langCode);
-            state.setCurrentTranslations(window.translations[langCode] || window.translations.en);
-            
-            // Update UI
-            if (ui) {
-                ui.setNativeLanguage(langCode, flag, name);
-            }
-            elements.nativeLangDropdown?.classList.add('hidden');
-            
-            // Save state
-            saveState();
-        }
-    });
+	function setupEventListeners() {
+		elements.startLessonBtn?.addEventListener('click', () => {
+			lesson.initializeLesson();
+		});
+		elements.micBtn?.addEventListener('click', () => lesson.toggleSpeechRecognition());
+		elements.toggleLessonsBtn?.addEventListener('click', () => ui.toggleLessonsVisibility());
+		elements.toggleHistoryBtn?.addEventListener('click', ui.toggleHistoryVisibility);
+		elements.difficultyTab?.addEventListener('click', () => ui.switchTab('difficulty'));
+		elements.situationsTab?.addEventListener('click', () => ui.switchTab('situations'));
+		elements.resetLessonBtn?.addEventListener('click', () => lesson.resetLesson());
+		elements.confirmStartLessonBtn?.addEventListener('click', () => lesson.confirmStartLesson());
 
-    const debouncedSave = lesson.debounce(saveState, 500);
-    elements.languageSelect?.addEventListener('change', (event) => {
-        console.log('Target language changed to:', event.target.value);
-        // Force immediate save with a small delay to ensure the value is captured
-        setTimeout(() => {
-            console.log('Saving state with target language:', elements.languageSelect.value);
-            saveState();
-        }, 50);
-    });
-    elements.topicInput?.addEventListener('input', debouncedSave);
-    elements.audioSpeedSelect?.addEventListener('change', saveState);
+		document.addEventListener('click', (event) => {
+			if (event.target.classList.contains('lesson-btn')) {
+				if (elements.topicInput) {
+					elements.topicInput.value = event.target.getAttribute('data-topic');
+					saveState();
+				}
+			}
+			if (event.target.closest('.native-lang-option')) {
+				const option = event.target.closest('.native-lang-option');
+				const langCode = option.getAttribute('data-lang');
+				const flag = option.getAttribute('data-flag');
+				const name = option.textContent.trim();
 
-    elements.closeModalBtn?.addEventListener('click', () => elements.modal?.classList.add('hidden'));
-    elements.tutorialBtn?.addEventListener('click', () => ui.showTutorial());
-    elements.closeTutorialBtn?.addEventListener('click', () => elements.tutorialModal?.classList.add('hidden'));
-    elements.startTutorialLessonBtn?.addEventListener('click', () => {
-        elements.tutorialModal?.classList.add('hidden');
-        if (elements.topicInput) elements.topicInput.value = ui.translateText('beginnerExample');
-    });
+				// Update state
+				state.setNativeLang(langCode);
+				state.setCurrentTranslations(window.translations[langCode] || window.translations.en);
 
-    elements.nativeLangBtn?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        elements.nativeLangDropdown?.classList.toggle('hidden');
-    });
-    document.addEventListener('click', (e) => {
-        if (!elements.nativeLangBtn?.contains(e.target) && !elements.nativeLangDropdown?.contains(e.target)) {
-            elements.nativeLangDropdown?.classList.add('hidden');
-        }
-    });
-	
-	elements.conversationContainer?.addEventListener('click', (event) => {
-        const lineElement = event.target.closest('.dialogue-line');
-        if (!lineElement || event.target.closest('.explanation-link')) return;
+				// Update UI
+				if (ui) {
+					ui.setNativeLanguage(langCode, flag, name);
+				}
+				elements.nativeLangDropdown?.classList.add('hidden');
 
-        const turnIndex = parseInt(lineElement.id.split('-')[1], 10);
-        const turn = state.lessonPlan?.dialogue[turnIndex];
-        if (turn) lesson.playLineAudioDebounced(turn.line.display, turn.party);
-    });
-	
-	elements.historyLessonsContainer?.addEventListener('click', (event) => {
-        const card = event.target.closest('.history-card');
-        if (!card) return;
-        const lessonId = card.dataset.lessonId;
-        const history = ui.getLessonHistory(); 
-        const lessonRecord = history.find(record => record.id === lessonId);
-        if (lessonRecord) {
-            lesson.reviewLesson(lessonRecord);
-        }
-    });
+				// Save state
+				saveState();
+			}
+		});
 
-    elements.lessonScreen?.addEventListener('click', (event) => {
-        if (event.target.closest('#vocab-quiz-btn')) {
-            const language = elements.languageSelect?.value;
-            if (lesson.startVocabularyQuiz) {
-                lesson.startVocabularyQuiz(language);
-            }
-        }
-    });
+		const debouncedSave = lesson.debounce(saveState, 500);
+		elements.languageSelect?.addEventListener('change', (event) => {
+			console.log('Target language changed to:', event.target.value);
+			// Force immediate save with a small delay to ensure the value is captured
+			setTimeout(() => {
+				console.log('Saving state with target language:', elements.languageSelect.value);
+				saveState();
+			}, 50);
+		});
+		elements.topicInput?.addEventListener('input', debouncedSave);
+		elements.audioSpeedSelect?.addEventListener('change', saveState);
+
+		elements.closeModalBtn?.addEventListener('click', () => elements.modal?.classList.add('hidden'));
+		elements.tutorialBtn?.addEventListener('click', () => ui.showTutorial());
+		elements.closeTutorialBtn?.addEventListener('click', () => elements.tutorialModal?.classList.add('hidden'));
+		elements.startTutorialLessonBtn?.addEventListener('click', () => {
+			elements.tutorialModal?.classList.add('hidden');
+			if (elements.topicInput) elements.topicInput.value = ui.translateText('beginnerExample');
+		});
+
+		elements.nativeLangBtn?.addEventListener('click', (e) => {
+			e.stopPropagation();
+			elements.nativeLangDropdown?.classList.toggle('hidden');
+		});
+		document.addEventListener('click', (e) => {
+			if (!elements.nativeLangBtn?.contains(e.target) && !elements.nativeLangDropdown?.contains(e.target)) {
+				elements.nativeLangDropdown?.classList.add('hidden');
+			}
+		});
+
+		elements.conversationContainer?.addEventListener('click', (event) => {
+			const lineElement = event.target.closest('.dialogue-line');
+			if (!lineElement || event.target.closest('.explanation-link')) return;
+
+			const turnIndex = parseInt(lineElement.id.split('-')[1], 10);
+			const turn = state.lessonPlan?.dialogue[turnIndex];
+			if (turn) lesson.playLineAudioDebounced(turn.line.display, turn.party);
+		});
+
+		elements.historyLessonsContainer?.addEventListener('click', (event) => {
+			const card = event.target.closest('.history-card');
+			if (!card) return;
+			const lessonId = card.dataset.lessonId;
+			const history = ui.getLessonHistory();
+			const lessonRecord = history.find(record => record.id === lessonId);
+			if (lessonRecord) {
+				lesson.reviewLesson(lessonRecord);
+			}
+		});
+
+		elements.lessonScreen?.addEventListener('click', (event) => {
+			if (event.target.closest('#vocab-quiz-btn')) {
+				const language = elements.languageSelect?.value;
+				if (lesson.startVocabularyQuiz) {
+					lesson.startVocabularyQuiz(language);
+				}
+			}
+		});
+	}
 
     // --- Initialization ---
     // Ensure translations are properly initialized
@@ -407,33 +409,22 @@ async function initializeApp() {
     } else {
         console.error('Translations not available, UI will not be properly translated');
     }
-    
+
+    // Set flag to prevent any saveState calls during initialization
+    isRestoring = true;
+
     const savedState = loadState();
     if (savedState) {
         await restoreState(savedState);
-        
-        // Double-check target language restoration after everything else is done
-        if (savedState.selectedLanguage && elements.languageSelect && elements.languageSelect.value !== savedState.selectedLanguage) {
-            console.log('Final attempt to restore target language:', savedState.selectedLanguage);
-            elements.languageSelect.value = savedState.selectedLanguage;
-            
-            // Force the option to be selected if direct value assignment fails
-            const options = elements.languageSelect.options;
-            for (let i = 0; i < options.length; i++) {
-                if (options[i].value === savedState.selectedLanguage) {
-                    options[i].selected = true;
-                    elements.languageSelect.selectedIndex = i;
-                    console.log('Target language forced to:', savedState.selectedLanguage);
-                    break;
-                }
-            }
-        }
         isRestoring = false; // Clear the flag after successful restoration
     } else {
         ui.startTopicRotations();
         isRestoring = false; // Clear the flag even if no saved state
     }
-    
+
+    // NOW add event listeners after restoration is complete
+    setupEventListeners();
+
     if (elements.appContainer) {
         elements.appContainer.dataset.initialized = 'true';
     }
