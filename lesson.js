@@ -165,7 +165,7 @@ function getVoiceConfig(language, party = 'A') {
     };
 }
 
-function getRandomNames(language, count = 5) {
+function getrandomnames(language, count = 5) {
     const namesByLanguage = window.characterNames;
 
     if (!namesByLanguage || !namesByLanguage[language]) {
