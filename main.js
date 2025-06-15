@@ -30,7 +30,7 @@ function saveState() {
         nativeLang: state.nativeLang,
         lessonsVisible: !elements.lessonsContainer?.classList.contains('hidden'),
         audioSpeed: elements.audioSpeedSelect ? elements.audioSpeedSelect.value : '1',
-        lastSaved: Date.now()
+        lastSaved: Date.now() // <-- ADD THIS LINE
     };
 
     try {
@@ -46,11 +46,17 @@ function loadState() {
         if (!savedState) return null;
 
         const parsedState = JSON.parse(savedState);
+
+        // --- ADD THIS LOGIC ---
+        // Check if state is recent (older than 7 days)
         const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
         if (parsedState.lastSaved < sevenDaysAgo) {
+            console.log("Saved state is older than 7 days, clearing.");
             localStorage.removeItem(state.STATE_KEY);
             return null;
         }
+        // --- END OF ADDED LOGIC ---
+
         return parsedState;
     } catch (error) {
         console.warn('Failed to load state from localStorage:', error);
@@ -173,10 +179,8 @@ async function initializeApp() {
         return;
     }
 
-    // Initialize modules
-    ui.init(elements, state.getTranslations, state.getNativeLang, saveState);
-    
-    // FIX: Pass the saveState function to the lesson module as well
+   lesson.init(elements, state, api, ui, saveState);
+ui.init(elements, state.getTranslations, state.getNativeLang, saveState, goBackToLanding); // Pass the function heres well
     lesson.init(elements, state, api, ui, saveState);
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -308,6 +312,18 @@ async function initializeApp() {
     if (elements.appContainer) {
         elements.appContainer.dataset.initialized = 'true';
     }
+}
+
+function goBackToLanding() {
+    clearState();
+    state.setLessonPlan(null);
+    state.setCurrentTurnIndex(0);
+
+    // Use the new UI function to switch screens
+    ui.showLandingScreen();
+
+    // Restart the topic animations on the landing page
+    ui.startTopicRotations();
 }
 
 if (document.readyState === 'loading') {

@@ -19,11 +19,12 @@ const exitAnimationClasses = [
 
 
 // --- Initialization ---
-export function init(elements, translationsFunc, nativeLangFunc, saveFunc) {
+export function init(elements, translationsFunc, nativeLangFunc, saveFunc, backCb) {
     domElements = elements;
     getTranslations = translationsFunc;
     getNativeLang = nativeLangFunc;
     saveState = saveFunc;
+    backToLandingCallback = backCb; // Assign the callback
 }
 
 // --- Translation ---
@@ -66,6 +67,7 @@ export function setNativeLanguage(langCode, flag, name) {
     domElements.nativeFlagEl.textContent = flag;
     domElements.nativeLangTextEl.textContent = name;
     updateTranslations();
+    updateBackButton(); // <-- ADD THIS LINE
     stopTopicRotations();
     startTopicRotations();
     localStorage.setItem('rolelang_native_lang', JSON.stringify({ code: langCode, flag, name }));
@@ -385,6 +387,8 @@ export function restoreIllustration(imageUrl) {
     domElements.illustrationImg.classList.remove('hidden');
 }
 
+let backToLandingCallback = () => window.location.reload(); // Default fallback
+
 export function addBackToLandingButton() {
     if (document.getElementById('lesson-header')) return;
 
@@ -395,13 +399,25 @@ export function addBackToLandingButton() {
     backBtn.id = 'back-to-landing-btn';
     backBtn.className = 'back-button bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition-colors text-sm';
     backBtn.innerHTML = `<i class="fas fa-arrow-left mr-2"></i>${translateText('back')}`;
-    backBtn.onclick = () => {
-        window.location.reload(); 
-    };
+
+    // --- THIS IS THE KEY CHANGE ---
+    backBtn.onclick = backToLandingCallback;
 
     if (domElements.lessonTitleContainer) {
         headerContainer.appendChild(backBtn);
         headerContainer.appendChild(domElements.lessonTitleContainer);
         domElements.lessonScreen.insertBefore(headerContainer, domElements.lessonScreen.firstChild);
     }
+}
+
+export function updateBackButton() {
+    const backBtn = document.getElementById('back-to-landing-btn');
+    if (backBtn) {
+        backBtn.innerHTML = `<i class="fas fa-arrow-left mr-2"></i>${translateText('back')}`;
+    }
+}
+
+export function showLandingScreen() {
+    domElements.landingScreen?.classList.remove('hidden');
+    domElements.lessonScreen?.classList.add('hidden');
 }
