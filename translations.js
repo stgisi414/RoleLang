@@ -310,7 +310,7 @@ const translations = {
       ],
       horror: [
         "Explorando mansión abandonada embrujada", "Atrapado en ascensor durante apagón", "Viaje de camping con sonidos extraños", "Solo en casa durante apagón misterioso",
-        "Perdido en bosque cubierto de niebla por la noche", "Vecino extraño con secretos oscuros", "Tienda de antigüedades con objetos malditos", "Turno nocturno en hospital espeluznante"
+        "迷失在夜晚雾气弥漫的森林中", "有着黑暗秘密的奇怪邻居", "有着被诅咒物品的古董店", "在令人毛骨悚然的医院值夜班"
       ]
     }
   },
@@ -870,4 +870,18 @@ const translations = {
       ],
       horror: [
         "探索废弃闹鬼豪宅", "停电时被困电梯", "露营旅行听到奇怪声音", "神秘停电时独自在家",
-        "夜
+        ja: {
+    // Add Japanese translations if needed - for now using English as fallback
+    title: "RoleLang | Postmodern Language Learning",
+    headerTitle: "RoleLang",
+    // ... other Japanese translations would go here
+  },
+  ko: {
+    // Add Korean translations if needed - for now using English as fallback  
+    title: "RoleLang | Postmodern Language Learning",
+    headerTitle: "RoleLang",
+    // ... other Korean translations would go here
+  }
+};
+
+export default translations;
