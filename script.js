@@ -95,9 +95,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.warn('Failed to save state to localStorage:', error);
         }
     }
-	
+
 	let preFetchedFirstAudioBlob = null;
-	
+
 	let audioPlayer = new Audio();
 	let audioController = new AbortController();
 
@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 			audioPlayer.pause();
 		}
 	}, { once: true });
-	
+
 	const startLessonOverlay = document.getElementById('start-lesson-overlay');
     const confirmStartLessonBtn = document.getElementById('confirm-start-lesson-btn');
 
@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 			const audioUrl = URL.createObjectURL(preFetchedFirstAudioBlob);
 			const audio = new Audio(audioUrl);
 			audio.playbackRate = parseFloat(audioSpeedSelect.value);
-			
+
 			// This is a direct result of a click, so it's safe to play.
 			audio.play().catch(e => console.error("Error playing pre-fetched audio:", e));
 
@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 			}
 
 			const isActuallyCompleted = currentTurnIndex >= lessonPlan.dialogue.length;
-			
+
 			if (isActuallyCompleted) {
 				// Lesson is completed, show review mode
 				micStatus.textContent = translateText('lessonComplete');
@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 			} else {
 				// Lesson is in progress, resume from the correct turn
 				lessonPlan.isCompleted = false;
-				
+
 				// --- THIS IS THE FIX ---
 				// We now pass the restored 'currentTurnIndex' to the function,
 				// so the lesson resumes from the correct point.
@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 			stopTopicRotations();
 		}
 	}
-	
+
     // Translation function
     function translateText(key) {
         return currentTranslations[key] || translations.en[key] || key;
@@ -590,9 +590,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const history = localStorage.getItem(LESSON_HISTORY_KEY);
             if (!history) return [];
-            
+
             const parsedHistory = JSON.parse(history);
-            
+
             // Filter out invalid lesson records (legacy data)
             const validHistory = parsedHistory.filter(record => {
                 return record && 
@@ -603,13 +603,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                        record.language &&
                        record.topic;
             });
-            
+
             // Save cleaned history back to localStorage if it was filtered
             if (validHistory.length !== parsedHistory.length) {
                 localStorage.setItem(LESSON_HISTORY_KEY, JSON.stringify(validHistory));
                 console.log(`Cleaned lesson history: removed ${parsedHistory.length - validHistory.length} invalid entries`);
             }
-            
+
             return validHistory;
         } catch (error) {
             console.warn('Failed to load lesson history:', error);
@@ -851,8 +851,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             colorClass = 'blue';
         } else if (level === 'futuristic') {
             colorClass = 'purple';
-        } else if (level === 'historical') {
-            colorClass = 'amber';
+        } else if (level === 'historical') {colorClass = 'amber';
         } else if (level === 'drama') {
             colorClass = 'red';
         } else if (level === 'comedy') {
@@ -1103,7 +1102,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 			return vocabulary.slice(0, 10);
 		}
 	}
-	
+
     function extractTranslation(text) {
         const match = text.match(/\(([^)]+)\)/);
         return match ? match[1] : null;
@@ -1262,51 +1261,54 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
             }
 
             const currentVocab = vocabularyWithNativeTranslations[currentQuestion];
-            const allTranslations = vocabularyWithNativeTranslations.map(v => v.nativeTranslation || v.translation);
-            const wrongAnswers = allTranslations.filter(t => t !== (currentVocab.nativeTranslation || currentVocab.translation))
-                .sort(() => 0.5 - Math.random()).slice(0, 3);
-            const correctAnswer = currentVocab.nativeTranslation || currentVocab.translation;
-            const allOptions = [correctAnswer, ...wrongAnswers]
-                .sort(() => 0.5 - Math.random());
+                const allTranslations = vocabularyWithNativeTranslations.map(v => v.nativeTranslation || v.translation);
+                const wrongAnswers = allTranslations.filter(t => t !== (currentVocab.nativeTranslation || currentVocab.translation))
+                    .sort(() => 0.5 - Math.random()).slice(0, 3);
+                const correctAnswer = currentVocab.nativeTranslation || currentVocab.translation;
+                const allOptions = [correctAnswer, ...wrongAnswers]
+                    .sort(() => 0.5 - Math.random());
 
-            quizContent.innerHTML = `
-                <div class="text-center mb-6">
-                    <h3 class="text-xl font-bold text-purple-300 mb-2">
-                        <i class="fas fa-brain mr-2"></i>${translateText('vocabularyQuiz') || 'Vocabulary Quiz'}
-                    </h3>
-                    <div class="text-sm text-gray-400">
-                        ${translateText('question') || 'Question'} ${currentQuestion + 1} ${translateText('of') || 'of'} ${vocabularyWithNativeTranslations.length}
+                // Remove English translations from context to avoid giving away the answer
+                const cleanContext = removeParentheses(currentVocab.context);
+
+                quizContent.innerHTML = `
+                    <div class="text-center mb-6">
+                        <h3 class="text-xl font-bold text-purple-300 mb-2">
+                            <i class="fas fa-brain mr-2"></i>${translateText('vocabularyQuiz') || 'Vocabulary Quiz'}
+                        </h3>
+                        <div class="text-sm text-gray-400">
+                            ${translateText('question') || 'Question'} ${currentQuestion + 1} ${translateText('of') || 'of'} ${vocabularyWithNativeTranslations.length}
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2 mt-2">
+                            <div class="bg-purple-600 h-2 rounded-full transition-all duration-300" 
+                                 style="width: ${((currentQuestion) / vocabularyWithNativeTranslations.length) * 100}%"></div>
+                        </div>
                     </div>
-                    <div class="w-full bg-gray-700 rounded-full h-2 mt-2">
-                        <div class="bg-purple-600 h-2 rounded-full transition-all duration-300" 
-                             style="width: ${((currentQuestion) / vocabularyWithNativeTranslations.length) * 100}%"></div>
+
+                    <div class="text-center mb-6">
+                        <p class="text-gray-300 text-sm mb-2">${translateText('whatDoesThisMean') || 'What does this mean?'}</p>
+                        <div class="text-3xl font-bold text-white mb-2">${currentVocab.word}</div>
+                        <div class="text-sm text-gray-400 italic">"${cleanContext}"</div>
                     </div>
-                </div>
 
-                <div class="text-center mb-6">
-                    <p class="text-gray-300 text-sm mb-2">${translateText('whatDoesThisMean') || 'What does this mean?'}</p>
-                    <div class="text-3xl font-bold text-white mb-2">${currentVocab.word}</div>
-                    <div class="text-sm text-gray-400 italic">"${currentVocab.context}"</div>
-                </div>
+                    <div class="grid grid-cols-1 gap-3 mb-6">
+                        ${allOptions.map((option, index) => `
+                            <button class="quiz-option w-full p-4 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors text-left" 
+                                    data-answer="${option}">
+                                <span class="font-bold mr-3">${String.fromCharCode(65 + index)}.</span>${option}
+                            </button>
+                        `).join('')}
+                    </div>
 
-                <div class="grid grid-cols-1 gap-3 mb-6">
-                    ${allOptions.map((option, index) => `
-                        <button class="quiz-option w-full p-4 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors text-left" 
-                                data-answer="${option}">
-                            <span class="font-bold mr-3">${String.fromCharCode(65 + index)}.</span>${option}
+                    <div class="flex justify-between items-center">
+                        <div class="text-sm text-gray-400">
+                            ${translateText('score') || 'Score'}: ${score}/${currentQuestion}
+                        </div>
+                        <button id="close-quiz-btn" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fas fa-times text-lg"></i>
                         </button>
-                    `).join('')}
-                </div>
-
-                <div class="flex justify-between items-center">
-                    <div class="text-sm text-gray-400">
-                        ${translateText('score') || 'Score'}: ${score}/${currentQuestion}
                     </div>
-                    <button id="close-quiz-btn" class="text-gray-400 hover:text-white transition-colors">
-                        <i class="fas fa-times text-lg"></i>
-                    </button>
-                </div>
-            `;
+                `;
 
             // Add option click handlers
             const options = quizContent.querySelectorAll('.quiz-option');
@@ -1431,7 +1433,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
     }
 
     // --- Core Functions ---
-	
+
 	function preFetchFirstAudio(firstTurn) {
 		return new Promise(async (resolve, reject) => {
 			if (!firstTurn) {
@@ -1481,7 +1483,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
 			if (!lessonPlan.id) lessonPlan.id = `lesson-${language}-${Date.now()}`;
 			if (recognition) recognition.lang = getLangCode(language);
-			
+
 			loadingSpinner.classList.add('hidden');
 			stopTopicRotations();
 			landingScreen.classList.add('hidden');
@@ -1489,21 +1491,21 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 
 			// Render the conversation UI in the background
 			startConversation();
-			
+
 			// Show the overlay with its button DISABLED
 			const overlayButton = document.getElementById('confirm-start-lesson-btn');
 			overlayButton.disabled = true;
 			document.getElementById('start-lesson-overlay').classList.remove('hidden');
-			
+
 			// --- FINAL FIX: Wait for both image and audio before enabling the button ---
 			const illustrationPromise = fetchAndDisplayIllustration(lessonPlan.illustration_prompt);
 			const audioPromise = preFetchFirstAudio(lessonPlan.dialogue[0]);
-			
+
 			await Promise.all([illustrationPromise, audioPromise]);
-			
+
 			// Once both are loaded, enable the button.
 			overlayButton.disabled = false;
-			
+
 			saveState();
 
 		} catch (error) {
@@ -1516,7 +1518,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 			document.getElementById('confirm-start-lesson-btn').disabled = false;
 		}
 	}
-	
+
     async function restoreConversation() {
         conversationContainer.innerHTML = ''; // Clear previous conversation
         for (const [index, turn] of lessonPlan.dialogue.entries()) {
@@ -1599,7 +1601,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 		restoreConversation();
 		addBackToLandingButton();
 	}
-	
+
     // Global audio state management
     let currentAudio = null;
     let audioDebounceTimer = null;
@@ -1614,7 +1616,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 			const cleanText = removeParentheses(text);
 			const audioBlob = await fetchPartnerAudio(cleanText, party);
 			const audioUrl = URL.createObjectURL(audioBlob);
-			
+
 			if (audioPlayer.src) {
 				URL.revokeObjectURL(audioPlayer.src);
 			}
@@ -1641,7 +1643,7 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
 			audioDebounceTimer = null;
 		}, 300);
 	}
-	
+
     // Add variables to track sentence-by-sentence recording
     let currentSentences = [];
     let currentSentenceIndex = 0;
@@ -1681,7 +1683,7 @@ Now, provide the JSON array for the given text.
         try {
             // 3. Call the Gemini API
             const data = await callGeminiAPI(prompt, { modelPreference: 'lite' });
-            const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+            const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|/g, '').trim();
             const sentences = JSON.parse(jsonString);
 
             // Validate the output
@@ -1697,7 +1699,7 @@ Now, provide the JSON array for the given text.
             return [cleanText];
         }
     }
-	
+
 	async function playAudioForTurn(party, text) {
 		// Abort any previous listeners to prevent mix-ups
 		audioController.abort();
@@ -1780,7 +1782,7 @@ Now, provide the JSON array for the given text.
 			currentLineEl.classList.add('active');
 			currentLineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 		}
-		
+
 		if (currentTurnData.party === 'A') { // User's turn
 			const cleanText = removeParentheses(currentTurnData.line.display);
 			currentSentences = await splitIntoSentences(cleanText);
@@ -1839,7 +1841,7 @@ Now, provide the JSON array for the given text.
 			}
 		}
 	}
-	
+
 	function enableUserMicForSentence() {
         micBtn.disabled = false;
 
@@ -1895,7 +1897,7 @@ Now, provide the JSON array for the given text.
                 const nativeLangCode = nativeLang || 'en';
                 const langCodeToName = {
                     'en': 'English',
-                    'es': 'Spanish',
+                    'es': 'Spanish', 
                     'fr': 'French',
                     'de': 'German',
                     'it': 'Italian',
@@ -2053,7 +2055,7 @@ Now, provide the JSON array for the given text.
 			const correctText = (currentSentences.length > 1) 
 				? (currentTranslations.allSentencesCorrect || translations.en.allSentencesCorrect)
 				: (currentTranslations.correct || translations.en.correct);
-			
+
 			micStatus.textContent = correctText;
 			const currentLineEl = document.getElementById(`turn-${currentTurnIndex}`);
 			if(currentLineEl) currentLineEl.style.borderColor = '#4ade80'; // green-400
@@ -2266,13 +2268,13 @@ Now, provide the JSON array for the given text.
         for (const language of languages) {
             const configA = getVoiceConfig(language, 'A');
             const configB = getVoiceConfig(language, 'B');
-            
+
             const isValidA = await testVoiceId(configA.voice_id, configA.language_code);
             const isValidB = await testVoiceId(configB.voice_id, configB.language_code);
-            
+
             console.log(`${language} A (${configA.voice_id}): ${isValidA ? '✅ Valid' : '❌ Invalid'}`);
             console.log(`${language} B (${configB.voice_id}): ${isValidB ? '✅ Valid' : '❌ Invalid'}`);
-            
+
             if (!isValidA) {
                 console.warn(`Voice ID ${configA.voice_id} for ${language} Party A is invalid and needs to be updated`);
             }
@@ -2490,7 +2492,7 @@ Now, provide the JSON array for the given text.
 		// Start the lesson flow from the very first turn (index 0).
 		advanceTurn(0);
 	}
-	
+
     // Add back to landing button functionality
     function addBackToLandingButton() {
         // Check if button already exists
