@@ -1,4 +1,3 @@
-
 console.log('Importing modules...');
 
 try {
@@ -17,8 +16,8 @@ try {
 
 console.log('main.js loaded');
 
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('DOM content loaded, initializing app...');
+async function initializeApp() {
+    console.log('Initializing app...');
     // --- DOM Elements ---
     const elements = {
         landingScreen: document.getElementById('landing-screen'),
@@ -68,7 +67,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize modules
     state.init(elements, ui, lesson);
-    
+
     // SIMPLIFY THE ui.init CALL
     ui.init(elements, state.getTranslations, state.getNativeLang, state.save);
     lesson.init(elements, state, api, ui);
@@ -183,4 +182,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
         ui.startTopicRotations();
     }
-});
+}
+
+// Initialize when DOM is ready with multiple fallback methods
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+    // DOM is already loaded
+    console.log('DOM already ready, initializing immediately...');
+    initializeApp();
+}
+
+// Fallback timeout in case DOMContentLoaded doesn't fire
+setTimeout(() => {
+    if (!document.getElementById('app-container')?.dataset.initialized) {
+        console.log('Fallback initialization...');
+        initializeApp();
+    }
+}, 1000);
+```
