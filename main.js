@@ -1,3 +1,4 @@
+
 import * as api from './api.js';
 import * as ui from './ui.js';
 import * as lesson from './lesson.js';
@@ -5,7 +6,6 @@ import * as state from './state.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     // --- DOM Elements ---
-    // This is the central place to get all DOM elements
     const elements = {
         landingScreen: document.getElementById('landing-screen'),
         lessonScreen: document.getElementById('lesson-screen'),
@@ -47,13 +47,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         appContainer: document.getElementById('app-container')
     };
 
-    // Initialize state with elements it needs to manipulate
-    state.init(elements);
-    // Initialize UI module
-    ui.init(elements, state.getTranslations, state.getNativeLang, state.setNativeLanguage, state.save);
-    // Initialize lesson module
+    // Initialize modules
+    state.init(elements, ui, lesson);
+    ui.init(elements, state.getTranslations, state.getNativeLang, ui.setNativeLanguage, state.save);
     lesson.init(elements, state, api, ui);
-
 
     // --- Speech Recognition Setup ---
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -66,54 +63,53 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         state.recognition.onstart = () => {
             state.isRecognizing = true;
-            elements.micBtn.classList.add('bg-green-600');
-            elements.micBtn.classList.remove('bg-red-600');
-            elements.micStatus.textContent = ui.translateText('listening');
+            elements.micBtn?.classList.add('bg-green-600');
+            elements.micBtn?.classList.remove('bg-red-600');
+            if (elements.micStatus) elements.micStatus.textContent = ui.translateText('listening');
         };
 
         state.recognition.onend = () => {
             state.isRecognizing = false;
-            elements.micBtn.classList.remove('bg-green-600');
-            elements.micBtn.classList.add('bg-red-600');
+            elements.micBtn?.classList.remove('bg-green-600');
+            elements.micBtn?.classList.add('bg-red-600');
         };
 
         state.recognition.onerror = (event) => {
             console.error("Speech recognition error:", event.error, "for language:", state.recognition.lang);
-            const currentLanguage = elements.languageSelect.value;
-            if (event.error === 'language-not-supported') {
+            const currentLanguage = elements.languageSelect?.value;
+            if (event.error === 'language-not-supported' && elements.micStatus) {
                 elements.micStatus.innerHTML = `Speech recognition for <strong>${currentLanguage}</strong> is not supported by your browser.`;
-                elements.micBtn.disabled = true;
-            } else {
+                if (elements.micBtn) elements.micBtn.disabled = true;
+            } else if (elements.micStatus) {
                 elements.micStatus.textContent = `An error occurred: ${event.error}.`;
             }
         };
 
         state.recognition.onresult = (event) => {
             const spokenText = event.results[0][0].transcript;
-            elements.micStatus.textContent = `${ui.translateText('youSaid')} "${spokenText}"`;
+            if (elements.micStatus) elements.micStatus.textContent = `${ui.translateText('youSaid')} "${spokenText}"`;
             lesson.verifyUserSpeech(spokenText);
         };
     } else {
-        elements.micStatus.textContent = ui.translateText('speechNotSupported');
-        elements.micBtn.disabled = true;
+        if (elements.micStatus) elements.micStatus.textContent = ui.translateText('speechNotSupported');
+        if (elements.micBtn) elements.micBtn.disabled = true;
     }
 
-
     // --- Event Listeners ---
-    elements.startLessonBtn.addEventListener('click', () => lesson.initializeLesson());
-    elements.micBtn.addEventListener('click', () => lesson.toggleSpeechRecognition());
-    elements.toggleLessonsBtn.addEventListener('click', () => ui.toggleLessonsVisibility());
-    elements.toggleHistoryBtn.addEventListener('click', () => ui.toggleHistoryVisibility());
-    elements.difficultyTab.addEventListener('click', () => ui.switchTab('difficulty'));
-    elements.situationsTab.addEventListener('click', () => ui.switchTab('situations'));
-    elements.resetLessonBtn.addEventListener('click', () => lesson.resetLesson());
-    elements.confirmStartLessonBtn.addEventListener('click', () => lesson.confirmStartLesson());
-
+    elements.startLessonBtn?.addEventListener('click', () => lesson.initializeLesson());
+    elements.micBtn?.addEventListener('click', () => lesson.toggleSpeechRecognition());
+    elements.toggleLessonsBtn?.addEventListener('click', () => ui.toggleLessonsVisibility());
+    elements.toggleHistoryBtn?.addEventListener('click', () => ui.toggleHistoryVisibility());
+    elements.difficultyTab?.addEventListener('click', () => ui.switchTab('difficulty'));
+    elements.situationsTab?.addEventListener('click', () => ui.switchTab('situations'));
+    elements.resetLessonBtn?.addEventListener('click', () => lesson.resetLesson());
+    elements.confirmStartLessonBtn?.addEventListener('click', () => lesson.confirmStartLesson());
 
     document.addEventListener('click', (event) => {
         // For lesson topic buttons
         if (event.target.classList.contains('lesson-btn')) {
-            elements.topicInput.value = event.target.getAttribute('data-topic');
+            const topic = event.target.getAttribute('data-topic');
+            if (elements.topicInput) elements.topicInput.value = topic;
             state.save();
             event.target.style.transform = 'scale(0.95)';
             setTimeout(() => { event.target.style.transform = ''; }, 150);
@@ -125,34 +121,36 @@ document.addEventListener('DOMContentLoaded', async () => {
             const flag = option.getAttribute('data-flag');
             const name = option.textContent.trim();
             ui.setNativeLanguage(langCode, flag, name);
-            elements.nativeLangDropdown.classList.add('hidden');
+            elements.nativeLangDropdown?.classList.add('hidden');
         }
     });
 
     // Save state on input changes
     const debouncedSave = lesson.debounce(state.save, 500);
-    elements.languageSelect.addEventListener('change', state.save);
-    elements.topicInput.addEventListener('input', debouncedSave);
-    elements.audioSpeedSelect.addEventListener('change', state.save);
+    elements.languageSelect?.addEventListener('change', state.save);
+    elements.topicInput?.addEventListener('input', debouncedSave);
+    elements.audioSpeedSelect?.addEventListener('change', state.save);
 
     // Modal listeners
-    elements.closeModalBtn.addEventListener('click', () => elements.modal.classList.add('hidden'));
-    elements.modal.addEventListener('click', (e) => { if (e.target === elements.modal) elements.modal.classList.add('hidden'); });
-    elements.tutorialBtn.addEventListener('click', () => ui.showTutorial());
-    elements.closeTutorialBtn.addEventListener('click', () => elements.tutorialModal.classList.add('hidden'));
-    elements.startTutorialLessonBtn.addEventListener('click', () => {
-        elements.tutorialModal.classList.add('hidden');
-        elements.topicInput.value = ui.translateText('beginnerExample');
+    elements.closeModalBtn?.addEventListener('click', () => elements.modal?.classList.add('hidden'));
+    elements.modal?.addEventListener('click', (e) => { 
+        if (e.target === elements.modal) elements.modal.classList.add('hidden'); 
+    });
+    elements.tutorialBtn?.addEventListener('click', () => ui.showTutorial());
+    elements.closeTutorialBtn?.addEventListener('click', () => elements.tutorialModal?.classList.add('hidden'));
+    elements.startTutorialLessonBtn?.addEventListener('click', () => {
+        elements.tutorialModal?.classList.add('hidden');
+        if (elements.topicInput) elements.topicInput.value = ui.translateText('beginnerExample');
     });
 
     // Dropdown listeners
-    elements.nativeLangBtn.addEventListener('click', (e) => {
+    elements.nativeLangBtn?.addEventListener('click', (e) => {
         e.stopPropagation();
-        elements.nativeLangDropdown.classList.toggle('hidden');
+        elements.nativeLangDropdown?.classList.toggle('hidden');
     });
     document.addEventListener('click', (e) => {
-        if (!elements.nativeLangBtn.contains(e.target) && !elements.nativeLangDropdown.contains(e.target)) {
-            elements.nativeLangDropdown.classList.add('hidden');
+        if (!elements.nativeLangBtn?.contains(e.target) && !elements.nativeLangDropdown?.contains(e.target)) {
+            elements.nativeLangDropdown?.classList.add('hidden');
         }
     });
 

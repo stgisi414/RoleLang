@@ -1,3 +1,4 @@
+
 // --- State Management ---
 export const STATE_KEY = 'rolelang_app_state';
 export const LESSON_HISTORY_KEY = 'rolelang_lesson_history';
@@ -14,10 +15,8 @@ export let preFetchedFirstAudioBlob = null;
 export const audioPlayer = new Audio();
 export let audioController = new AbortController();
 
-// DOM elements needed for state restoration
+// DOM elements and modules
 let domElements = {};
-
-// Modules needed for state restoration
 let uiModule;
 let lessonModule;
 
@@ -25,6 +24,9 @@ export function init(elements, ui, lesson) {
     domElements = elements;
     uiModule = ui;
     lessonModule = lesson;
+    
+    // Initialize translations with default English
+    currentTranslations = window.translations?.en || {};
 }
 
 export function setLessonPlan(plan) {
@@ -51,16 +53,15 @@ export function getNativeLang() {
     return nativeLang;
 }
 
-
 export function save() {
     const state = {
         lessonPlan: lessonPlan,
         currentTurnIndex: currentTurnIndex,
         currentScreen: lessonPlan ? 'lesson' : 'landing',
-        selectedLanguage: domElements.languageSelect.value,
-        topicInput: domElements.topicInput.value,
+        selectedLanguage: domElements.languageSelect?.value,
+        topicInput: domElements.topicInput?.value,
         nativeLang: nativeLang,
-        lessonsVisible: !domElements.lessonsContainer.classList.contains('hidden'),
+        lessonsVisible: !domElements.lessonsContainer?.classList.contains('hidden'),
         audioSpeed: domElements.audioSpeedSelect ? domElements.audioSpeedSelect.value : '1',
         lastSaved: Date.now()
     };
@@ -93,13 +94,15 @@ export function load() {
 
 export function clear() {
     localStorage.removeItem(STATE_KEY);
-    uiModule.hideReviewModeBanner();
+    if (uiModule) {
+        uiModule.hideReviewModeBanner();
+    }
 }
 
 export async function restore(state) {
-    if (state.selectedLanguage) domElements.languageSelect.value = state.selectedLanguage;
-    if (state.topicInput) domElements.topicInput.value = state.topicInput;
-    if (state.lessonsVisible) uiModule.toggleLessonsVisibility(true); // Force show
+    if (state.selectedLanguage && domElements.languageSelect) domElements.languageSelect.value = state.selectedLanguage;
+    if (state.topicInput && domElements.topicInput) domElements.topicInput.value = state.topicInput;
+    if (state.lessonsVisible && uiModule) uiModule.toggleLessonsVisibility(true);
     if (state.audioSpeed && domElements.audioSpeedSelect) domElements.audioSpeedSelect.value = state.audioSpeed;
 
     if (state.lessonPlan && state.currentScreen === 'lesson') {
@@ -111,30 +114,35 @@ export async function restore(state) {
             return;
         }
 
-        if (recognition) recognition.lang = lessonModule.getLangCode(state.selectedLanguage);
+        if (recognition && lessonModule) {
+            recognition.lang = lessonModule.getLangCode(state.selectedLanguage);
+        }
 
-        domElements.landingScreen.classList.add('hidden');
-        domElements.lessonScreen.classList.remove('hidden');
+        domElements.landingScreen?.classList.add('hidden');
+        domElements.lessonScreen?.classList.remove('hidden');
 
-        await uiModule.restoreConversation(lessonPlan);
-        uiModule.displayLessonTitleAndContext(lessonPlan);
+        if (uiModule) {
+            await uiModule.restoreConversation(lessonPlan);
+            uiModule.displayLessonTitleAndContext(lessonPlan);
 
-        if (lessonPlan.illustration_url) {
-            uiModule.restoreIllustration(lessonPlan.illustration_url);
-        } else if (lessonPlan.illustration_prompt) {
-            lessonModule.fetchAndDisplayIllustration(lessonPlan.illustration_prompt);
+            if (lessonPlan.illustration_url) {
+                uiModule.restoreIllustration(lessonPlan.illustration_url);
+            } else if (lessonPlan.illustration_prompt && lessonModule) {
+                lessonModule.fetchAndDisplayIllustration(lessonPlan.illustration_prompt);
+            }
         }
 
         const isCompleted = currentTurnIndex >= lessonPlan.dialogue.length;
         if (isCompleted) {
-            domElements.micStatus.textContent = uiModule.translateText('lessonComplete');
-            domElements.micBtn.disabled = true;
+            if (domElements.micStatus) domElements.micStatus.textContent = uiModule?.translateText('lessonComplete') || 'Lesson Complete!';
+            if (domElements.micBtn) domElements.micBtn.disabled = true;
             lessonPlan.isCompleted = true;
-            uiModule.showReviewModeUI(state.selectedLanguage, lessonPlan);
+            if (uiModule) uiModule.showReviewModeUI(state.selectedLanguage, lessonPlan);
         } else {
             lessonPlan.isCompleted = false;
-            lessonModule.advanceTurn(currentTurnIndex);
+            if (lessonModule) lessonModule.advanceTurn(currentTurnIndex);
         }
-        uiModule.stopTopicRotations();
+        
+        if (uiModule) uiModule.stopTopicRotations();
     }
 }
