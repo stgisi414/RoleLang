@@ -219,9 +219,6 @@ export async function showExplanation(content) {
         
         domElements.modal.classList.remove('hidden');
         document.body.classList.add('modal-open'); // Lock body scroll
-        
-        // Add modal close handler after content is loaded
-        // We'll add this later when the YouTube iframe is actually created
     }
 
     // Now load content asynchronously
@@ -282,7 +279,7 @@ Do not add any other text or explanations.`;
         }
 
         // Parse the explanation content for audio-tagged phrases
-        const { processedBody, audioItems } = await parseAndRenderExplanationWithAudio({ 
+        const processedData = await parseAndRenderExplanationWithAudio({ 
             title: translatedTitle, 
             body: translatedBody 
         });
@@ -291,23 +288,23 @@ Do not add any other text or explanations.`;
         if (domElements.modalBody) {
             domElements.modalBody.innerHTML = `
                 <h3 class="text-xl font-bold mb-2 text-cyan-300">${translatedTitle}</h3>
-                <p class="text-gray-300 mb-4">${processedBody}</p>
+                <p class="text-gray-300 mb-4">${processedData.processedBody}</p>
                 <div class="border-t border-gray-600 pt-6 mt-6">
                     <div class="text-center mb-4">
                         <h4 class="text-lg font-semibold text-cyan-300 mb-3">
                             <i class="fab fa-youtube text-red-500 mr-2"></i>
-                            ${translateText('relatedEducationalVideo')}
+                            ${translateText('relatedEducationalVideo') || 'Related Educational Video'}
                         </h4>
                         <button id="youtube-play-btn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg transition-colors cursor-pointer inline-flex items-center font-semibold">
                             <i class="fab fa-youtube mr-2"></i>
                             <i class="fas fa-play mr-2"></i>
-                            ${translateText('loadVideo')}
+                            ${translateText('loadVideo') || 'Load Video'}
                         </button>
                     </div>
                     <div id="youtube-container" class="mt-6">
                         <div id="youtube-loader" class="flex items-center justify-center py-8 hidden">
                             <div class="loader"></div>
-                            <span class="ml-3 text-gray-400">${translateText('loadingVideo')}</span>
+                            <span class="ml-3 text-gray-400">${translateText('loadingVideo') || 'Loading video...'}</span>
                         </div>
                         <div id="video-content" class="hidden">
                             <iframe 
@@ -328,18 +325,12 @@ Do not add any other text or explanations.`;
                 try {
                     const iframe = document.getElementById('youtube-iframe');
                     if (iframe && iframe.src) {
-                        // Stop video by clearing and resetting the src
-                        const currentSrc = iframe.src;
                         iframe.src = '';
-                        // Optional: Reset to original src if needed for future use
-                        setTimeout(() => {
-                            if (iframe) iframe.src = currentSrc;
-                        }, 100);
                     }
-                    document.body.classList.remove('modal-open'); // Unlock body scroll
+                    document.body.classList.remove('modal-open');
                 } catch (error) {
                     console.error('Error in modal close handler:', error);
-                    document.body.classList.remove('modal-open'); // Unlock body scroll anyway
+                    document.body.classList.remove('modal-open');
                 }
             };
 
@@ -353,14 +344,11 @@ Do not add any other text or explanations.`;
             if (playBtn) {
                 playBtn.onclick = () => {
                     try {
-                        // Hide the button and show loader
                         playBtn.classList.add('hidden');
                         const loader = document.getElementById('youtube-loader');
                         if (loader) {
                             loader.classList.remove('hidden');
                         }
-
-                        // Search for and load YouTube video
                         searchAndLoadYouTubeVideo(content.title);
                     } catch (error) {
                         console.error('Error loading YouTube video:', error);
@@ -384,7 +372,9 @@ Do not add any other text or explanations.`;
                         }
                     } catch (error) {
                         console.error('Error playing phrase audio:', error);
-                        showToast('Audio playback failed', 'error');
+                        if (typeof showToast === 'function') {
+                            showToast('Audio playback failed', 'error');
+                        }
                     }
                 });
             });
@@ -399,7 +389,7 @@ Do not add any other text or explanations.`;
                 <div class="flex flex-col items-center justify-center py-12">
                     <i class="fas fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
                     <p class="text-gray-400 text-center">${translateText('errorLoadingExplanation') || 'Error loading explanation. Please try again.'}</p>
-                    <button onclick="this.closest('.modal-backdrop').classList.add('hidden')" class="mt-4 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg">
+                    <button onclick="document.getElementById('explanation-modal').classList.add('hidden')" class="mt-4 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg">
                         ${translateText('close') || 'Close'}
                     </button>
                 </div>
