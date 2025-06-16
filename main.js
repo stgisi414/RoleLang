@@ -470,7 +470,11 @@ async function initializeApp() {
     }
 
     // Initialize native language AFTER all modules are connected and state is restored
-    ui.initializeNativeLanguage();
+    // Use setTimeout to ensure the DOM is fully ready and state is properly set
+    setTimeout(() => {
+        ui.initializeNativeLanguage();
+        console.log('Native language initialization completed');
+    }, 200);
 
     // NOW add event listeners after restoration is complete
     setupEventListeners();

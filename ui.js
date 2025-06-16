@@ -73,8 +73,12 @@ export function setNativeLanguage(langCode, flag, name) {
         window.state.setCurrentTranslations(window.translations[langCode] || window.translations.en);
     }
 
-    updateTranslations();
-    updateBackButton(); 
+    // Force a translation update with a small delay to ensure state is properly set
+    setTimeout(() => {
+        updateTranslations();
+        updateBackButton(); 
+        console.log(`Translations updated for language: ${langCode}`);
+    }, 100);
 
     // Refresh review banner if it exists
     const existingBanner = document.querySelector('.review-mode-indicator');
@@ -101,10 +105,11 @@ function detectNativeLanguage() {
         'de': { code: 'de', flag: '🇩🇪', name: 'Deutsch' },
         'it': { code: 'it', flag: '🇮🇹', name: 'Italiano' },
         'zh': { code: 'zh', flag: '🇨🇳', name: '中文' },
-        'ja': { code: 'ja', flag: '🇯🇵', name: '日本語' },
+        'ja': { code: 'ja', flag: '🇯🇵', name: '日본語' },
         'ko': { code: 'ko', flag: '🇰🇷', name: '한국어' }
     };
     const lang = supportedLangs[browserLang] || supportedLangs['en'];
+    console.log(`Detected browser language: ${browserLang}, setting to: ${lang.code}`);
     setNativeLanguage(lang.code, lang.flag, lang.name);
 }
 
