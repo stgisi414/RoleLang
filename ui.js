@@ -201,45 +201,32 @@ export function showExplanation(content) {
     domElements.modalBody.innerHTML = `
         <h3 class="text-xl font-bold mb-2 text-cyan-300">${content.title}</h3>
         <p class="text-gray-300 mb-4">${content.body}</p>
-        <div class="border-t border-gray-600 pt-4">
-            <div class="flex items-center justify-between mb-3">
-                <h4 class="text-lg font-semibold text-cyan-300 flex items-center">
+        <div class="border-t border-gray-600 pt-6 mt-6">
+            <div class="text-center mb-4">
+                <h4 class="text-lg font-semibold text-cyan-300 mb-3">
                     <i class="fab fa-youtube text-red-500 mr-2"></i>
                     Related Educational Video
                 </h4>
-                <h6 id="youtube-play-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors cursor-pointer inline-flex items-center text-sm font-semibold">
+                <button id="youtube-play-btn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg transition-colors cursor-pointer inline-flex items-center font-semibold">
                     <i class="fab fa-youtube mr-2"></i>
-                    <i class="fas fa-play mr-1"></i>
+                    <i class="fas fa-play mr-2"></i>
                     Load Video
-                </h6>
+                </button>
             </div>
-            <div id="youtube-container" class="relative">
-                <div id="youtube-placeholder" class="flex items-center justify-center py-12 bg-gray-700/30 rounded-lg border-2 border-dashed border-gray-600">
-                    <div class="text-center">
-                        <i class="fab fa-youtube text-red-500 text-4xl mb-3"></i>
-                        <p class="text-gray-400 mb-2">Click "Load Video" to search for educational content</p>
-                        <p class="text-sm text-gray-500">Optional - helps reinforce learning</p>
-                    </div>
-                </div>
+            <div id="youtube-container" class="mt-6">
                 <div id="youtube-loader" class="flex items-center justify-center py-8 hidden">
                     <div class="loader"></div>
-                    <span class="ml-3 text-gray-400">Searching for educational content...</span>
+                    <span class="ml-3 text-gray-400">Loading video...</span>
                 </div>
                 <div id="video-content" class="hidden">
                     <iframe 
                         id="youtube-iframe" 
-                        class="w-full h-64 rounded-lg"
+                        class="w-full h-80 rounded-lg shadow-lg"
                         frameborder="0" 
                         allowfullscreen
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         src="">
                     </iframe>
-                    <div class="mt-2 text-center">
-                        <button id="search-more-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center text-sm">
-                            <i class="fab fa-youtube mr-2"></i>
-                            Find More Videos
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
@@ -268,14 +255,9 @@ export function showExplanation(content) {
     const playBtn = document.getElementById('youtube-play-btn');
     if (playBtn) {
         playBtn.onclick = () => {
-            // Hide the placeholder and show loader
-            document.getElementById('youtube-placeholder').classList.add('hidden');
+            // Hide the button and show loader
+            playBtn.classList.add('hidden');
             document.getElementById('youtube-loader').classList.remove('hidden');
-            
-            // Disable the play button and change its text
-            playBtn.style.opacity = '0.5';
-            playBtn.style.cursor = 'not-allowed';
-            playBtn.innerHTML = '<i class="fab fa-youtube mr-2"></i><i class="fas fa-spinner fa-spin mr-1"></i>Loading...';
             
             // Search for and load YouTube video
             searchAndLoadYouTubeVideo(content.title);
@@ -307,18 +289,8 @@ async function searchAndLoadYouTubeVideo(title) {
             const iframe = document.getElementById('youtube-iframe');
             iframe.src = `https://www.youtube.com/embed/${videoId}`;
             
-            // Set up "Find More Videos" button
-            const searchMoreBtn = document.getElementById('search-more-btn');
-            searchMoreBtn.onclick = () => {
-                const searchUrl = `https://www.youtube.com/results?search_query=${searchQuery}`;
-                window.open(searchUrl, '_blank');
-            };
-            
             loader.classList.add('hidden');
             videoContent.classList.remove('hidden');
-            
-            // Hide the play button since video is loaded
-            if (playBtn) playBtn.style.display = 'none';
             
             showToast('Educational video loaded!', 'success');
         } else {
@@ -327,30 +299,20 @@ async function searchAndLoadYouTubeVideo(title) {
         
     } catch (error) {
         console.error('Error loading YouTube video:', error);
-        showToast('Showing search option instead', 'warning');
         
-        // Fallback to search link
+        // Simple fallback - show search link
         const searchQuery = encodeURIComponent(`${title} grammar explanation tutorial`);
         loader.innerHTML = `
-            <div class="text-center py-4">
-                <i class="fab fa-youtube text-red-500 text-3xl mb-3"></i>
-                <p class="text-gray-300 mb-3">Find educational videos</p>
-                <p class="text-sm text-gray-400 mb-3">Click below to search for content about this topic</p>
+            <div class="text-center py-8">
+                <p class="text-gray-300 mb-4">Video not available</p>
                 <a href="https://www.youtube.com/results?search_query=${searchQuery}" 
                    target="_blank" 
                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center">
                     <i class="fab fa-youtube mr-2"></i>
-                    Search on YouTube
+                    Search YouTube
                 </a>
             </div>
         `;
-        
-        // Reset the play button on error
-        if (playBtn) {
-            playBtn.style.opacity = '1';
-            playBtn.style.cursor = 'pointer';
-            playBtn.innerHTML = '<i class="fab fa-youtube mr-2"></i><i class="fas fa-play mr-1"></i>Load Video';
-        }
     }
 }
 
