@@ -201,45 +201,56 @@ export function toggleHistoryVisibility() {
 }
 
 export async function showExplanation(content) {
+    // Ensure we have valid content before showing modal
+    if (!content || !content.title || !content.body) {
+        console.error('Invalid explanation content:', content);
+        return;
+    }
+
     // Parse the explanation content for audio-tagged phrases
     const { processedBody, audioItems } = await parseAndRenderExplanationWithAudio(content);
 
     // Create the modal content with explanation text and YouTube video option
-    domElements.modalBody.innerHTML = `
-        <h3 class="text-xl font-bold mb-2 text-cyan-300">${content.title}</h3>
-        <p class="text-gray-300 mb-4">${processedBody}</p>
-        <div class="border-t border-gray-600 pt-6 mt-6">
-            <div class="text-center mb-4">
-                <h4 class="text-lg font-semibold text-cyan-300 mb-3">
-                    <i class="fab fa-youtube text-red-500 mr-2"></i>
-                    Related Educational Video
-                </h4>
-                <button id="youtube-play-btn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg transition-colors cursor-pointer inline-flex items-center font-semibold">
-                    <i class="fab fa-youtube mr-2"></i>
-                    <i class="fas fa-play mr-2"></i>
-                    Load Video
-                </button>
-            </div>
-            <div id="youtube-container" class="mt-6">
-                <div id="youtube-loader" class="flex items-center justify-center py-8 hidden">
-                    <div class="loader"></div>
-                    <span class="ml-3 text-gray-400">Loading video...</span>
+    if (domElements.modalBody) {
+        domElements.modalBody.innerHTML = `
+            <h3 class="text-xl font-bold mb-2 text-cyan-300">${content.title}</h3>
+            <p class="text-gray-300 mb-4">${processedBody}</p>
+            <div class="border-t border-gray-600 pt-6 mt-6">
+                <div class="text-center mb-4">
+                    <h4 class="text-lg font-semibold text-cyan-300 mb-3">
+                        <i class="fab fa-youtube text-red-500 mr-2"></i>
+                        Related Educational Video
+                    </h4>
+                    <button id="youtube-play-btn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg transition-colors cursor-pointer inline-flex items-center font-semibold">
+                        <i class="fab fa-youtube mr-2"></i>
+                        <i class="fas fa-play mr-2"></i>
+                        Load Video
+                    </button>
                 </div>
-                <div id="video-content" class="hidden">
-                    <iframe 
-                        id="youtube-iframe" 
-                        class="w-full h-80 rounded-lg shadow-lg"
-                        frameborder="0" 
-                        allowfullscreen
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        src="">
-                    </iframe>
+                <div id="youtube-container" class="mt-6">
+                    <div id="youtube-loader" class="flex items-center justify-center py-8 hidden">
+                        <div class="loader"></div>
+                        <span class="ml-3 text-gray-400">Loading video...</span>
+                    </div>
+                    <div id="video-content" class="hidden">
+                        <iframe 
+                            id="youtube-iframe" 
+                            class="w-full h-80 rounded-lg shadow-lg"
+                            frameborder="0" 
+                            allowfullscreen
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            src="">
+                        </iframe>
+                    </div>
                 </div>
             </div>
-        </div>
-    `;
+        `;
+    }
 
-    domElements.modal.classList.remove('hidden');
+    // Only show modal if we have valid content
+    if (domElements.modal && domElements.modalBody?.innerHTML.trim()) {
+        domElements.modal.classList.remove('hidden');
+    }
 
     // Add modal close handler to stop video playback
     const handleModalClose = () => {

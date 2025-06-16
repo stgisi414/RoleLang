@@ -397,6 +397,9 @@ async function initializeApp() {
 		elements.topicInput?.addEventListener('input', debouncedSave);
 		elements.audioSpeedSelect?.addEventListener('change', saveState);
 
+		// Ensure modal is hidden on page load
+		elements.modal?.classList.add('hidden');
+		
 		elements.closeModalBtn?.addEventListener('click', () => {
 			// Stop YouTube video if playing
 			if (elements.modal?._closeHandler) {

@@ -960,6 +960,11 @@ function showToast(message, type = 'info') {
     align-items: center;
     justify-content: center;
     backdrop-filter: blur(4px);
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+#explanation-modal.hidden {
+    display: none !important;
 }
 
 #explanation-modal .modal-content {
@@ -969,6 +974,10 @@ function showToast(message, type = 'info') {
     margin: 0 auto;
     overflow-y: auto;
     position: relative;
+    background: rgba(31, 41, 55, 0.95);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-height: 200px;
 }
 
 /* Ensure modal content stays within viewport */
