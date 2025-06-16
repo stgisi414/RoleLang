@@ -301,13 +301,13 @@ Do not add any other text or explanations.`;
         domElements.modalBody.innerHTML = `
             <h3 class="text-xl font-bold mb-2 text-cyan-300">${translatedTitle}</h3>
             ${content.originalSentence ? `<div class="bg-blue-600/20 border border-blue-600/30 rounded-lg p-3 mb-4">
-                <p class="text-blue-300 font-bold" style="font-size: 11px; line-height: 1.4;">${content.originalSentence}</p>
+                <p class="text-blue-300 font-bold" style="font-size: 14px !important; line-height: 1.4;">${content.originalSentence}</p>
             </div>` : ''}
             <p class="text-gray-300 mb-4">${processedBody}</p>
             <div class="border-t border-gray-600 pt-6 mt-6">
                 <div class="text-center mb-4">
                     <h4 class="text-lg font-semibold text-cyan-300 mb-3">
-                        <i class="fab fa-play text-red-500 mr-2"></i>
+                        <i class="fas fa-play text-red-500 mr-2"></i>
                         ${translateText('relatedEducationalVideo')}
                     </h4>
                     <button id="youtube-play-btn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg transition-colors cursor-pointer inline-flex items-center font-semibold">
