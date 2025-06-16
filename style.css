@@ -170,6 +170,22 @@ header img[alt="RoleLang Logo"] {
     display: none;
 }
 
+/* YouTube video container styling */
+#youtube-container {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#youtube-iframe {
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    transition: border-color 0.3s ease;
+}
+
+#youtube-iframe:hover {
+    border-color: rgba(239, 68, 68, 0.5);
+}
+
 /* Main heading flash and shimmer animations */
 @keyframes flash {
 

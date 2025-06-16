@@ -187,8 +187,99 @@ export function toggleHistoryVisibility() {
 }
 
 export function showExplanation(content) {
-    domElements.modalBody.innerHTML = `<h3 class="text-xl font-bold mb-2 text-cyan-300">${content.title}</h3><p class="text-gray-300">${content.body}</p>`;
+    // Create the modal content with explanation text and YouTube video
+    const videoId = generateYouTubeSearchUrl(content.title);
+    
+    domElements.modalBody.innerHTML = `
+        <h3 class="text-xl font-bold mb-2 text-cyan-300">${content.title}</h3>
+        <p class="text-gray-300 mb-4">${content.body}</p>
+        <div class="border-t border-gray-600 pt-4">
+            <h4 class="text-lg font-semibold text-cyan-300 mb-3 flex items-center">
+                <i class="fab fa-youtube text-red-500 mr-2"></i>
+                Related Video
+            </h4>
+            <div id="youtube-container" class="relative">
+                <div id="youtube-loader" class="flex items-center justify-center py-8">
+                    <div class="loader"></div>
+                    <span class="ml-3 text-gray-400">Loading video...</span>
+                </div>
+                <iframe 
+                    id="youtube-iframe" 
+                    class="hidden w-full h-64 rounded-lg"
+                    frameborder="0" 
+                    allowfullscreen
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+                </iframe>
+            </div>
+        </div>
+    `;
+    
     domElements.modal.classList.remove('hidden');
+    
+    // Load YouTube video after modal is shown
+    loadYouTubeVideo(content.title);
+}
+
+function generateYouTubeSearchUrl(title) {
+    // Clean the title for better search results
+    const cleanTitle = title.replace(/[^\w\s]/gi, '').trim();
+    const searchQuery = encodeURIComponent(`${cleanTitle} grammar explanation english learning`);
+    return `https://www.youtube.com/results?search_query=${searchQuery}`;
+}
+
+async function loadYouTubeVideo(title) {
+    try {
+        // Use YouTube Data API to search for videos
+        const apiKey = 'AIzaSyCqWc7_hTRoM6_xgofWZWXOOhNDp6mHOQg'; // YouTube Data API key
+        const cleanTitle = title.replace(/[^\w\s]/gi, '').trim();
+        const searchQuery = encodeURIComponent(`${cleanTitle} grammar explanation english learning`);
+        
+        const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=${searchQuery}&type=video&key=${apiKey}`);
+        const data = await response.json();
+        
+        const loader = document.getElementById('youtube-loader');
+        const iframe = document.getElementById('youtube-iframe');
+        
+        if (data.items && data.items.length > 0) {
+            const videoId = data.items[0].id.videoId;
+            const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1`;
+            
+            iframe.src = embedUrl;
+            loader.classList.add('hidden');
+            iframe.classList.remove('hidden');
+        } else {
+            // Fallback: show a search link if no video found
+            loader.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-search text-gray-400 text-2xl mb-2"></i>
+                    <p class="text-gray-400 mb-3">No video found automatically</p>
+                    <a href="https://www.youtube.com/results?search_query=${searchQuery}" 
+                       target="_blank" 
+                       class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center">
+                        <i class="fab fa-youtube mr-2"></i>
+                        Search on YouTube
+                    </a>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading YouTube video:', error);
+        const loader = document.getElementById('youtube-loader');
+        const searchQuery = encodeURIComponent(`${title} grammar explanation english learning`);
+        
+        loader.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fas fa-exclamation-triangle text-yellow-400 text-2xl mb-2"></i>
+                <p class="text-gray-400 mb-3">Could not load video</p>
+                <a href="https://www.youtube.com/results?search_query=${searchQuery}" 
+                   target="_blank" 
+                   class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center">
+                    <i class="fab fa-youtube mr-2"></i>
+                    Search on YouTube
+                </a>
+            </div>
+        `;
+    }
 }
 
 
