@@ -401,11 +401,16 @@ async function initializeApp() {
 		elements.modal?.classList.add('hidden');
 		
 		elements.closeModalBtn?.addEventListener('click', () => {
-			// Stop YouTube video if playing
-			if (elements.modal?._closeHandler) {
-				elements.modal._closeHandler();
+			try {
+				// Stop YouTube video if playing
+				if (elements.modal?._closeHandler) {
+					elements.modal._closeHandler();
+				}
+				elements.modal?.classList.add('hidden');
+			} catch (error) {
+				console.error('Error closing modal:', error);
+				elements.modal?.classList.add('hidden');
 			}
-			elements.modal?.classList.add('hidden');
 		});
 		elements.tutorialBtn?.addEventListener('click', () => ui.showTutorial());
 		elements.closeTutorialBtn?.addEventListener('click', () => elements.tutorialModal?.classList.add('hidden'));
@@ -419,16 +424,20 @@ async function initializeApp() {
 			elements.nativeLangDropdown?.classList.toggle('hidden');
 		});
 		document.addEventListener('click', (e) => {
-			if (!elements.nativeLangBtn?.contains(e.target) && !elements.nativeLangDropdown?.contains(e.target)) {
-				elements.nativeLangDropdown?.classList.add('hidden');
-			}
-			
-			// Close modal when clicking outside and stop video
-			if (e.target === elements.modal && !elements.modal?.classList.contains('hidden')) {
-				if (elements.modal?._closeHandler) {
-					elements.modal._closeHandler();
+			try {
+				if (!elements.nativeLangBtn?.contains(e.target) && !elements.nativeLangDropdown?.contains(e.target)) {
+					elements.nativeLangDropdown?.classList.add('hidden');
 				}
-				elements.modal?.classList.add('hidden');
+				
+				// Close modal when clicking outside and stop video
+				if (e.target === elements.modal && !elements.modal?.classList.contains('hidden')) {
+					if (elements.modal?._closeHandler) {
+						elements.modal._closeHandler();
+					}
+					elements.modal?.classList.add('hidden');
+				}
+			} catch (error) {
+				console.error('Error in document click handler:', error);
 			}
 		});
 

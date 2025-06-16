@@ -325,17 +325,22 @@ Do not add any other text or explanations.`;
 
             // Add modal close handler now that content is loaded
             const handleModalClose = () => {
-                const iframe = document.getElementById('youtube-iframe');
-                if (iframe && iframe.src) {
-                    // Stop video by clearing and resetting the src
-                    const currentSrc = iframe.src;
-                    iframe.src = '';
-                    // Optional: Reset to original src if needed for future use
-                    setTimeout(() => {
-                        if (iframe) iframe.src = currentSrc;
-                    }, 100);
+                try {
+                    const iframe = document.getElementById('youtube-iframe');
+                    if (iframe && iframe.src) {
+                        // Stop video by clearing and resetting the src
+                        const currentSrc = iframe.src;
+                        iframe.src = '';
+                        // Optional: Reset to original src if needed for future use
+                        setTimeout(() => {
+                            if (iframe) iframe.src = currentSrc;
+                        }, 100);
+                    }
+                    document.body.classList.remove('modal-open'); // Unlock body scroll
+                } catch (error) {
+                    console.error('Error in modal close handler:', error);
+                    document.body.classList.remove('modal-open'); // Unlock body scroll anyway
                 }
-                document.body.classList.remove('modal-open'); // Unlock body scroll
             };
 
             // Store the close handler for cleanup
@@ -347,12 +352,24 @@ Do not add any other text or explanations.`;
             const playBtn = document.getElementById('youtube-play-btn');
             if (playBtn) {
                 playBtn.onclick = () => {
-                    // Hide the button and show loader
-                    playBtn.classList.add('hidden');
-                    document.getElementById('youtube-loader').classList.remove('hidden');
+                    try {
+                        // Hide the button and show loader
+                        playBtn.classList.add('hidden');
+                        const loader = document.getElementById('youtube-loader');
+                        if (loader) {
+                            loader.classList.remove('hidden');
+                        }
 
-                    // Search for and load YouTube video
-                    searchAndLoadYouTubeVideo(content.title);
+                        // Search for and load YouTube video
+                        searchAndLoadYouTubeVideo(content.title);
+                    } catch (error) {
+                        console.error('Error loading YouTube video:', error);
+                        playBtn.classList.remove('hidden');
+                        const loader = document.getElementById('youtube-loader');
+                        if (loader) {
+                            loader.classList.add('hidden');
+                        }
+                    }
                 };
             }
 
@@ -360,8 +377,15 @@ Do not add any other text or explanations.`;
             const audioPhrases = domElements.modalBody.querySelectorAll('.audio-phrase');
             audioPhrases.forEach(phraseElement => {
                 phraseElement.addEventListener('click', async () => {
-                    const phrase = phraseElement.getAttribute('data-phrase');
-                    await playPhraseAudio(phrase);
+                    try {
+                        const phrase = phraseElement.getAttribute('data-phrase');
+                        if (phrase) {
+                            await playPhraseAudio(phrase);
+                        }
+                    } catch (error) {
+                        console.error('Error playing phrase audio:', error);
+                        showToast('Audio playback failed', 'error');
+                    }
                 });
             });
         }
