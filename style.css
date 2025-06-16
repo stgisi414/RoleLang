@@ -668,3 +668,140 @@ header img[alt="RoleLang Logo"] {
 #features-section i {
     margin-right: 5px;
 }
+
+/* Custom toast styling for shadowbox appearance */
+.toastify {
+    background: rgba(31, 41, 55, 0.95) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.05) !important;
+    color: white !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+    padding: 16px 20px !important;
+    margin: 10px !important;
+    min-width: 280px;
+    max-width: 400px;
+    transform: translateX(100%);
+    animation: toastSlideIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.toastify.toastify-right {
+    right: 20px !important;
+}
+
+.toastify.toastify-top {
+    top: 20px !important;
+}
+
+/* Toast slide animations */
+@keyframes toastSlideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes toastSlideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Toast type-specific styling */
+.toastify.toast-success {
+    border-left: 4px solid #10b981;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(31, 41, 55, 0.95)) !important;
+}
+
+.toastify.toast-error {
+    border-left: 4px solid #ef4444;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(31, 41, 55, 0.95)) !important;
+}
+
+.toastify.toast-warning {
+    border-left: 4px solid #f59e0b;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(31, 41, 55, 0.95)) !important;
+}
+
+.toastify.toast-info {
+    border-left: 4px solid #3b82f6;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(31, 41, 55, 0.95)) !important;
+}
+
+/* Toast close button styling */
+.toastify-close {
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-weight: bold !important;
+    font-size: 16px !important;
+    line-height: 1 !important;
+    padding: 0 !important;
+    margin-left: 10px !important;
+    background: none !important;
+    border: none !important;
+    cursor: pointer !important;
+}
+
+.toastify-close:hover {
+    color: white !important;
+}
+
+/* Toast icon styling */
+.toast-icon {
+    display: inline-block;
+    margin-right: 8px;
+    font-size: 16px;
+}
+
+function showToast(message, type = 'info') {
+    if (typeof Toastify !== 'undefined') {
+        const icons = {
+            success: '✅',
+            error: '❌',
+            warning: '⚠️',
+            info: 'ℹ️'
+        };
+
+        const toastInstance = Toastify({
+            text: `<span class="toast-icon">${icons[type] || icons.info}</span>${message}`,
+            duration: 5000,
+            gravity: "top",
+            position: "right",
+            stopOnFocus: true,
+            escapeMarkup: false,
+            className: `toast-${type}`,
+            onClick: function() {
+                toastInstance.hideToast();
+            }
+        });
+
+        // Add exit animation before hiding
+        const originalHide = toastInstance.hideToast;
+        toastInstance.hideToast = function() {
+            const toastElement = this.toastElement;
+            if (toastElement) {
+                toastElement.style.animation = 'toastSlideOut 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
+                setTimeout(() => originalHide.call(this), 300);
+            } else {
+                originalHide.call(this);
+            }
+        };
+
+        toastInstance.showToast();
+        return toastInstance;
+    } else {
+        console.log(`Toast (${type}): ${message}`);
+        return null;
+    }
+}

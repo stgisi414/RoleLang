@@ -1,6 +1,7 @@
 import * as state from './state.js';
 import * as api from './api.js';
 import * as ui from './ui.js';
+import { showToast } from './ui.js';
 
 let domElements = {};
 let stateRef = {};
@@ -215,7 +216,7 @@ export async function initializeLesson() {
     const topic = domElements.topicInput?.value;
 
     if (!topic) {
-        alert(uiRef.translateText('enterTopic'));
+        showToast(uiRef.translateText('enterTopic'), 'warning');
         return;
     }
 
@@ -257,7 +258,7 @@ export async function initializeLesson() {
         if (saveStateRef) saveStateRef();
     } catch (error) {
         console.error("Failed to initialize lesson:", error);
-        alert(`${uiRef.translateText('errorLoading')} ${error.message}`);
+        showToast(`${uiRef.translateText('errorLoading')} ${error.message}`, 'error');
         uiRef.hideLoadingSpinner();
         uiRef.showLandingScreen();
     }

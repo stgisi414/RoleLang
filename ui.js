@@ -432,25 +432,43 @@ Create the best search term for the given topic and language:`;
 
 function showToast(message, type = 'info') {
     if (typeof Toastify !== 'undefined') {
-        const backgroundColor = type === 'error' ? '#ef4444' : 
-                              type === 'success' ? '#10b981' : 
-                              type === 'warning' ? '#f59e0b' : '#3b82f6';
+        const icons = {
+            success: '✅',
+            error: '❌',
+            warning: '⚠️',
+            info: 'ℹ️'
+        };
 
-        Toastify({
-            text: message,
-            duration: 4000,
+        const toastInstance = Toastify({
+            text: `<span class="toast-icon">${icons[type] || icons.info}</span>${message}`,
+            duration: 5000,
             gravity: "top",
             position: "right",
-            backgroundColor: backgroundColor,
             stopOnFocus: true,
-            style: {
-                borderRadius: "8px",
-                fontSize: "14px",
-                fontWeight: "500"
+            escapeMarkup: false,
+            className: `toast-${type}`,
+            onClick: function() {
+                toastInstance.hideToast();
             }
-        }).showToast();
+        });
+
+        // Add exit animation before hiding
+        const originalHide = toastInstance.hideToast;
+        toastInstance.hideToast = function() {
+            const toastElement = this.toastElement;
+            if (toastElement) {
+                toastElement.style.animation = 'toastSlideOut 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
+                setTimeout(() => originalHide.call(this), 300);
+            } else {
+                originalHide.call(this);
+            }
+        };
+
+        toastInstance.showToast();
+        return toastInstance;
     } else {
         console.log(`Toast (${type}): ${message}`);
+        return null;
     }
 }
 
