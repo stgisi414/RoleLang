@@ -346,54 +346,16 @@ async function initializeApp() {
 
     // --- Event Listeners ---
 	function setupEventListeners() {
-		if (elements.startLessonBtn) {
-			elements.startLessonBtn.addEventListener('click', () => {
-				console.log('Start lesson button clicked');
-				lesson.initializeLesson();
-			});
-		}
-		if (elements.micBtn) {
-			elements.micBtn.addEventListener('click', () => {
-				console.log('Mic button clicked');
-				lesson.toggleSpeechRecognition();
-			});
-		}
-		if (elements.toggleLessonsBtn) {
-			elements.toggleLessonsBtn.addEventListener('click', () => {
-				console.log('Toggle lessons button clicked');
-				ui.toggleLessonsVisibility();
-			});
-		}
-		if (elements.toggleHistoryBtn) {
-			elements.toggleHistoryBtn.addEventListener('click', () => {
-				console.log('Toggle history button clicked');
-				ui.toggleHistoryVisibility();
-			});
-		}
-		if (elements.difficultyTab) {
-			elements.difficultyTab.addEventListener('click', () => {
-				console.log('Difficulty tab clicked');
-				ui.switchTab('difficulty');
-			});
-		}
-		if (elements.situationsTab) {
-			elements.situationsTab.addEventListener('click', () => {
-				console.log('Situations tab clicked');
-				ui.switchTab('situations');
-			});
-		}
-		if (elements.resetLessonBtn) {
-			elements.resetLessonBtn.addEventListener('click', () => {
-				console.log('Reset lesson button clicked');
-				lesson.resetLesson();
-			});
-		}
-		if (elements.confirmStartLessonBtn) {
-			elements.confirmStartLessonBtn.addEventListener('click', () => {
-				console.log('Confirm start lesson button clicked');
-				lesson.confirmStartLesson();
-			});
-		}
+		elements.startLessonBtn?.addEventListener('click', () => {
+			lesson.initializeLesson();
+		});
+		elements.micBtn?.addEventListener('click', () => lesson.toggleSpeechRecognition());
+		elements.toggleLessonsBtn?.addEventListener('click', () => ui.toggleLessonsVisibility());
+		elements.toggleHistoryBtn?.addEventListener('click', ui.toggleHistoryVisibility);
+		elements.difficultyTab?.addEventListener('click', () => ui.switchTab('difficulty'));
+		elements.situationsTab?.addEventListener('click', () => ui.switchTab('situations'));
+		elements.resetLessonBtn?.addEventListener('click', () => lesson.resetLesson());
+		elements.confirmStartLessonBtn?.addEventListener('click', () => lesson.confirmStartLesson());
 
 		document.addEventListener('click', (event) => {
 			if (event.target.classList.contains('lesson-btn')) {
@@ -439,16 +401,11 @@ async function initializeApp() {
 		elements.modal?.classList.add('hidden');
 		
 		elements.closeModalBtn?.addEventListener('click', () => {
-			try {
-				// Stop YouTube video if playing
-				if (elements.modal?._closeHandler) {
-					elements.modal._closeHandler();
-				}
-				elements.modal?.classList.add('hidden');
-			} catch (error) {
-				console.error('Error closing modal:', error);
-				elements.modal?.classList.add('hidden');
+			// Stop YouTube video if playing
+			if (elements.modal?._closeHandler) {
+				elements.modal._closeHandler();
 			}
+			elements.modal?.classList.add('hidden');
 		});
 		elements.tutorialBtn?.addEventListener('click', () => ui.showTutorial());
 		elements.closeTutorialBtn?.addEventListener('click', () => elements.tutorialModal?.classList.add('hidden'));
@@ -462,20 +419,16 @@ async function initializeApp() {
 			elements.nativeLangDropdown?.classList.toggle('hidden');
 		});
 		document.addEventListener('click', (e) => {
-			try {
-				if (!elements.nativeLangBtn?.contains(e.target) && !elements.nativeLangDropdown?.contains(e.target)) {
-					elements.nativeLangDropdown?.classList.add('hidden');
+			if (!elements.nativeLangBtn?.contains(e.target) && !elements.nativeLangDropdown?.contains(e.target)) {
+				elements.nativeLangDropdown?.classList.add('hidden');
+			}
+			
+			// Close modal when clicking outside and stop video
+			if (e.target === elements.modal && !elements.modal?.classList.contains('hidden')) {
+				if (elements.modal?._closeHandler) {
+					elements.modal._closeHandler();
 				}
-				
-				// Close modal when clicking outside and stop video
-				if (e.target === elements.modal && !elements.modal?.classList.contains('hidden')) {
-					if (elements.modal?._closeHandler) {
-						elements.modal._closeHandler();
-					}
-					elements.modal?.classList.add('hidden');
-				}
-			} catch (error) {
-				console.error('Error in document click handler:', error);
+				elements.modal?.classList.add('hidden');
 			}
 		});
 
