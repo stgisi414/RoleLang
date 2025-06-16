@@ -366,7 +366,7 @@ Do not add any other text or explanations.`;
             document.getElementById('youtube-loader').classList.remove('hidden');
 
             // Search for and load YouTube video
-            searchAndLoadYouTubeVideo(content.title);
+            searchAndLoadYouTubeVideo(content);
         };
     }
 
@@ -441,17 +441,17 @@ function getVoiceConfigForLanguage(language) {
 // YouTube Data API key - you'll need to get this from Google Cloud Console
 const YOUTUBE_API_KEY = 'AIzaSyDAdiXobuer_CZHdM1llM5RlrfhRbls84M'; // Replace with your actual API key
 
-async function searchAndLoadYouTubeVideo(title) {
+async function searchAndLoadYouTubeVideo(content) {
     const loader = document.getElementById('youtube-loader');
     const videoContent = document.getElementById('video-content');
     const playBtn = document.getElementById('youtube-play-btn');
 
     try {
-        console.log('Searching YouTube for:', title);
+        console.log('Searching YouTube for:', content.title);
         showToast(translateText('searchingForVideos'), 'info');
 
         // Generate intelligent search term using Gemini
-        const searchQuery = await createIntelligentSearchTerm(title);
+        const searchQuery = await createIntelligentSearchTerm(content);
         console.log('Generated search query:', decodeURIComponent(searchQuery));
 
         // Search YouTube using the Data API
@@ -474,7 +474,7 @@ async function searchAndLoadYouTubeVideo(title) {
         console.error('Error loading YouTube video:', error);
 
         // Simple fallback - show search link
-        const searchQuery = encodeURIComponent(`${title} grammar explanation tutorial`);
+        const searchQuery = encodeURIComponent(`${content.title} grammar explanation tutorial`);
         loader.classList.remove('hidden');
         loader.innerHTML = `
             <div class="text-center py-8">
@@ -532,43 +532,65 @@ async function searchYouTubeVideos(query) {
         throw new Error('No videos found');
 
     } catch (error) {
-        console.error('YouTube search failed:', error);
+        console.error('Youtube failed:', error);
         throw error;
     }
 }
 
-async function createIntelligentSearchTerm(explanationTitle) {
+async function createIntelligentSearchTerm(explanationContent) {
     try {
         // Get current language from the language select element
         const targetLanguage = domElements.languageSelect?.value || 'English';
         const nativeLang = getNativeLang() || 'en';
+        const { title, body } = explanationContent;
 
-        console.log(`Creating search term for: "${explanationTitle}" in ${targetLanguage}`);
+        console.log(`Creating search term for: "${title}" in ${targetLanguage}`);
 
         const prompt = `
-You are a YouTube search optimization expert for language learning content. Your task is to create the most effective search term for finding educational videos about a specific grammar or language concept.
+You are a Youtube optimization expert for language learning content. Your task is to create the most effective search term for finding educational videos.
 
 Given:
-- Grammar/Language Topic: "${explanationTitle}"
 - Target Language: "${targetLanguage}"
 - User's Native Language: "${nativeLang}"
+- Explanation Title: "${title}"
+- Explanation Body: "${body}"
 
-Create an optimized YouTube search query that will find the best educational videos. Consider:
-1. The specific grammar concept or language topic
-2. The target language being learned
-3. Common terms used by language educators on YouTube
-4. Alternative phrasings and synonyms
-5. Popular educational channels' naming conventions
+**Your instructions are:**
 
-Your response should be a single, concise search phrase (no quotes, max 60 characters) that maximizes the chance of finding relevant educational content.
+1.  **Analyze the Explanation:** Read the title and body to understand the core concept. The concept might be about grammar, vocabulary, culture, history, or something else related to the language.
 
-Examples of good search terms:
-- "Spanish ser vs estar explanation"
-- "French subjunctive mood tutorial"
-- "Japanese particle wa ga difference"
-- "German case system grammar lesson"
+2.  **Determine the Category:** Based on your analysis, categorize the topic. Is it primarily:
+    * **Grammar:** (e.g., verb conjugations, sentence structure, tenses)
+    * **Vocabulary:** (e.g., specific words, idioms, phrases)
+    * **Culture:** (e.g., holidays, etiquette, social norms, food)
+    * **History:** (e.g., historical events, figures)
+    * **General Conversation Practice:** (e.g., a specific scenario like "ordering coffee")
 
-Create the best search term for the given topic and language:`;
+3.  **Construct the Search Query:** Create an optimized Youtube query using the following patterns based on the category. Use the most relevant keywords from the title and body.
+
+    * For **Grammar**: \`\${targetLanguage} grammar \${keywords} tutorial\` or \`how to use \${keywords} in \${targetLanguage}\`
+    * For **Vocabulary**: \`\${targetLanguage} vocabulary \${keywords}\` or \`\${keywords} meaning in \${targetLanguage}\`
+    * For **Culture**: \`\${targetLanguage} culture \${keywords}\` or \`\${keywords} in \${targetLanguage} explained\`
+    * For **History**: \`\${targetLanguage} history \${keywords}\` or \`history of \${keywords} in \${targetLanguage}\`
+    * For **General Conversation**: \`\${targetLanguage} conversation practice \${keywords}\`
+
+4.  **Final Output:** Your response must be a single, concise search phrase. Do not include quotes. The phrase should be ready to be used in the Youtube API.
+
+**Example:**
+- Given:
+  - Target Language: "Spanish"
+  - Title: "The Difference Between 'Ser' and 'Estar'"
+  - Body: "Ser is used for permanent states... Estar is for temporary conditions..."
+- Output: \`Spanish grammar ser vs estar explanation\`
+
+**Example 2:**
+- Given:
+  - Target Language: "Japanese"
+  - Title: "New Year's Traditions"
+  - Body: "Explains the significance of mochi and visiting shrines during Shogatsu."
+- Output: \`Japanese culture New Year traditions shogatsu\`
+
+Now, create the best search term for the provided content.`;
 
         // Import api dynamically to avoid circular imports
         const api = await import('./api.js');
@@ -591,7 +613,7 @@ Create the best search term for the given topic and language:`;
         console.error('Failed to generate intelligent search term:', error);
 
         // Fallback to basic search
-        const cleanTitle = explanationTitle.replace(/[^\w\s]/gi, '').trim();
+        const cleanTitle = explanationContent.title.replace(/[^\w\s]/gi, '').trim();
         const targetLanguage = domElements.languageSelect?.value || 'English';
         const fallbackQuery = `${targetLanguage} ${cleanTitle} grammar explanation tutorial`;
 
@@ -599,6 +621,7 @@ Create the best search term for the given topic and language:`;
         return fallbackQuery;
     }
 }
+
 
 async function parseAndRenderExplanationWithAudio(content) {
     const targetLanguage = domElements.languageSelect?.value || 'English';
