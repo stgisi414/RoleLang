@@ -27,8 +27,14 @@ async function splitIntoSentences(text) {
     const currentLanguage = domElements.languageSelect.value;
     const cleanText = text.trim();
 
-    const words = cleanText.split(/\s+/);
-    if (words.length <= 5) {
+    // For languages without spaces, count characters instead of words
+    const isSpacelessLanguage = ['Japanese', 'Chinese'].includes(currentLanguage);
+    const textLength = isSpacelessLanguage ? cleanText.length : cleanText.split(/\s+/).length;
+    
+    // Lower threshold for spaceless languages
+    const threshold = isSpacelessLanguage ? 15 : 5;
+    
+    if (textLength <= threshold) {
         return [cleanText];
     }
 
@@ -36,6 +42,9 @@ async function splitIntoSentences(text) {
 You are an expert linguist. Split the following text into natural, speakable chunks for a language learner.
 - Break long texts into 2-4 shorter, meaningful chunks.
 - Split at natural sentence boundaries or logical pauses.
+- For Japanese: Split at particles like は、が、を、に、で or sentence endings like です、ます、だ
+- For Chinese: Split at punctuation marks or natural pause points
+- For Korean: Split at particles or sentence endings
 - Your response MUST be a valid JSON array of strings.
 Language: ${currentLanguage}
 Text to Split: "${cleanText}"
@@ -47,7 +56,7 @@ Provide the JSON array.`;
         const sentences = JSON.parse(jsonString);
 
         if (Array.isArray(sentences) && sentences.every(s => typeof s === 'string' && s.trim().length > 0)) {
-            if (sentences.length === 1 && words.length > 8) {
+            if (sentences.length === 1 && textLength > (threshold * 1.5)) {
                 return tryFallbackSplit(cleanText, currentLanguage);
             }
             return sentences;
@@ -61,19 +70,33 @@ Provide the JSON array.`;
 }
 
 function tryFallbackSplit(text, language) {
-    const words = text.split(/\s+/);
-    if (words.length <= 5) return [text];
+    const isSpacelessLanguage = ['Japanese', 'Chinese'].includes(language);
+    const words = isSpacelessLanguage ? [text] : text.split(/\s+/);
+    const threshold = isSpacelessLanguage ? 15 : 5;
+    
+    if ((isSpacelessLanguage && text.length <= threshold) || (!isSpacelessLanguage && words.length <= threshold)) {
+        return [text];
+    }
 
     let splitPattern;
     switch (language) {
-        case 'Korean': splitPattern = /([다요까]\s*)/; break;
-        case 'Japanese': splitPattern = /(です|ます|だ|である)\s*/; break;
-        case 'Chinese': splitPattern = /([。！？]\s*)/; break;
-        default: splitPattern = /([.!?]\s+)/;
+        case 'Korean': 
+            splitPattern = /([다요까니다습니다]\s*)/; 
+            break;
+        case 'Japanese': 
+            splitPattern = /(です|ます|だ|である|た|て|。|、)/; 
+            break;
+        case 'Chinese': 
+            splitPattern = /([。！？，、]\s*)/; 
+            break;
+        default: 
+            splitPattern = /([.!?]\s+)/;
     }
+    
     const parts = text.split(splitPattern).filter(part => part && part.trim().length > 0);
     const sentences = [];
     let currentSentence = '';
+    
     for (let i = 0; i < parts.length; i++) {
         currentSentence += parts[i];
         if (splitPattern.test(parts[i]) || i === parts.length - 1) {
@@ -81,10 +104,18 @@ function tryFallbackSplit(text, language) {
             currentSentence = '';
         }
     }
-    if (sentences.length <= 1 && words.length > 8) {
-        const midPoint = Math.ceil(words.length / 2);
-        return [words.slice(0, midPoint).join(' '), words.slice(midPoint).join(' ')];
+    
+    // If still no good split, divide by length
+    if (sentences.length <= 1) {
+        if (isSpacelessLanguage) {
+            const midPoint = Math.ceil(text.length / 2);
+            return [text.slice(0, midPoint), text.slice(midPoint)];
+        } else {
+            const midPoint = Math.ceil(words.length / 2);
+            return [words.slice(0, midPoint).join(' '), words.slice(midPoint).join(' ')];
+        }
     }
+    
     return sentences.length > 0 ? sentences : [text];
 }
 
@@ -461,8 +492,6 @@ export async function verifyUserSpeech(spokenText) {
             const nativeLangName = {'en': 'English', 'es': 'Spanish', 'fr': 'French', 'de': 'German', 'it': 'Italian', 'zh': 'Chinese', 'ja': 'Japanese', 'ko': 'Korean'}[stateRef.nativeLang] || 'English';
             let expectedLine = (currentSentences.length > 1) ? currentSentences[currentSentenceIndex] : currentTurnData.line.clean_text;
 
-            // --- START OF FIX ---
-            // This detailed prompt is restored from the original script.
             const verificationPrompt = `
 You are a language evaluation tool. The user's native language is ${nativeLangName}.
 
@@ -496,7 +525,6 @@ Here is the information for your evaluation:
 Remember: For Chinese learners, speech recognition technology is often inadequate. Be very forgiving and focus on effort and partial understanding.
 
 Now, provide the JSON response.`;
-            // --- END OF FIX ---
 
             const data = await apiRef.callGeminiAPI(verificationPrompt);
             const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
@@ -507,17 +535,56 @@ Now, provide the JSON response.`;
                 handleIncorrectSpeech(0, expectedLine, spokenText, result.feedback);
             }
         } else {
+            // Enhanced logic for Western languages
             let requiredText = (currentSentences.length > 1) ? currentSentences[currentSentenceIndex] : currentTurnData.line.clean_text;
-            const normalize = (text) => text.trim().toLowerCase().replace(/[.,!?;:"'`´''""。！？]/g, '').replace(/\s+/g, ' ');
+            
+            // More aggressive normalization for better matching
+            const normalize = (text) => {
+                return text.trim()
+                    .toLowerCase()
+                    .replace(/[.,!?;:"'`´''""。！？]/g, '')
+                    .replace(/\s+/g, ' ')
+                    .replace(/[-_]/g, ' ') // Handle hyphens and underscores
+                    .trim();
+            };
+            
             const normalizedSpoken = normalize(spokenText);
             const normalizedRequired = normalize(requiredText);
+            
+            console.log('Speech verification:', {
+                original: requiredText,
+                normalized: normalizedRequired,
+                spoken: normalizedSpoken
+            });
+            
+            // Check for exact match first
+            if (normalizedSpoken === normalizedRequired) {
+                handleCorrectSpeech();
+                return;
+            }
+            
+            // Check if spoken text contains all major words from required text
+            const requiredWords = normalizedRequired.split(' ').filter(w => w.length > 2);
+            const spokenWords = normalizedSpoken.split(' ');
+            const matchedWords = requiredWords.filter(word => 
+                spokenWords.some(spokenWord => 
+                    spokenWord.includes(word) || word.includes(spokenWord) || 
+                    levenshteinDistance(word, spokenWord) <= 1
+                )
+            );
+            
+            const wordMatchRatio = requiredWords.length > 0 ? matchedWords.length / requiredWords.length : 0;
+            
+            // Use Levenshtein distance as backup
             const distance = levenshteinDistance(normalizedSpoken, normalizedRequired);
             const maxLength = Math.max(normalizedSpoken.length, normalizedRequired.length);
             const similarity = maxLength === 0 ? 1 : 1 - (distance / maxLength);
-            if (similarity >= 0.75) {
+            
+            // More lenient matching - accept if word match ratio is good OR similarity is decent
+            if (wordMatchRatio >= 0.7 || similarity >= 0.6) {
                 handleCorrectSpeech();
             } else {
-                handleIncorrectSpeech(similarity, normalizedRequired, normalizedSpoken);
+                handleIncorrectSpeech(Math.max(similarity, wordMatchRatio), normalizedRequired, normalizedSpoken);
             }
         }
     } catch (error) {
