@@ -1081,6 +1081,8 @@ function showToast(message, type = 'info') {
     background-color: rgba(0, 0, 0, 0.7);
     overflow-y: auto;
     overflow-x: hidden;
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height for mobile */
 }
 
 #explanation-modal.hidden {
@@ -1107,19 +1109,20 @@ function showToast(message, type = 'info') {
 /* Enhanced mobile responsiveness */
 @media (max-width: 768px) {
     #explanation-modal {
-        padding: 0.5rem;
-        align-items: flex-start;
-        padding-top: 1rem;
-        padding-bottom: 1rem;
+        padding: 1rem 0.5rem;
+        align-items: center;
+        justify-content: center;
     }
     
     #explanation-modal .modal-content {
         max-width: calc(100vw - 1rem);
         max-height: calc(100vh - 2rem);
+        max-height: calc(100dvh - 2rem); /* Dynamic viewport height */
         width: calc(100vw - 1rem);
         min-height: auto;
         border-radius: 8px;
         font-size: 0.9rem;
+        margin: auto;
     }
     
     .audio-phrase {
@@ -1164,17 +1167,19 @@ function showToast(message, type = 'info') {
 /* Extra small devices */
 @media (max-width: 480px) {
     #explanation-modal {
-        padding: 0.25rem;
-        padding-top: 0.5rem;
-        padding-bottom: 0.5rem;
+        padding: 0.5rem 0.25rem;
+        align-items: center;
+        justify-content: center;
     }
     
     #explanation-modal .modal-content {
         max-width: calc(100vw - 0.5rem);
         max-height: calc(100vh - 1rem);
+        max-height: calc(100dvh - 1rem); /* Dynamic viewport height */
         width: calc(100vw - 0.5rem);
         border-radius: 6px;
         font-size: 0.85rem;
+        margin: auto;
     }
     
     #explanation-modal .modal-content h3 {
