@@ -250,6 +250,7 @@ export async function showExplanation(content) {
     // Only show modal if we have valid content
     if (domElements.modal && domElements.modalBody?.innerHTML.trim()) {
         domElements.modal.classList.remove('hidden');
+        document.body.classList.add('modal-open'); // Lock body scroll
     }
 
     // Add modal close handler to stop video playback
@@ -264,6 +265,7 @@ export async function showExplanation(content) {
                 if (iframe) iframe.src = currentSrc;
             }, 100);
         }
+        document.body.classList.remove('modal-open'); // Unlock body scroll
     };
 
     // Store the close handler for cleanup

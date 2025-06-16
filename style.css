@@ -205,6 +205,9 @@ header img[alt="RoleLang Logo"] {
 /* Prevent scroll issues on modal open */
 body.modal-open {
     overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
 }
 
 @keyframes spin {
@@ -931,6 +934,11 @@ function showToast(message, type = 'info') {
     text-underline-offset: 2px;
     display: inline-block;
     will-change: transform;
+    position: relative;
+    z-index: 1;
+    max-width: 100%;
+    word-break: break-word;
+    overflow: hidden;
 }
 
 .audio-phrase:hover {
@@ -939,12 +947,14 @@ function showToast(message, type = 'info') {
     transform: translateY(-1px) scale(1.01);
     box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);
     text-decoration-color: rgba(96, 165, 250, 0.8);
+    z-index: 2;
 }
 
 .audio-phrase:active {
     transform: translateY(0) scale(0.99);
     background: linear-gradient(135deg, rgba(96, 165, 250, 0.35), rgba(59, 130, 246, 0.35));
     transition: all 0.1s ease;
+    z-index: 2;
 }
 
 /* Modal positioning fixes for mobile */
@@ -961,6 +971,7 @@ function showToast(message, type = 'info') {
     justify-content: center;
     backdrop-filter: blur(4px);
     background-color: rgba(0, 0, 0, 0.7);
+    overflow: hidden; /* Prevent any content from escaping */
 }
 
 #explanation-modal.hidden {
@@ -973,11 +984,13 @@ function showToast(message, type = 'info') {
     width: 100%;
     margin: 0 auto;
     overflow-y: auto;
+    overflow-x: hidden;
     position: relative;
     background: rgba(31, 41, 55, 0.95);
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     min-height: 200px;
+    contain: layout style; /* Contain layout and style changes */
 }
 
 /* Ensure modal content stays within viewport */
@@ -986,16 +999,20 @@ function showToast(message, type = 'info') {
         padding: 0.5rem;
         align-items: flex-start;
         padding-top: 2rem;
+        overflow: hidden; /* Critical: prevent overflow on mobile */
     }
     
     #explanation-modal .modal-content {
         max-width: 100vw;
         max-height: 95vh;
+        overflow-y: auto;
+        overflow-x: hidden;
     }
     
     .audio-phrase {
         margin: 1px;
         padding: 1px 4px;
         font-size: 0.9em;
+        position: relative; /* Ensure proper positioning context */
     }
 }
