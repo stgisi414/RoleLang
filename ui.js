@@ -227,12 +227,61 @@ function generateYouTubeSearchUrl(title) {
     return `https://www.youtube.com/results?search_query=${searchQuery}`;
 }
 
+async function createIntelligentSearchTerm(explanationTitle) {
+    try {
+        // Get current language from the language select element
+        const targetLanguage = domElements.languageSelect?.value || 'English';
+        
+        const prompt = `
+You are a YouTube search optimization expert for language learning content. Your task is to create the most effective search term for finding educational videos about a specific grammar or language concept.
+
+Given:
+- Grammar/Language Topic: "${explanationTitle}"
+- Target Language: "${targetLanguage}"
+- User's Native Language: "${getNativeLang() || 'en'}"
+
+Create an optimized YouTube search query that will find the best educational videos. Consider:
+1. The specific grammar concept or language topic
+2. The target language being learned
+3. Common terms used by language educators on YouTube
+4. Alternative phrasings and synonyms
+5. Popular educational channels' naming conventions
+
+Your response should be a single, concise search phrase (no quotes, max 60 characters) that maximizes the chance of finding relevant educational content.
+
+Examples of good search terms:
+- "Spanish ser vs estar explanation"
+- "French subjunctive mood tutorial"
+- "Japanese particle wa ga difference"
+- "German case system grammar lesson"
+
+Create the best search term for the given topic and language:`;
+
+        // Import api dynamically to avoid circular imports
+        const api = await import('./api.js');
+        const data = await api.callGeminiAPI(prompt);
+        const searchTerm = data.candidates[0].content.parts[0].text.trim().replace(/["""]/g, '');
+        
+        console.log(`Generated search term: "${searchTerm}"`);
+        return encodeURIComponent(searchTerm);
+        
+    } catch (error) {
+        console.error('Failed to generate intelligent search term:', error);
+        // Fallback to basic search
+        const cleanTitle = explanationTitle.replace(/[^\w\s]/gi, '').trim();
+        const targetLanguage = domElements.languageSelect?.value || 'English';
+        const fallbackQuery = `${targetLanguage} ${cleanTitle} grammar explanation tutorial`;
+        return encodeURIComponent(fallbackQuery);
+    }
+}
+
 async function loadYouTubeVideo(title) {
     try {
         // Use YouTube Data API to search for videos
         const apiKey = 'AIzaSyCqWc7_hTRoM6_xgofWZWXOOhNDp6mHOQg'; // YouTube Data API key
-        const cleanTitle = title.replace(/[^\w\s]/gi, '').trim();
-        const searchQuery = encodeURIComponent(`${cleanTitle} grammar explanation english learning`);
+        
+        // Generate intelligent search term using Gemini
+        const searchQuery = await createIntelligentSearchTerm(title);
         
         const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=${searchQuery}&type=video&key=${apiKey}`);
         const data = await response.json();
@@ -249,11 +298,12 @@ async function loadYouTubeVideo(title) {
             iframe.classList.remove('hidden');
         } else {
             // Fallback: show a search link if no video found
+            const fallbackSearchQuery = await createIntelligentSearchTerm(title);
             loader.innerHTML = `
                 <div class="text-center py-4">
                     <i class="fas fa-search text-gray-400 text-2xl mb-2"></i>
                     <p class="text-gray-400 mb-3">No video found automatically</p>
-                    <a href="https://www.youtube.com/results?search_query=${searchQuery}" 
+                    <a href="https://www.youtube.com/results?search_query=${fallbackSearchQuery}" 
                        target="_blank" 
                        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center">
                         <i class="fab fa-youtube mr-2"></i>
@@ -265,20 +315,37 @@ async function loadYouTubeVideo(title) {
     } catch (error) {
         console.error('Error loading YouTube video:', error);
         const loader = document.getElementById('youtube-loader');
-        const searchQuery = encodeURIComponent(`${title} grammar explanation english learning`);
         
-        loader.innerHTML = `
-            <div class="text-center py-4">
-                <i class="fas fa-exclamation-triangle text-yellow-400 text-2xl mb-2"></i>
-                <p class="text-gray-400 mb-3">Could not load video</p>
-                <a href="https://www.youtube.com/results?search_query=${searchQuery}" 
-                   target="_blank" 
-                   class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center">
-                    <i class="fab fa-youtube mr-2"></i>
-                    Search on YouTube
-                </a>
-            </div>
-        `;
+        try {
+            const errorSearchQuery = await createIntelligentSearchTerm(title);
+            loader.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-exclamation-triangle text-yellow-400 text-2xl mb-2"></i>
+                    <p class="text-gray-400 mb-3">Could not load video</p>
+                    <a href="https://www.youtube.com/results?search_query=${errorSearchQuery}" 
+                       target="_blank" 
+                       class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center">
+                        <i class="fab fa-youtube mr-2"></i>
+                        Search on YouTube
+                    </a>
+                </div>
+            `;
+        } catch (fallbackError) {
+            // Ultimate fallback if even intelligent search fails
+            const basicSearchQuery = encodeURIComponent(`${title} grammar explanation english learning`);
+            loader.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-exclamation-triangle text-yellow-400 text-2xl mb-2"></i>
+                    <p class="text-gray-400 mb-3">Could not load video</p>
+                    <a href="https://www.youtube.com/results?search_query=${basicSearchQuery}" 
+                       target="_blank" 
+                       class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center">
+                        <i class="fab fa-youtube mr-2"></i>
+                        Search on YouTube
+                    </a>
+                </div>
+            `;
+        }
     }
 }
 
