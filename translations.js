@@ -174,7 +174,20 @@ const translations = {
         "Exploring abandoned haunted mansion", "Trapped in elevator during power outage", "Camping trip with strange sounds", "Home alone during mysterious blackout",
         "Lost in fog-covered forest at night", "Strange neighbor with dark secrets", "Old antique shop with cursed objects", "Night shift at creepy hospital"
       ]
-    }
+    },
+    // Vocabulary Quiz
+    vocabularyQuiz: 'Vocabulary Quiz',
+    correctAnswer: 'Correct!',
+    incorrectAnswer: 'Incorrect. The correct answer is:',
+    vocabularyScore: 'Your Score:',
+    vocabularyComplete: 'Quiz Complete!',
+    playAgain: 'Play Again',
+    backToLesson: 'Back to Lesson',
+
+    // Modal states
+    loadingExplanation: 'Loading explanation...',
+    errorLoadingExplanation: 'Error loading explanation. Please try again.',
+    close: 'Close'
   },
   es: {
     title: "RoleLang | Aprendizaje de Idiomas Posmoderno",
@@ -250,8 +263,7 @@ const translations = {
     noVocabularyFound: "No se encontró vocabulario con traducciones en esta lección.",
     reviewMode: "Modo Revisión",
     lessonCompleteReview: "Lección Completa",
-    reviewModeReady: "Modo Revisión Listo",
-    vocabQuiz: "Quiz de Vocabulario",
+    vocabQuiz: "Vocabulary Quiz",
     reviewModeActive: "¡El modo de revisión está ahora activo! Usa el botón de quiz de vocabulario arriba.",
     back: "Atrás",
     skip: "Saltar",
@@ -338,7 +350,20 @@ const translations = {
         "Explorando mansión abandonada embrujada", "Atrapado en ascensor durante apagón", "Viaje de camping con sonidos extraños", "Solo en casa durante apagón misterioso",
         "Perdido en bosque cubierto de niebla por la noche", "Vecino extraño con secretos oscuros", "Tienda de antigüedades con objetos malditos", "Turno nocturno en hospital espeluznante"
       ]
-    }
+    },
+    // Vocabulary Quiz
+    vocabularyQuiz: 'Quiz de Vocabulario',
+    correctAnswer: '¡Correcto!',
+    incorrectAnswer: 'Incorrecto. La respuesta correcta es:',
+    vocabularyScore: 'Tu Puntuación:',
+    vocabularyComplete: '¡Quiz Completado!',
+    playAgain: 'Jugar de Nuevo',
+    backToLesson: 'Volver a la Lección',
+
+    // Modal states
+    loadingExplanation: 'Cargando explicación...',
+    errorLoadingExplanation: 'Error al cargar la explicación. Por favor, inténtalo de nuevo.',
+    close: 'Cerrar'
   },
   fr: {
     title: "RoleLang | Apprentissage des Langues Postmoderne",
@@ -411,8 +436,7 @@ const translations = {
     noVocabularyFound: "Aucun vocabulaire avec traductions trouvé dans cette leçon.",
     reviewMode: "Mode Révision",
     lessonCompleteReview: "Leçon Terminée",
-    reviewModeReady: "Mode Révision Prêt",
-    vocabQuiz: "Quiz de Vocabulaire",
+    vocabQuiz: "Vocabulary Quiz",
     reviewModeActive: "Le mode de révision est maintenant actif! Utilisez le bouton de quiz de vocabulaire ci-dessus.",
     back: "Retour",
     skip: "Passer",
@@ -457,7 +481,7 @@ const translations = {
     vocabularyQuizzes: "Quiz de vocabulaire interactifs après chaque leçon",
     adjustableSpeed: "Vitesse audio ajustable pour tous les niveaux",
     proTips: "Conseils Pro",
-    tip1: "Commencez avec des scénarios débutants même si vous connaissez un peu la langue",
+    tip1: "Commencez avec des scénarios débutants même se vous connaissez un peu la langue",
     tip2: "Ne vous inquiétez pas de la prononciation parfaite - concentrez-vous sur la communication",
     tip3: "Révisez les leçons terminées pour renforcer le vocabulaire",
     tip4: "Pratiquez régulièrement pour de meilleurs résultats - même 10 minutes par jour aident",
@@ -498,7 +522,20 @@ const translations = {
         "Explorer manoir abandonné hanté", "Coincé dans ascenseur pendant panne", "Voyage camping avec bruits étranges", "Seul à la maison pendant panne mystérieuse",
         "Perdu dans forêt couverte de brouillard la nuit", "Voisin étrange avec secrets sombres", "Magasin d'antiquités avec objets maudits", "Quart de nuit à hôpital effrayant"
       ]
-    }
+    },
+    // Vocabulary Quiz
+    vocabularyQuiz: 'Quiz de Vocabulaire',
+    correctAnswer: 'Correct !',
+    incorrectAnswer: 'Incorrect. La bonne réponse est :',
+    vocabularyScore: 'Votre Score :',
+    vocabularyComplete: 'Quiz Terminé !',
+    playAgain: 'Rejouer',
+    backToLesson: 'Retour à la Leçon',
+
+    // Modal states
+    loadingExplanation: 'Chargement de l\'explication...',
+    errorLoadingExplanation: 'Erreur lors du chargement de l\'explication. Veuillez réessayer.',
+    close: 'Fermer'
   },
   de: {
     title: "RoleLang | Postmodernes Sprachenlernen",
@@ -569,7 +606,6 @@ const translations = {
     noVocabularyFound: "Kein Vokabular mit Übersetzungen in dieser Lektion gefunden.",
     reviewMode: "Überprüfungsmodus",
     lessonCompleteReview: "Lektion Abgeschlossen",
-    reviewModeReady: "Überprüfungsmodus Bereit",
     vocabQuiz: "Vokabel-Quiz",
     reviewModeActive: "Der Wiederholungsmodus ist jetzt aktiv! Verwenden Sie die Vokabelquiz-Schaltfläche oben.",
     back: "Zurück",
@@ -656,7 +692,20 @@ const translations = {
         "Verlassenes Spukschloss erkunden", "Im Aufzug während Stromausfall gefangen", "Campingausflug mit seltsamen Geräuschen", "Allein zu Hause während mysteriösem Blackout",
         "In nebliger Waldnacht verloren", "Seltsamer Nachbar mit dunklen Geheimnissen", "Alter Antiquitätenladen mit verfluchten Objekten", "Nachtschicht im gruseligen Krankenhaus"
       ]
-    }
+    },
+    // Vocabulary Quiz
+    vocabularyQuiz: 'Vokabel-Quiz',
+    correctAnswer: 'Richtig!',
+    incorrectAnswer: 'Falsch. Die richtige Antwort ist:',
+    vocabularyScore: 'Ihre Punktzahl:',
+    vocabularyComplete: 'Quiz Abgeschlossen!',
+    playAgain: 'Nochmal Spielen',
+    backToLesson: 'Zurück zur Lektion',
+
+    // Modal states
+    loadingExplanation: 'Erklärung wird geladen...',
+    errorLoadingExplanation: 'Fehler beim Laden der Erklärung. Bitte versuchen Sie es erneut.',
+    close: 'Schließen'
   },
   it: {
     title: "RoleLang | Apprendimento Linguistico Postmoderno",
@@ -731,8 +780,7 @@ const translations = {
     noVocabularyFound: "Nessun vocabolario con traduzioni trovato in questa lezione.",
     reviewMode: "Modalità Revisione",
     lessonCompleteReview: "Lezione Completata",
-    reviewModeReady: "Modalità Revisione Pronta",
-    vocabQuiz: "Quiz di Vocabolario",
+    vocabQuiz: "Vocabulary Quiz",
     reviewModeActive: "La modalità revisione è ora attiva! Usa il pulsante del quiz di vocabolario sopra.",
     back: "Indietro",
     skip: "Salta",
@@ -818,7 +866,20 @@ const translations = {
         "Esplorare villa abbandonata infestata", "Intrappolato in ascensore durante blackout", "Viaggio in campeggio con rumori strani", "Solo in casa durante blackout misterioso",
         "Perso in foresta coperta di nebbia di notte", "Vicino strano con segreti oscuri", "Negozio di antiquariato con oggetti maledetti", "Turno notturno in ospedale inquietante"
       ]
-    }
+    },
+    // Vocabulary Quiz
+    vocabularyQuiz: 'Quiz di Vocabolario',
+    correctAnswer: 'Corretto!',
+    incorrectAnswer: 'Incorretto. La risposta corretta è:',
+    vocabularyScore: 'Il Tuo Punteggio:',
+    vocabularyComplete: 'Quiz Completato!',
+    playAgain: 'Gioca Ancora',
+    backToLesson: 'Torna alla Lezione',
+
+    // Modal states
+    loadingExplanation: 'Caricamento spiegazione...',
+    errorLoadingExplanation: 'Errore nel caricamento della spiegazione. Riprova.',
+    close: 'Chiudi'
   },
   zh: {
     title: "RoleLang | 后现代语言学习",
@@ -981,7 +1042,20 @@ const translations = {
         "探索废弃闹鬼豪宅", "停电时被困电梯", "露营旅行听到奇怪声音", "神秘停电时独自在家",
         "夜晚在雾蒙蒙的森林中迷路", "有黑暗秘密的奇怪邻居", "有诅咒物品的古董店", "在令人毛骨悚然的医院值夜班"
       ]
-    }
+    },
+    // Vocabulary Quiz
+    vocabularyQuiz: '词汇测验',
+    correctAnswer: '正确！',
+    incorrectAnswer: '错误。正确答案是：',
+    vocabularyScore: '您的分数：',
+    vocabularyComplete: '测验完成！',
+    playAgain: '再玩一次',
+    backToLesson: '返回课程',
+
+    // Modal states
+    loadingExplanation: '正在加载解释...',
+    errorLoadingExplanation: '加载解释时出错。请重试。',
+    close: '关闭'
   },
   ja: {
     title: "RoleLang | ポストモダン言語学習",
@@ -1065,7 +1139,7 @@ const translations = {
 	tutorial: "チュートリアル",
     relatedEducationalVideo: "関連教育動画",
     loadVideo: "動画を読み込む",
-    loadingVideo: "動画を読み込み中...",
+    loadingVideo: "動画を読み込み中...",```text
     searchingForVideos: "教育動画を検索中...",
     educationalVideoLoaded: "教育動画が読み込まれました！",
     videoNotAvailable: "動画は利用できません",
@@ -1144,7 +1218,20 @@ const translations = {
         "廃墟となった幽霊屋敷の探索", "停電中にエレベーターに閉じ込められる", "奇妙な音がするキャンプ旅行", "謎の停電で一人きりの家",
         "夜の霧に覆われた森で道に迷う", "暗い秘密を持つ奇妙な隣人", "呪われた物がある古い骨董品店", "在令人毛骨悚然的医院值夜班"
       ]
-    }
+    },
+    // Vocabulary Quiz
+    vocabularyQuiz: '語彙クイズ',
+    correctAnswer: '正解！',
+    incorrectAnswer: '不正解です。正解は：',
+    vocabularyScore: 'あなたのスコア：',
+    vocabularyComplete: 'クイズ完了！',
+    playAgain: 'もう一度プレイ',
+    backToLesson: 'レッスンに戻る',
+
+    // Modal states
+    loadingExplanation: '説明を読み込み中...',
+    errorLoadingExplanation: '説明の読み込みエラー。もう一度お試しください。',
+    close: '閉じる'
   },
   ko: {
     title: "RoleLang | 포스트모던 언어 학습",
@@ -1307,7 +1394,20 @@ const translations = {
         "버려진 유령 저택 탐험", "정전 중 엘리베이터에 갇힘", "이상한 소리가 나는 캠핑 여행", "신비한 정전 중 혼자 집에",
         "밤에 안개 낀 숲에서 길 잃음", "어두운 비밀을 가진 이상한 이웃", "저주받은 물건이 있는 오래된 골동품점", "소름끼치는 병원에서 야간 근무"
       ]
-    }
+    },
+    // Vocabulary Quiz
+    vocabularyQuiz: '어휘 퀴즈',
+    correctAnswer: '정답!',
+    incorrectAnswer: '오답입니다. 정답은:',
+    vocabularyScore: '당신의 점수:',
+    vocabularyComplete: '퀴즈 완료!',
+    playAgain: '다시 플레이',
+    backToLesson: '레슨으로 돌아가기',
+
+    // Modal states
+    loadingExplanation: '설명을 로딩 중...',
+    errorLoadingExplanation: '설명 로딩 오류. 다시 시도해주세요.',
+    close: '닫기'
   }
 };
 
