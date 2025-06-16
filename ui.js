@@ -357,7 +357,7 @@ Do not add any other text or explanations.`;
         isExplanationLoading = false;
     }
 
-    // Add modal close handler to stop video playback
+    // Add modal close handler to stop video playback and audio
     const handleModalClose = () => {
         const iframe = document.getElementById('youtube-iframe');
         if (iframe && iframe.src) {
@@ -369,6 +369,14 @@ Do not add any other text or explanations.`;
                 if (iframe) iframe.src = currentSrc;
             }, 100);
         }
+        
+        // Stop any ongoing audio playback from dialogue lines
+        const state = window.state || await import('./state.js');
+        if (state.audioPlayer && !state.audioPlayer.paused) {
+            state.audioPlayer.pause();
+            state.audioPlayer.currentTime = 0;
+        }
+        
         document.body.classList.remove('modal-open'); // Unlock body scroll
     };
 
