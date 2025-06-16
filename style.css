@@ -38,7 +38,9 @@ body {
 
 .vocab-quiz-flash:hover {
     animation-play-state: paused;
-    text-shadow: 0 0 8px rgba(147, 51, 234, 0.6);
+    text-shadow: 0 0 8px rgba(88, 28, 135, 0.8);
+    border: 2px solid rgba(88, 28, 135, 0.9);
+    box-shadow: 0 0 15px rgba(88, 28, 135, 0.7);
 }
 
 @keyframes fadeIn {
