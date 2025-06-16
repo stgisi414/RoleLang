@@ -1,0 +1,12 @@
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://rolelang.xyz/sitemap.xml
+
+# Disallow non-essential files
+Disallow: /old/
+Disallow: /attached_assets/
+Disallow: /.config/
+Disallow: /assets/
