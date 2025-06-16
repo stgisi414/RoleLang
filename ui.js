@@ -249,7 +249,7 @@ export async function showExplanation(content) {
             // Get the native language name for translation
             const languageNames = {
                 'es': 'Spanish',
-                'fr': 'French', 
+                'fr': 'French',
                 'de': 'German',
                 'it': 'Italian',
                 'zh': 'Chinese',
@@ -292,9 +292,9 @@ Do not add any other text or explanations.`;
     }
 
     // Parse the explanation content for audio-tagged phrases
-    const { processedBody, audioItems } = await parseAndRenderExplanationWithAudio({ 
-        title: translatedTitle, 
-        body: translatedBody 
+    const { processedBody, audioItems } = await parseAndRenderExplanationWithAudio({
+        title: translatedTitle,
+        body: translatedBody
     });
 
     // Create the modal content with explanation text and YouTube video option
@@ -322,10 +322,10 @@ Do not add any other text or explanations.`;
                         <span class="ml-3 text-gray-400">${translateText('loadingVideo')}</span>
                     </div>
                     <div id="video-content" class="hidden">
-                        <iframe 
-                            id="youtube-iframe" 
+                        <iframe
+                            id="youtube-iframe"
                             class="w-full h-80 rounded-lg shadow-lg"
-                            frameborder="0" 
+                            frameborder="0"
                             allowfullscreen
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             src="">
@@ -480,8 +480,8 @@ async function searchAndLoadYouTubeVideo(content) {
         loader.innerHTML = `
             <div class="text-center py-8">
                 <p class="text-gray-300 mb-4">${translateText('videoNotAvailable')}</p>
-                <a href="https://www.youtube.com/results?search_query=${searchQuery}" 
-                   target="_blank" 
+                <a href="https://www.youtube.com/results?search_query=${searchQuery}"
+                   target="_blank"
                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center">
                     <i class="fab fa-youtube mr-2"></i>
                     ${translateText('searchYoutube')}
@@ -517,7 +517,7 @@ async function searchYouTubeVideos(query) {
 
                 // Look for educational keywords
                 const educationalKeywords = ['learn', 'tutorial', 'lesson', 'explanation', 'guide', 'how to', 'grammar', 'language'];
-                const hasEducationalContent = educationalKeywords.some(keyword => 
+                const hasEducationalContent = educationalKeywords.some(keyword =>
                     title.includes(keyword) || description.includes(keyword) || channel.includes(keyword)
                 );
 
@@ -642,7 +642,7 @@ async function parseAndRenderExplanationWithAudio(content) {
 
         // Replace the audio tag with a clickable span
         processedBody = processedBody.replace(
-            match[0], 
+            match[0],
             `<span class="audio-phrase" data-audio-id="${audioId}" data-phrase="${phrase}">${phrase}</span>`
         );
         index++;
@@ -873,29 +873,39 @@ function createDialogueLine(turn, index) {
     lineDiv.id = `turn-${index}`;
 
     const speakerIcon = party === 'A' ? '👤' : '🤖';
-    let lineContent = `<strong>${speakerIcon}</strong> `;
+    let lineContentHTML = `<strong>${speakerIcon}</strong> `;
 
     if (party === 'A' && turn.sentences && turn.sentences.length > 0) {
         turn.sentences.forEach((sentence, sentenceIndex) => {
-            lineContent += `<span class="sentence-span" id="turn-${index}-sentence-${sentenceIndex}">${sentence}</span> `;
+            lineContentHTML += `<span class="sentence-span" id="turn-${index}-sentence-${sentenceIndex}">${sentence}</span> `;
         });
 
         const originalLine = turn.line.display;
         if (originalLine.includes('(')) {
             const translationPart = originalLine.substring(originalLine.indexOf('('));
-            lineContent += `<span class="translation-part text-gray-400">${translationPart}</span>`;
+            lineContentHTML += `<span class="translation-part text-gray-400">${translationPart}</span>`;
         }
     } else {
-        lineContent += turn.line.display;
+        lineContentHTML += turn.line.display;
     }
 
-    // This now includes a direct, inline onclick event handler.
-    // It calls a global function and passes the turn's index.
-    // event.stopPropagation() is included to prevent any other clicks from firing.
-    lineContent += ` <i class="fas fa-volume-up text-gray-400 ml-2 hover:text-sky-300 cursor-pointer" onclick="event.stopPropagation(); window.triggerAudioPlayback(${index});"></i>`;
+    // Set the base HTML content first
+    lineDiv.innerHTML = lineContentHTML.trim();
 
-    lineDiv.innerHTML = lineContent.trim();
+    // Now, create the icon, add the listener, and append it
+    const audioIcon = document.createElement('i');
+    audioIcon.className = "fas fa-volume-up text-gray-400 ml-2 hover:text-sky-300 cursor-pointer";
+    audioIcon.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (window.triggerAudioPlayback) {
+            window.triggerAudioPlayback(index);
+        } else {
+            console.error("Audio playback function is not defined on the window object.");
+        }
+    });
+    lineDiv.appendChild(audioIcon);
 
+    // Handle explanation icon
     if (turn.explanation) {
         const explanationSpan = document.createElement('span');
         explanationSpan.innerHTML = ` <i class="fas fa-info-circle text-sky-300 ml-6"></i>`;
@@ -903,7 +913,7 @@ function createDialogueLine(turn, index) {
 
         let clickTimeout = null;
         explanationSpan.onclick = (e) => {
-            e.stopPropagation(); // This prevents the line's click from firing
+            e.stopPropagation();
             if (clickTimeout) {
                 clearTimeout(clickTimeout);
             }
@@ -921,6 +931,7 @@ function createDialogueLine(turn, index) {
 
     return lineDiv;
 }
+
 
 export function restoreIllustration(imageUrl) {
     domElements.illustrationPlaceholder.classList.add('hidden');
