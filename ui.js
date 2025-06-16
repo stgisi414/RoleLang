@@ -425,7 +425,7 @@ export function showReviewModeUI(language) {
     hideReviewModeBanner();
 
     const reviewBanner = document.createElement('div');
-    reviewBanner.className = 'review-mode-indicator bg-blue-900 text-white px-4 py-3 mb-4 rounded-lg';
+    reviewBanner.className = 'review-mode-indicator bg-cyan-900 text-white px-4 py-3 mb-4 rounded-lg';
 
     const reviewModeText = translateText('reviewMode');
     const lessonCompleteText = translateText('lessonCompleteReview');
