@@ -358,7 +358,7 @@ Do not add any other text or explanations.`;
     }
 
     // Add modal close handler to stop video playback and audio
-    const handleModalClose = async () => {
+    const handleModalClose = () => {
         const iframe = document.getElementById('youtube-iframe');
         if (iframe && iframe.src) {
             // Stop video by clearing and resetting the src
