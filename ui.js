@@ -357,35 +357,6 @@ Do not add any other text or explanations.`;
         isExplanationLoading = false;
     }
 
-    // Add modal close handler to stop video playback and audio
-    const handleModalClose = () => {
-        const iframe = document.getElementById('youtube-iframe');
-        if (iframe && iframe.src) {
-            // Stop video by clearing and resetting the src
-            const currentSrc = iframe.src;
-            iframe.src = '';
-            // Optional: Reset to original src if needed for future use
-            setTimeout(() => {
-                if (iframe) iframe.src = currentSrc;
-            }, 100);
-        }
-
-        // Stop any ongoing audio playback from dialogue lines
-        try {
-            if (window.state && window.state.audioPlayer && !window.state.audioPlayer.paused) {
-                window.state.audioPlayer.pause();
-                window.state.audioPlayer.currentTime = 0;
-            }
-        } catch (error) {
-            console.error('Error stopping audio:', error);
-        }
-
-        document.body.classList.remove('modal-open'); // Unlock body scroll
-    };
-
-    // Store the close handler for cleanup
-    domElements.modal._closeHandler = handleModalClose;
-
     // Add click event listener to the YouTube play button
     const playBtn = document.getElementById('youtube-play-btn');
     if (playBtn) {
@@ -838,7 +809,7 @@ function createTopicButton(topic, level) {
         drama: 'red', comedy: 'yellow', horror: 'purple'
     };
     const color = colorMap[level] || 'gray';
-    button.className = `lesson-btn bg-${color}-600/20 hover:bg-${color}-600/30 text-${color}-300 text-xs py-2 px-3 rounded-md transition-all border border-${color}-600/30`;
+    button.className = `lesson-btn bg`- ${color}-600/20 hover:bg-${color}-600/30 text-${color}-300 text-xs py-2 px-3 rounded-md transition-all border border-${color}-600/30`;
     button.setAttribute('data-topic', topic);
     button.textContent = topic;
     button.style.opacity = '0';
@@ -1113,18 +1084,62 @@ export function showLessonComplete() {
     enableMicButton(false);
 }
 
-// Add event listener to close modal and stop any playing audio
-domElements.closeModalBtn?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        // Stop YouTube video and audio if playing
-        if (domElements.modal?._closeHandler) {
-            domElements.modal._closeHandler();
-        }
-        domElements.modal?.classList.add('hidden');
-        // Prevent any default scrolling behavior
-        return false;
-    });
+// Modal close handlers are now set up at the bottom of the file
 
 // Export toast function for use in other modules
+
+// Add event listeners to close modal and stop any playing audio
+domElements.closeModalBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    // Stop YouTube video and audio if playing
+    const iframe = document.getElementById('youtube-iframe');
+    if (iframe && iframe.src) {
+        // Stop video by clearing and resetting the src
+        iframe.src = '';
+    }
+
+    // Stop any ongoing audio playback from dialogue lines
+    try {
+        if (window.state && window.state.audioPlayer && !window.state.audioPlayer.paused) {
+            window.state.audioPlayer.pause();
+            window.state.audioPlayer.currentTime = 0;
+        }
+    } catch (error) {
+        console.error('Error stopping audio:', error);
+    }
+
+    domElements.modal?.classList.add('hidden');
+    document.body.classList.remove('modal-open');
+});
+
+// Also add a handler for the modal backdrop in case users click outside the modal
+domElements.modal?.addEventListener('click', (e) => {
+    if (e.target === domElements.modal) {
+        e.stopPropagation();
+        e.preventDefault();
+
+        // Stop YouTube video and audio if playing
+        const iframe = document.getElementById('youtube-iframe');
+        if (iframe && iframe.src) {
+            // Stop video by clearing the src
+            iframe.src = '';
+        }
+
+        // Stop any ongoing audio playback from dialogue lines
+        try {
+            if (window.state && window.state.audioPlayer && !window.state.audioPlayer.paused) {
+                window.state.audioPlayer.pause();
+                window.state.audioPlayer.currentTime = 0;
+            }
+        } catch (error) {
+            console.error('Error stopping audio:', error);
+        }
+
+        domElements.modal?.classList.add('hidden');
+        document.body.classList.remove('modal-open');
+    }
+});
+
 export { showToast };
