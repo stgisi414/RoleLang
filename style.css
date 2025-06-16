@@ -721,6 +721,72 @@ body.modal-open {
     overflow: hidden;
 }
 
+/* Mobile-specific toast optimizations */
+@media (max-width: 768px) {
+    .toastify {
+        min-width: 280px !important;
+        max-width: calc(100vw - 24px) !important;
+        padding: 12px 16px !important;
+        margin: 8px !important;
+        border-radius: 12px !important;
+        font-size: 0.875rem !important;
+        line-height: 1.4 !important;
+        right: 12px !important;
+        left: auto !important;
+        top: 12px !important;
+        word-wrap: break-word;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    .toastify.toastify-right {
+        right: 12px !important;
+        left: auto !important;
+    }
+    
+    .toastify.toastify-top {
+        top: 12px !important;
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+    .toastify {
+        min-width: 240px !important;
+        max-width: calc(100vw - 16px) !important;
+        padding: 10px 12px !important;
+        margin: 6px !important;
+        border-radius: 10px !important;
+        font-size: 0.8rem !important;
+        right: 8px !important;
+        top: 8px !important;
+    }
+    
+    .toastify.toastify-right {
+        right: 8px !important;
+        left: auto !important;
+    }
+    
+    .toastify.toastify-top {
+        top: 8px !important;
+    }
+    
+    /* Smaller close button on mobile */
+    .toastify-close {
+        width: 20px !important;
+        height: 20px !important;
+        font-size: 14px !important;
+        margin-left: 8px !important;
+        padding: 2px !important;
+    }
+    
+    /* Smaller icon on mobile */
+    .toast-icon {
+        margin-right: 6px !important;
+        font-size: 14px !important;
+    }
+}
+
 .toastify::before {
     content: '';
     position: absolute;
@@ -756,6 +822,39 @@ body.modal-open {
         transform: translateX(0) scale(1) rotateY(0deg);
         opacity: 1;
         filter: blur(0);
+    }
+}
+
+/* Mobile-optimized slide animations */
+@media (max-width: 768px) {
+    @keyframes toastSlideIn {
+        0% {
+            transform: translateX(100%) scale(0.9);
+            opacity: 0;
+        }
+        60% {
+            transform: translateX(-2%) scale(1.01);
+            opacity: 0.9;
+        }
+        100% {
+            transform: translateX(0) scale(1);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes toastSlideOut {
+        0% {
+            transform: translateX(0) scale(1);
+            opacity: 1;
+        }
+        40% {
+            transform: translateX(2%) scale(0.99);
+            opacity: 0.7;
+        }
+        100% {
+            transform: translateX(100%) scale(0.9);
+            opacity: 0;
+        }
     }
 }
 
