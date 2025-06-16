@@ -318,30 +318,55 @@ function showToast(message, type = 'info') {
 
 function checkYTSearchLibrary() {
     return new Promise((resolve) => {
-        // Check multiple ways the library might be available
+        // Check if library is already loaded
         if (typeof yts !== 'undefined') {
+            console.log('yt-search found as global yts');
             resolve(true);
             return;
         }
         
         if (typeof window.yts !== 'undefined') {
+            console.log('yt-search found as window.yts');
             window.yts = window.yts;
             resolve(true);
             return;
         }
         
-        // Wait a bit more for the library to load
+        // Check loading status from script
+        if (window.ytsLoaded === true) {
+            console.log('yt-search marked as loaded, checking again...');
+            // Give it a moment and check again
+            setTimeout(() => {
+                if (typeof yts !== 'undefined' || typeof window.yts !== 'undefined') {
+                    resolve(true);
+                } else {
+                    resolve(false);
+                }
+            }, 100);
+            return;
+        }
+        
+        if (window.ytsLoaded === false) {
+            console.log('yt-search marked as failed to load');
+            resolve(false);
+            return;
+        }
+        
+        // Wait for the library to load
         let attempts = 0;
         const checkInterval = setInterval(() => {
             attempts++;
-            if (typeof yts !== 'undefined' || typeof window.yts !== 'undefined') {
+            console.log(`Checking for yt-search library, attempt ${attempts}/15`);
+            
+            if (typeof yts !== 'undefined' || typeof window.yts !== 'undefined' || window.ytsLoaded === true) {
                 clearInterval(checkInterval);
                 if (typeof window.yts !== 'undefined' && typeof yts === 'undefined') {
                     window.yts = window.yts;
                 }
                 resolve(true);
-            } else if (attempts >= 10) { // 2 seconds total
+            } else if (window.ytsLoaded === false || attempts >= 15) { // 3 seconds total
                 clearInterval(checkInterval);
+                console.log('yt-search library check timed out or failed');
                 resolve(false);
             }
         }, 200);
@@ -358,6 +383,7 @@ async function loadYouTubeVideo(title) {
         // Check if yt-search library is available
         const isLibraryLoaded = await checkYTSearchLibrary();
         if (!isLibraryLoaded) {
+            console.warn('yt-search library not available, proceeding with fallback');
             throw new Error('yt-search library not available after waiting');
         }
         
@@ -366,10 +392,11 @@ async function loadYouTubeVideo(title) {
         const decodedQuery = decodeURIComponent(searchQuery);
         console.log('Generated search query:', decodedQuery);
         
-        // Check if yt-search library is loaded
-        if (typeof yts === 'undefined' || typeof window.yts === 'undefined') {
-            console.warn('yt-search library not available, using fallback search');
-            throw new Error('yt-search library not loaded - showing manual search link');
+        // Use the correct reference to yts
+        const ytsFunction = typeof yts !== 'undefined' ? yts : window.yts;
+        if (!ytsFunction) {
+            console.warn('yt-search function not available, using fallback search');
+            throw new Error('yt-search function not accessible - showing manual search link');
         }
         
         // Use yt-search library to find videos
@@ -379,7 +406,7 @@ async function loadYouTubeVideo(title) {
         let searchResults;
         try {
             searchResults = await Promise.race([
-                yts(decodedQuery),
+                ytsFunction(decodedQuery),
                 new Promise((_, reject) => 
                     setTimeout(() => reject(new Error('Search timeout')), 10000)
                 )
