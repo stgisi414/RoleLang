@@ -318,16 +318,21 @@ function showToast(message, type = 'info') {
 
 function checkYTSearchLibrary() {
     return new Promise((resolve) => {
+        console.log('checkYTSearchLibrary started');
+        console.log('window.yts type:', typeof window.yts);
+        console.log('window.ytsLoaded value:', window.ytsLoaded);
+        
         // Check if ES6 module is loaded
         if (typeof window.yts !== 'undefined') {
-            console.log('yt-search ES6 module found');
+            console.log('yt-search ES6 module found, type:', typeof window.yts);
+            console.log('window.yts value:', window.yts);
             resolve(true);
             return;
         }
         
         // Check loading status
         if (window.ytsLoaded === true) {
-            console.log('yt-search marked as loaded');
+            console.log('yt-search marked as loaded but window.yts is undefined');
             resolve(true);
             return;
         }
@@ -343,13 +348,15 @@ function checkYTSearchLibrary() {
         const checkInterval = setInterval(() => {
             attempts++;
             console.log(`Checking for yt-search ES6 module, attempt ${attempts}/15`);
+            console.log(`Current window.yts type: ${typeof window.yts}, ytsLoaded: ${window.ytsLoaded}`);
             
             if (typeof window.yts !== 'undefined' || window.ytsLoaded === true) {
                 clearInterval(checkInterval);
+                console.log('yt-search library found after waiting');
                 resolve(true);
             } else if (window.ytsLoaded === false || attempts >= 15) {
                 clearInterval(checkInterval);
-                console.log('yt-search ES6 module check timed out or failed');
+                console.log('yt-search ES6 module check timed out or failed after', attempts, 'attempts');
                 resolve(false);
             }
         }, 200);
@@ -361,10 +368,14 @@ async function loadYouTubeVideo(title) {
     const iframe = document.getElementById('youtube-iframe');
     
     try {
+        console.log('loadYouTubeVideo called with title:', title);
         showToast('Searching for related video...', 'info');
         
         // Check if yt-search library is available
+        console.log('Checking if yt-search library is available...');
         const isLibraryLoaded = await checkYTSearchLibrary();
+        console.log('Library loaded check result:', isLibraryLoaded);
+        
         if (!isLibraryLoaded) {
             console.warn('yt-search library not available, proceeding with fallback');
             throw new Error('yt-search library not available after waiting');
@@ -383,18 +394,29 @@ async function loadYouTubeVideo(title) {
         
         // Use yt-search library to find videos
         console.log('Searching YouTube with yt-search ES6 module...');
+        console.log('About to call window.yts with query:', decodedQuery);
+        console.log('window.yts function:', window.yts);
         
         // Use a promise wrapper to handle potential errors
         let searchResults;
         try {
+            console.log('Calling window.yts...');
+            const searchPromise = window.yts(decodedQuery);
+            console.log('window.yts returned:', searchPromise);
+            
             searchResults = await Promise.race([
-                window.yts(decodedQuery),
+                searchPromise,
                 new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Search timeout')), 10000)
+                    setTimeout(() => reject(new Error('Search timeout after 10 seconds')), 10000)
                 )
             ]);
+            console.log('Search completed successfully');
         } catch (searchError) {
-            console.error('yt-search failed:', searchError);
+            console.error('yt-search failed with detailed error:');
+            console.error('Error name:', searchError.name);
+            console.error('Error message:', searchError.message);
+            console.error('Error stack:', searchError.stack);
+            console.error('Full error object:', searchError);
             throw new Error(`Search failed: ${searchError.message}`);
         }
         

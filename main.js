@@ -6,20 +6,39 @@ if (!window.translations) {
 }
 
 try {
-    var api = await import('./api.js');
-    console.log('API module loaded');
-    var ui = await import('./ui.js');
-    console.log('UI module loaded');
-    var lesson = await import('./lesson.js');
-    console.log('Lesson module loaded');
-    var state = await import('./state.js');
-    console.log('State module loaded');
-
-    // Expose state globally for cross-module access
-    window.state = state;
+    console.log('Importing modules...');
+    const api = await import('./api.js');
+    console.log('API module loaded:', api);
+    const ui = await import('./ui.js');
+    console.log('UI module loaded:', ui);
+    const lesson = await import('./lesson.js');
+    console.log('Lesson module loaded:', lesson);
+    const state = await import('./state.js');
+    console.log('State module loaded:', state);
+    console.log('main.js loaded');
 } catch (error) {
-    console.error('Failed to import modules:', error);
-    alert('Failed to load application modules. Please check the console for details.');
+    console.error('Failed to load modules:');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Full error object:', error);
+
+    document.body.innerHTML = `
+            <div class="flex items-center justify-center min-h-screen bg-gray-900 text-white">
+                <div class="text-center p-8 max-w-2xl">
+                    <h1 class="text-2xl font-bold mb-4">Failed to Load Application</h1>
+                    <div class="bg-red-900/50 border border-red-500 rounded p-4 mb-4 text-left">
+                        <p class="font-bold">Error Details:</p>
+                        <p class="text-sm mt-2">Name: ${error.name}</p>
+                        <p class="text-sm">Message: ${error.message}</p>
+                        <pre class="text-xs mt-2 overflow-auto max-h-32">${error.stack}</pre>
+                    </div>
+                    <button onclick="window.location.reload()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">
+                        Reload Page
+                    </button>
+                </div>
+            </div>
+        `;
 }
 
 console.log('main.js loaded');
