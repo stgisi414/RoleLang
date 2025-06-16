@@ -425,7 +425,7 @@ export function showReviewModeUI(language) {
     hideReviewModeBanner();
 
     const reviewBanner = document.createElement('div');
-    reviewBanner.className = 'review-mode-indicator bg-purple-600 text-white px-4 py-3 mb-4 rounded-lg';
+    reviewBanner.className = 'review-mode-indicator bg-blue-900 text-white px-4 py-3 mb-4 rounded-lg';
 
     const reviewModeText = translateText('reviewMode');
     const lessonCompleteText = translateText('lessonCompleteReview');
@@ -437,7 +437,7 @@ export function showReviewModeUI(language) {
                 <i class="fas fa-history text-lg"></i>
                 <span class="font-medium">${reviewModeText} - ${lessonCompleteText}</span>
             </div>
-            <button id="vocab-quiz-btn" class="flex items-center space-x-2 bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded-lg transition-colors">
+            <button id="vocab-quiz-btn" class="vocab-quiz-flash flex items-center space-x-2 bg-silver text-blue-900 px-3 py-1 rounded-lg transition-all duration-300 hover:text-purple-400 hover:shadow-lg hover:shadow-purple-400/50">
                 <i class="fas fa-brain text-sm"></i>
                 <span class="text-sm">${vocabQuizText}</span>
             </button>

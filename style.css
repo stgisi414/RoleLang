@@ -14,6 +14,32 @@ body {
     border-bottom: 2px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Silver color definition */
+.bg-silver {
+    background-color: #c0c0c0;
+}
+
+/* Vocabulary quiz button flashing animation */
+@keyframes flashSilver {
+    0%, 100% {
+        background-color: #c0c0c0;
+        box-shadow: 0 0 5px rgba(192, 192, 192, 0.5);
+    }
+    50% {
+        background-color: #e8e8e8;
+        box-shadow: 0 0 15px rgba(192, 192, 192, 0.8);
+    }
+}
+
+.vocab-quiz-flash {
+    animation: flashSilver 2s ease-in-out infinite;
+}
+
+.vocab-quiz-flash:hover {
+    animation-play-state: paused;
+    text-shadow: 0 0 8px rgba(147, 51, 234, 0.6);
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;
