@@ -705,5 +705,53 @@ IMPORTANT: Return ONLY the JSON array, no other text.`;
                 if (contextTurnIndex !== -1) {
                     // Get surrounding context for better quiz experience
                     const contextParts = [];
+                    const currentTurn = stateRef.lessonPlan.dialogue[contextTurnIndex];
+                    contextParts.push(currentTurn.line.display);
+                    
+                    return {
+                        ...vocabItem,
+                        contextTurnIndex,
+                        context: contextParts.join(' ')
+                    };
+                }
+                
+                return vocabItem;
+            });
+        } catch (error) {
+            console.error("Failed to extract vocabulary:", error);
+            return [];
+        }
+    } else {
+        // For non-English languages, extract vocabulary with translations
+        if (!stateRef.lessonPlan || !stateRef.lessonPlan.dialogue) return [];
+
+        const vocabularyItems = [];
+        
+        stateRef.lessonPlan.dialogue.forEach((turn, turnIndex) => {
+            if (turn.line && turn.line.display) {
+                // Extract parenthetical translations
+                const matches = turn.line.display.match(/([^()]+)\s*\(([^)]+)\)/g);
+                if (matches) {
+                    matches.forEach(match => {
+                        const parts = match.match(/([^()]+)\s*\(([^)]+)\)/);
+                        if (parts && parts.length >= 3) {
+                            const foreignWord = parts[1].trim();
+                            const translation = parts[2].trim();
+                            
+                            vocabularyItems.push({
+                                word: foreignWord,
+                                definition: translation,
+                                contextTurnIndex: turnIndex,
+                                context: turn.line.display
+                            });
+                        }
+                    });
+                }
+            }
+        });
+
+        return vocabularyItems;
+    }
+}
 
 json|
