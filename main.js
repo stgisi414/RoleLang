@@ -297,9 +297,6 @@ async function initializeApp() {
 
     lesson.init(elements, state, api, ui, saveState);
 	ui.init(elements, state.getTranslations, () => state.nativeLang, saveState, goBackToLanding);
-	
-	// Initialize native language AFTER ui.init to ensure all dependencies are available
-	ui.initializeNativeLanguage();
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
@@ -458,7 +455,6 @@ async function initializeApp() {
     // Ensure translations are properly initialized
     if (window.translations) {
         state.setCurrentTranslations(window.translations.en);
-        ui.initializeNativeLanguage();
         ui.updateTranslations();
     } else {
         console.error('Translations not available, UI will not be properly translated');
@@ -472,6 +468,9 @@ async function initializeApp() {
         ui.startTopicRotations();
         isRestoring = false; // Clear the flag even if no saved state
     }
+
+    // Initialize native language AFTER all modules are connected and state is restored
+    ui.initializeNativeLanguage();
 
     // NOW add event listeners after restoration is complete
     setupEventListeners();
