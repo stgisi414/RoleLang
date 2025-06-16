@@ -188,43 +188,149 @@ export function toggleHistoryVisibility() {
 
 export function showExplanation(content) {
     // Create the modal content with explanation text and YouTube video
-    const videoId = generateYouTubeSearchUrl(content.title);
-    
     domElements.modalBody.innerHTML = `
         <h3 class="text-xl font-bold mb-2 text-cyan-300">${content.title}</h3>
         <p class="text-gray-300 mb-4">${content.body}</p>
         <div class="border-t border-gray-600 pt-4">
             <h4 class="text-lg font-semibold text-cyan-300 mb-3 flex items-center">
                 <i class="fab fa-youtube text-red-500 mr-2"></i>
-                Related Video
+                Related Educational Video
             </h4>
             <div id="youtube-container" class="relative">
                 <div id="youtube-loader" class="flex items-center justify-center py-8">
                     <div class="loader"></div>
-                    <span class="ml-3 text-gray-400">Loading video...</span>
+                    <span class="ml-3 text-gray-400">Searching for educational content...</span>
                 </div>
-                <iframe 
-                    id="youtube-iframe" 
-                    class="hidden w-full h-64 rounded-lg"
-                    frameborder="0" 
-                    allowfullscreen
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-                </iframe>
+                <div id="video-content" class="hidden">
+                    <iframe 
+                        id="youtube-iframe" 
+                        class="w-full h-64 rounded-lg"
+                        frameborder="0" 
+                        allowfullscreen
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        src="">
+                    </iframe>
+                    <div class="mt-2 text-center">
+                        <button id="search-more-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center text-sm">
+                            <i class="fab fa-youtube mr-2"></i>
+                            Find More Videos
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     `;
     
     domElements.modal.classList.remove('hidden');
     
-    // Load YouTube video after modal is shown
-    loadYouTubeVideo(content.title);
+    // Search for and load YouTube video
+    searchAndLoadYouTubeVideo(content.title);
 }
 
-function generateYouTubeSearchUrl(title) {
-    // Clean the title for better search results
-    const cleanTitle = title.replace(/[^\w\s]/gi, '').trim();
-    const searchQuery = encodeURIComponent(`${cleanTitle} grammar explanation english learning`);
-    return `https://www.youtube.com/results?search_query=${searchQuery}`;
+// YouTube Data API key - you'll need to get this from Google Cloud Console
+const YOUTUBE_API_KEY = 'YOUR_YOUTUBE_API_KEY'; // Replace with your actual API key
+
+async function searchAndLoadYouTubeVideo(title) {
+    const loader = document.getElementById('youtube-loader');
+    const videoContent = document.getElementById('video-content');
+    
+    try {
+        console.log('Searching YouTube for:', title);
+        showToast('Searching for educational videos...', 'info');
+        
+        // Generate intelligent search term using Gemini
+        const searchQuery = await createIntelligentSearchTerm(title);
+        console.log('Generated search query:', decodeURIComponent(searchQuery));
+        
+        // Search YouTube using the Data API
+        const videoId = await searchYouTubeVideos(decodeURIComponent(searchQuery));
+        
+        if (videoId) {
+            // Load the video in iframe
+            const iframe = document.getElementById('youtube-iframe');
+            iframe.src = `https://www.youtube.com/embed/${videoId}`;
+            
+            // Set up "Find More Videos" button
+            const searchMoreBtn = document.getElementById('search-more-btn');
+            searchMoreBtn.onclick = () => {
+                const searchUrl = `https://www.youtube.com/results?search_query=${searchQuery}`;
+                window.open(searchUrl, '_blank');
+            };
+            
+            loader.classList.add('hidden');
+            videoContent.classList.remove('hidden');
+            showToast('Educational video loaded!', 'success');
+        } else {
+            throw new Error('No suitable videos found');
+        }
+        
+    } catch (error) {
+        console.error('Error loading YouTube video:', error);
+        showToast('Showing search option instead', 'warning');
+        
+        // Fallback to search link
+        const searchQuery = encodeURIComponent(`${title} grammar explanation tutorial`);
+        loader.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fab fa-youtube text-red-500 text-3xl mb-3"></i>
+                <p class="text-gray-300 mb-3">Find educational videos</p>
+                <p class="text-sm text-gray-400 mb-3">Click below to search for content about this topic</p>
+                <a href="https://www.youtube.com/results?search_query=${searchQuery}" 
+                   target="_blank" 
+                   class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center">
+                    <i class="fab fa-youtube mr-2"></i>
+                    Search on YouTube
+                </a>
+            </div>
+        `;
+    }
+}
+
+async function searchYouTubeVideos(query) {
+    if (YOUTUBE_API_KEY === 'YOUR_YOUTUBE_API_KEY') {
+        console.warn('YouTube API key not configured');
+        throw new Error('YouTube API key not configured');
+    }
+    
+    const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}&maxResults=5&order=relevance&relevanceLanguage=en&safeSearch=strict`;
+    
+    try {
+        const response = await fetch(apiUrl);
+        
+        if (!response.ok) {
+            throw new Error(`YouTube API error: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.items && data.items.length > 0) {
+            // Filter for educational content
+            const educationalVideo = data.items.find(item => {
+                const title = item.snippet.title.toLowerCase();
+                const description = item.snippet.description.toLowerCase();
+                const channel = item.snippet.channelTitle.toLowerCase();
+                
+                // Look for educational keywords
+                const educationalKeywords = ['learn', 'tutorial', 'lesson', 'explanation', 'guide', 'how to', 'grammar', 'language'];
+                const hasEducationalContent = educationalKeywords.some(keyword => 
+                    title.includes(keyword) || description.includes(keyword) || channel.includes(keyword)
+                );
+                
+                return hasEducationalContent;
+            });
+            
+            // Return the first educational video or fall back to the first result
+            const selectedVideo = educationalVideo || data.items[0];
+            console.log('Selected video:', selectedVideo.snippet.title);
+            return selectedVideo.id.videoId;
+        }
+        
+        throw new Error('No videos found');
+        
+    } catch (error) {
+        console.error('YouTube search failed:', error);
+        throw error;
+    }
 }
 
 async function createIntelligentSearchTerm(explanationTitle) {
@@ -275,12 +381,10 @@ Create the best search term for the given topic and language:`;
         }
         
         console.log(`Generated intelligent search term: "${searchTerm}"`);
-        showToast(`Generated search: "${searchTerm.substring(0, 30)}..."`, 'info');
-        return encodeURIComponent(searchTerm);
+        return searchTerm;
         
     } catch (error) {
         console.error('Failed to generate intelligent search term:', error);
-        showToast('Using fallback search term', 'warning');
         
         // Fallback to basic search
         const cleanTitle = explanationTitle.replace(/[^\w\s]/gi, '').trim();
@@ -288,7 +392,7 @@ Create the best search term for the given topic and language:`;
         const fallbackQuery = `${targetLanguage} ${cleanTitle} grammar explanation tutorial`;
         
         console.log(`Using fallback search term: "${fallbackQuery}"`);
-        return encodeURIComponent(fallbackQuery);
+        return fallbackQuery;
     }
 }
 
@@ -313,60 +417,6 @@ function showToast(message, type = 'info') {
         }).showToast();
     } else {
         console.log(`Toast (${type}): ${message}`);
-    }
-}
-
-function checkYTSearchLibrary() {
-    // Always return false since yt-search doesn't work in browsers
-    return Promise.resolve(false);
-}
-
-async function loadYouTubeVideo(title) {
-    const loader = document.getElementById('youtube-loader');
-    
-    try {
-        console.log('loadYouTubeVideo called with title:', title);
-        showToast('Generating YouTube search link...', 'info');
-        
-        // Generate intelligent search term using Gemini
-        const searchQuery = await createIntelligentSearchTerm(title);
-        console.log('Generated search query:', decodeURIComponent(searchQuery));
-        
-        // Show manual search link (since yt-search doesn't work in browsers)
-        loader.innerHTML = `
-            <div class="text-center py-4">
-                <i class="fab fa-youtube text-red-500 text-3xl mb-3"></i>
-                <p class="text-gray-300 mb-3">Search for related videos</p>
-                <p class="text-sm text-gray-400 mb-3">Click below to find educational content about this topic</p>
-                <a href="https://www.youtube.com/results?search_query=${searchQuery}" 
-                   target="_blank" 
-                   class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center">
-                    <i class="fab fa-youtube mr-2"></i>
-                    Search on YouTube
-                </a>
-            </div>
-        `;
-        
-        showToast('YouTube search link ready', 'success');
-        
-    } catch (error) {
-        console.error('Error generating YouTube search:', error);
-        showToast('Using basic search', 'warning');
-        
-        // Ultimate fallback if even intelligent search fails
-        const basicSearchQuery = encodeURIComponent(`${title} grammar explanation english learning`);
-        loader.innerHTML = `
-            <div class="text-center py-4">
-                <i class="fab fa-youtube text-red-500 text-3xl mb-3"></i>
-                <p class="text-gray-300 mb-3">Search for related videos</p>
-                <a href="https://www.youtube.com/results?search_query=${basicSearchQuery}" 
-                   target="_blank" 
-                   class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center">
-                    <i class="fab fa-youtube mr-2"></i>
-                    Search on YouTube
-                </a>
-            </div>
-        `;
     }
 }
 

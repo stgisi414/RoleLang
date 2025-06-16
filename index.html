@@ -138,20 +138,13 @@
     <!-- Toast notifications -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-    <!-- Initialize YouTube search fallback -->
-    <script>
-        // Since yt-search doesn't work in browsers, we'll use fallback approach
-        window.ytsLoaded = false;
-        window.yts = null;
-        console.log('YouTube search will use fallback manual search links');
-    </script>
     <!-- Custom Stylesheet -->
     <link rel="stylesheet" href="style.css">
     <!-- Translations -->
     <script src="translations.js"></script>
     <!-- Character Names -->
     <script src="names.js"></script>
-    
+
     <script>
         // Verify translations loaded
         if (typeof translations === 'undefined') {
@@ -515,7 +508,7 @@
                         <div class="grid md:grid-cols-2 gap-3 text-gray-300">
                             <div class="flex items-center space-x-2">
                                 <i class="fas fa-microphone text-green-400"></i>
-                                <span data-translate="voiceRecognition">Voice recognition practice</span>
+                                <span data-translate="voicerecognition">Voice recognition practice</span>
                             </div>
                             <div class="flex items-center space-x-2">
                                 <i class="fas fa-image text-green-400"></i>
