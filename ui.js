@@ -441,7 +441,7 @@ function showToast(message, type = 'info') {
 
         const toastInstance = Toastify({
             text: `<span class="toast-icon">${icons[type] || icons.info}</span>${message}`,
-            duration: 5000,
+            duration: 6000,
             gravity: "top",
             position: "right",
             stopOnFocus: true,
@@ -452,19 +452,43 @@ function showToast(message, type = 'info') {
             }
         });
 
-        // Add exit animation before hiding
+        // Enhanced exit animation with shadowbox effects
         const originalHide = toastInstance.hideToast;
         toastInstance.hideToast = function() {
             const toastElement = this.toastElement;
             if (toastElement) {
-                toastElement.style.animation = 'toastSlideOut 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
-                setTimeout(() => originalHide.call(this), 300);
+                // Add a subtle pulse before sliding out
+                toastElement.style.animation = 'toastSlideOut 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards';
+                setTimeout(() => originalHide.call(this), 500);
             } else {
                 originalHide.call(this);
             }
         };
 
+        // Add hover effects for better interactivity
         toastInstance.showToast();
+        
+        // Enhanced hover effects
+        setTimeout(() => {
+            const toastElement = toastInstance.toastElement;
+            if (toastElement) {
+                toastElement.addEventListener('mouseenter', () => {
+                    toastElement.style.transform = 'translateX(0) scale(1.02)';
+                    toastElement.style.boxShadow = `
+                        0 35px 70px rgba(0, 0, 0, 0.5),
+                        0 0 40px rgba(255, 255, 255, 0.12),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.15),
+                        inset 0 -1px 0 rgba(0, 0, 0, 0.2)
+                    `;
+                });
+                
+                toastElement.addEventListener('mouseleave', () => {
+                    toastElement.style.transform = 'translateX(0) scale(1)';
+                    toastElement.style.boxShadow = '';
+                });
+            }
+        }, 100);
+
         return toastInstance;
     } else {
         console.log(`Toast (${type}): ${message}`);
