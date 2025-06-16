@@ -203,7 +203,7 @@ export function toggleHistoryVisibility() {
 export async function showExplanation(content) {
     // Parse the explanation content for audio-tagged phrases
     const { processedBody, audioItems } = await parseAndRenderExplanationWithAudio(content);
-    
+
     // Create the modal content with explanation text and YouTube video option
     domElements.modalBody.innerHTML = `
         <h3 class="text-xl font-bold mb-2 text-cyan-300">${content.title}</h3>
@@ -285,30 +285,30 @@ async function playPhraseAudio(phrase) {
     try {
         const targetLanguage = domElements.languageSelect?.value || 'English';
         showToast(`Playing: "${phrase}"`, 'info');
-        
+
         // Import lesson module to get voice config
         const lesson = await import('./lesson.js');
         const api = await import('./api.js');
-        
+
         // Get appropriate voice config for the target language
         const voiceConfig = getVoiceConfigForLanguage(targetLanguage);
-        
+
         // Fetch and play audio
         const audioBlob = await api.fetchPartnerAudio(phrase, voiceConfig);
         const audioUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(audioUrl);
-        
+
         audio.play().catch(error => {
             console.error('Error playing phrase audio:', error);
             showToast('Audio playback failed', 'error');
         });
-        
+
         audio.onended = () => URL.revokeObjectURL(audioUrl);
         audio.onerror = () => {
             URL.revokeObjectURL(audioUrl);
             showToast('Audio playback failed', 'error');
         };
-        
+
     } catch (error) {
         console.error('Failed to play phrase audio:', error);
         showToast('Audio generation failed', 'error');
@@ -492,12 +492,12 @@ Create the best search term for the given topic and language:`;
 
 async function parseAndRenderExplanationWithAudio(content) {
     const targetLanguage = domElements.languageSelect?.value || 'English';
-    
+
     // Parse the explanation text for audio tags
     const audioTagRegex = /<audio>(.*?)<\/audio>/g;
     let processedBody = content.body;
     const audioItems = [];
-    
+
     // Extract all audio-tagged phrases
     let match;
     let index = 0;
@@ -505,7 +505,7 @@ async function parseAndRenderExplanationWithAudio(content) {
         const phrase = match[1];
         const audioId = `audio-phrase-${index}`;
         audioItems.push({ id: audioId, phrase: phrase });
-        
+
         // Replace the audio tag with a clickable span
         processedBody = processedBody.replace(
             match[0], 
@@ -513,7 +513,7 @@ async function parseAndRenderExplanationWithAudio(content) {
         );
         index++;
     }
-    
+
     return { processedBody, audioItems };
 }
 
@@ -554,7 +554,7 @@ function showToast(message, type = 'info') {
 
         // Add hover effects for better interactivity
         toastInstance.showToast();
-        
+
         // Enhanced hover effects
         setTimeout(() => {
             const toastElement = toastInstance.toastElement;
@@ -568,7 +568,7 @@ function showToast(message, type = 'info') {
                         inset 0 -1px 0 rgba(0, 0, 0, 0.2)
                     `;
                 });
-                
+
                 toastElement.addEventListener('mouseleave', () => {
                     toastElement.style.transform = 'translateX(0) scale(1)';
                     toastElement.style.boxShadow = '';
@@ -802,7 +802,7 @@ export function addBackToLandingButton() {
 
 export function updateBackButton() {
     const backBtn = document.getElementById('back-to-landing-btn');
-    if (backBtn) {
+if (backBtn) {
         backBtn.innerHTML = `<i class="fas fa-arrow-left mr-2"></i>${translateText('back')}`;
     }
 }

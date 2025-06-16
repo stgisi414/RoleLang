@@ -184,6 +184,29 @@ header img[alt="RoleLang Logo"] {
     animation: spin 1s linear infinite;
 }
 
+/* Modal backdrop and positioning */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.modal-backdrop.hidden {
+    display: none;
+}
+
+/* Prevent scroll issues on modal open */
+body.modal-open {
+    overflow: hidden;
+}
+
 @keyframes spin {
     0% {
         transform: rotate(0deg);
@@ -901,22 +924,69 @@ function showToast(message, type = 'info') {
     padding: 2px 6px;
     margin: 0 2px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     font-weight: 500;
     text-decoration: underline;
     text-decoration-color: rgba(96, 165, 250, 0.5);
     text-underline-offset: 2px;
+    display: inline-block;
+    will-change: transform;
 }
 
 .audio-phrase:hover {
     background: linear-gradient(135deg, rgba(96, 165, 250, 0.25), rgba(59, 130, 246, 0.25));
-    border-color: rgba(96, 165,250, 0.5);
-    transform: scale(1.02);
-    box-shadow: 0 2px 8px rgba(96, 165, 250, 0.3);
+    border-color: rgba(96, 165, 250, 0.5);
+    transform: translateY(-1px) scale(1.01);
+    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);
     text-decoration-color: rgba(96, 165, 250, 0.8);
 }
 
 .audio-phrase:active {
-    transform: scale(0.98);
+    transform: translateY(0) scale(0.99);
     background: linear-gradient(135deg, rgba(96, 165, 250, 0.35), rgba(59, 130, 246, 0.35));
+    transition: all 0.1s ease;
+}
+
+/* Modal positioning fixes for mobile */
+#explanation-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+#explanation-modal .modal-content {
+    max-width: 95vw;
+    max-height: 90vh;
+    width: 100%;
+    margin: 0 auto;
+    overflow-y: auto;
+    position: relative;
+}
+
+/* Ensure modal content stays within viewport */
+@media (max-width: 768px) {
+    #explanation-modal {
+        padding: 0.5rem;
+        align-items: flex-start;
+        padding-top: 2rem;
+    }
+    
+    #explanation-modal .modal-content {
+        max-width: 100vw;
+        max-height: 95vh;
+    }
+    
+    .audio-phrase {
+        margin: 1px;
+        padding: 1px 4px;
+        font-size: 0.9em;
+    }
 }
