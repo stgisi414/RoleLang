@@ -345,122 +345,107 @@ async function initializeApp() {
     }
 
     // --- Event Listeners ---
-	function setupEventListeners() {
-		elements.startLessonBtn?.addEventListener('click', () => {
-			lesson.initializeLesson();
-		});
-		elements.micBtn?.addEventListener('click', () => lesson.toggleSpeechRecognition());
-		elements.toggleLessonsBtn?.addEventListener('click', () => ui.toggleLessonsVisibility());
-		elements.toggleHistoryBtn?.addEventListener('click', ui.toggleHistoryVisibility);
-		elements.difficultyTab?.addEventListener('click', () => ui.switchTab('difficulty'));
-		elements.situationsTab?.addEventListener('click', () => ui.switchTab('situations'));
-		elements.resetLessonBtn?.addEventListener('click', () => lesson.resetLesson());
-		elements.confirmStartLessonBtn?.addEventListener('click', () => lesson.confirmStartLesson());
+    function setupEventListeners() {
+        elements.startLessonBtn?.addEventListener('click', () => {
+            lesson.initializeLesson();
+        });
+        elements.micBtn?.addEventListener('click', () => lesson.toggleSpeechRecognition());
+        elements.toggleLessonsBtn?.addEventListener('click', () => ui.toggleLessonsVisibility());
+        elements.toggleHistoryBtn?.addEventListener('click', ui.toggleHistoryVisibility);
+        elements.difficultyTab?.addEventListener('click', () => ui.switchTab('difficulty'));
+        elements.situationsTab?.addEventListener('click', () => ui.switchTab('situations'));
+        elements.resetLessonBtn?.addEventListener('click', () => lesson.resetLesson());
+        elements.confirmStartLessonBtn?.addEventListener('click', () => lesson.confirmStartLesson());
 
-		document.addEventListener('click', (event) => {
-			if (event.target.classList.contains('lesson-btn')) {
-				if (elements.topicInput) {
-					elements.topicInput.value = event.target.getAttribute('data-topic');
-					saveState();
-				}
-			}
-			if (event.target.closest('.native-lang-option')) {
-				const option = event.target.closest('.native-lang-option');
-				const langCode = option.getAttribute('data-lang');
-				const flag = option.getAttribute('data-flag');
-				const name = option.textContent.trim();
+        // Remove the old, ineffective delegated listener and replace it
+        // with a listener for our new custom event.
+        elements.appContainer?.addEventListener('play-audio-for-turn', (event) => {
+            const { turn } = event.detail;
+            if (turn && lesson.playLineAudioDebounced) {
+                lesson.playLineAudioDebounced(turn.line.display, turn.party);
+            }
+        });
 
-				// Update state
-				state.setNativeLang(langCode);
-				state.setCurrentTranslations(window.translations[langCode] || window.translations.en);
+        document.addEventListener('click', (event) => {
+            if (event.target.classList.contains('lesson-btn')) {
+                if (elements.topicInput) {
+                    elements.topicInput.value = event.target.getAttribute('data-topic');
+                    saveState();
+                }
+            }
+            if (event.target.closest('.native-lang-option')) {
+                const option = event.target.closest('.native-lang-option');
+                const langCode = option.getAttribute('data-lang');
+                const flag = option.getAttribute('data-flag');
+                const name = option.textContent.trim();
+                state.setNativeLang(langCode);
+                state.setCurrentTranslations(window.translations[langCode] || window.translations.en);
+                if (ui) ui.setNativeLanguage(langCode, flag, name);
+                elements.nativeLangDropdown?.classList.add('hidden');
+                saveState();
+            }
+        });
 
-				// Update UI
-				if (ui) {
-					ui.setNativeLanguage(langCode, flag, name);
-				}
-				elements.nativeLangDropdown?.classList.add('hidden');
+        const debouncedSave = lesson.debounce(saveState, 500);
+        elements.languageSelect?.addEventListener('change', (event) => {
+            console.log('Target language changed to:', event.target.value);
+            setTimeout(() => {
+                console.log('Saving state with target language:', elements.languageSelect.value);
+                saveState();
+            }, 50);
+        });
+        elements.topicInput?.addEventListener('input', debouncedSave);
+        elements.audioSpeedSelect?.addEventListener('change', saveState);
 
-				// Save state
-				saveState();
-			}
-		});
-
-		const debouncedSave = lesson.debounce(saveState, 500);
-		elements.languageSelect?.addEventListener('change', (event) => {
-			console.log('Target language changed to:', event.target.value);
-			// Force immediate save with a small delay to ensure the value is captured
-			setTimeout(() => {
-				console.log('Saving state with target language:', elements.languageSelect.value);
-				saveState();
-			}, 50);
-		});
-		elements.topicInput?.addEventListener('input', debouncedSave);
-		elements.audioSpeedSelect?.addEventListener('change', saveState);
-
-		// Ensure modal is hidden on page load
-		elements.modal?.classList.add('hidden');
-		
+        elements.modal?.classList.add('hidden');
         elements.closeModalBtn?.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             ui.closeExplanationModal();
         });
-
         elements.modal?.addEventListener('click', (e) => {
-            // Only close if the click is on the backdrop itself
             if (e.target === elements.modal) {
                 e.preventDefault();
                 e.stopPropagation();
                 ui.closeExplanationModal();
             }
         });		
-		elements.tutorialBtn?.addEventListener('click', () => ui.showTutorial());
-		elements.closeTutorialBtn?.addEventListener('click', () => elements.tutorialModal?.classList.add('hidden'));
-		elements.startTutorialLessonBtn?.addEventListener('click', () => {
-			elements.tutorialModal?.classList.add('hidden');
-			if (elements.topicInput) elements.topicInput.value = ui.translateText('beginnerExample');
-		});
+        elements.tutorialBtn?.addEventListener('click', () => ui.showTutorial());
+        elements.closeTutorialBtn?.addEventListener('click', () => elements.tutorialModal?.classList.add('hidden'));
+        elements.startTutorialLessonBtn?.addEventListener('click', () => {
+            elements.tutorialModal?.classList.add('hidden');
+            if (elements.topicInput) elements.topicInput.value = ui.translateText('beginnerExample');
+        });
 
-		elements.nativeLangBtn?.addEventListener('click', (e) => {
-			e.stopPropagation();
-			elements.nativeLangDropdown?.classList.toggle('hidden');
-		});
-		document.addEventListener('click', (e) => {
-			if (!elements.nativeLangBtn?.contains(e.target) && !elements.nativeLangDropdown?.contains(e.target)) {
-				elements.nativeLangDropdown?.classList.add('hidden');
-			}
-			
-		});
+        elements.nativeLangBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            elements.nativeLangDropdown?.classList.toggle('hidden');
+        });
+        document.addEventListener('click', (e) => {
+            if (!elements.nativeLangBtn?.contains(e.target) && !elements.nativeLangDropdown?.contains(e.target)) {
+                elements.nativeLangDropdown?.classList.add('hidden');
+            }
+        });
 
-		elements.conversationContainer?.addEventListener('click', (event) => {
-			const lineElement = event.target.closest('.dialogue-line');
-			if (!lineElement || event.target.closest('.explanation-link')) return;
-
-			const turnIndex = parseInt(lineElement.id.split('-')[1], 10);
-			const turn = state.lessonPlan?.dialogue[turnIndex];
-			if (turn) lesson.playLineAudioDebounced(turn.line.display, turn.party);
-		});
-
-		elements.historyLessonsContainer?.addEventListener('click', (event) => {
-			const card = event.target.closest('.history-card');
-			if (!card) return;
-			const lessonId = card.dataset.lessonId;
-			const history = ui.getLessonHistory();
-			const lessonRecord = history.find(record => record.id === lessonId);
-			if (lessonRecord) {
-				lesson.reviewLesson(lessonRecord);
-			}
-		});
-
-		elements.lessonScreen?.addEventListener('click', (event) => {
-			if (event.target.closest('#vocab-quiz-btn')) {
-				const language = elements.languageSelect?.value;
-				if (lesson.startVocabularyQuiz) {
-					lesson.startVocabularyQuiz(language);
-				}
-			}
-		});
-	}
+        elements.historyLessonsContainer?.addEventListener('click', (event) => {
+            const card = event.target.closest('.history-card');
+            if (!card) return;
+            const lessonId = card.dataset.lessonId;
+            const history = ui.getLessonHistory();
+            const lessonRecord = history.find(record => record.id === lessonId);
+            if (lessonRecord) {
+                lesson.reviewLesson(lessonRecord);
+            }
+        });
+        elements.lessonScreen?.addEventListener('click', (event) => {
+            if (event.target.closest('#vocab-quiz-btn')) {
+                const language = elements.languageSelect?.value;
+                if (lesson.startVocabularyQuiz) {
+                    lesson.startVocabularyQuiz(language);
+                }
+            }
+        });
+    }
 
     // --- Initialization ---
     // Ensure translations are properly initialized

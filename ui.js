@@ -891,28 +891,27 @@ function createDialogueLine(turn, index) {
     lineContent += ` <i class="fas fa-volume-up text-gray-400 ml-2 hover:text-sky-300"></i>`;
     lineDiv.innerHTML = lineContent.trim();
 
+    // Attach a specific event dispatcher for audio playback
+    lineDiv.addEventListener('click', () => {
+        const audioRequestEvent = new CustomEvent('play-audio-for-turn', {
+            detail: { turn },
+            bubbles: true,
+            cancelable: true
+        });
+        lineDiv.dispatchEvent(audioRequestEvent);
+    });
+
     if (turn.explanation) {
         const explanationSpan = document.createElement('span');
         explanationSpan.innerHTML = ` <i class="fas fa-info-circle text-sky-300 ml-6"></i>`;
         explanationSpan.classList.add('explanation-link');
 
-        // Add debounced click handler to prevent multiple rapid clicks
         let clickTimeout = null;
         explanationSpan.onclick = (e) => {
-            e.stopPropagation();
-
-            // Clear any existing timeout
-            if (clickTimeout) {
-                clearTimeout(clickTimeout);
-            }
-
-            // Debounce the click with a 300ms delay
+            e.stopPropagation(); // This is crucial to prevent the audio from playing
+            if (clickTimeout) clearTimeout(clickTimeout);
             clickTimeout = setTimeout(() => {
-                // Include the original sentence in the explanation
-                const explanationWithSentence = {
-                    ...turn.explanation,
-                    originalSentence: turn.line.display || turn.line.text || ''
-                };
+                const explanationWithSentence = { ...turn.explanation, originalSentence: turn.line.display || turn.line.text || '' };
                 showExplanation(explanationWithSentence);
                 clickTimeout = null;
             }, 300);
