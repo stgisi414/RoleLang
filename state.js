@@ -15,6 +15,20 @@ export const audioPlayer = new Audio();
 export let audioController = new AbortController();
 
 // --- Setters ---
+
+/**
+ * Aborts the current AbortController and creates a new one.
+ * This is the correct way to manage the controller from other modules.
+ */
+export function resetAudioController() {
+    // Abort the current controller if it exists and hasn't been aborted yet.
+    if (audioController && !audioController.signal.aborted) {
+        audioController.abort();
+    }
+    // Create and assign a new AbortController.
+    audioController = new AbortController();
+}
+
 export function setRecognition(instance) {
     recognition = instance;
 }

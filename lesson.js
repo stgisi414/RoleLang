@@ -14,7 +14,6 @@ let currentSentences = [];
 let currentSentenceIndex = 0;
 let speechAttempts = 0;
 let audioDebounceTimer = null;
-let manualAudioPlayer = null; // To handle manually triggered line audio
 
 
 // --- Helper Functions (Unique to Lesson Logic) ---
@@ -188,7 +187,7 @@ Follow these steps precisely:
 7.  **Character Names:** Use realistic, culturally-appropriate names for ${language}. Examples: ${nameExamples}.
 8.  **NO PLACEHOLDERS:** Do not use placeholders like "[USER NAME]".
 9.  **Illustration Prompt:** A brief, descriptive prompt in English for an illustration (style: highly detailed, anime-like, stylish, no text).
-10. **AUDIO TAGGING FOR EXPLANATIONS:** In the explanation "body" text, wrap any ${language} words or phrases that would be helpful for pronunciation practice in <audio></audio> tags. For example: "The word <audio>bonjour</audio> is a common greeting" or "Notice how <audio>je suis</audio> means 'I am'". This allows the app to make these phrases clickable for audio playback. Use this feature for 2-4 key terms per explanation.
+10. **AUDIO TAGGING FOR EXPLANATIONS:** In the explanation "body" text, wrap any ${language} words or phrases that would be helpful for pronunciation practice in <audio></audio> tags. For example: "The word <audio>bonjour</audio> is a common greeting" or "Notice how <audio>je suis</audio> means 'I am'". This allows the app to make these phrases clickable for audio playback. Use this for 2-4 key terms per explanation.
 
 Now, generate the complete JSON lesson plan.`;
 }
@@ -233,7 +232,7 @@ export async function initializeLesson() {
     const prompt = createGeminiPrompt(language, topic, stateRef.nativeLang);
 
     try {
-        const data = await apiRef.callGeminiAPI(prompt); 
+        const data = await apiRef.callGeminiAPI(prompt);
         const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
         const plan = JSON.parse(jsonString);
 
@@ -311,7 +310,7 @@ export async function advanceTurn(newTurnIndex) {
 
     if (currentTurnData.party && currentTurnData.party.toUpperCase() === 'A') {
         const cleanText = removeParentheses(currentTurnData.line.display);
-        currentSentences = currentTurnData.sentences; 
+        currentSentences = currentTurnData.sentences;
         currentSentenceIndex = 0;
         uiRef.updateMicStatus('listenFirst', true);
 
@@ -326,7 +325,7 @@ export async function advanceTurn(newTurnIndex) {
         } catch (error) {
             enableUserMicForSentence();
         }
-    } else { 
+    } else {
         uiRef.updateMicStatus('partnerSpeaking', true);
         try {
             const cleanText = removeParentheses(currentTurnData.line.display);
@@ -411,7 +410,7 @@ async function fetchAndDisplayIllustration(prompt) {
                 stateRef.lessonPlan.illustration_url = result.imageUrl;
                 if (saveStateRef) saveStateRef();
             }
-            await uiRef.restoreIllustration(result.imageUrl); 
+            await uiRef.restoreIllustration(result.imageUrl);
         } else {
             throw new Error("No image URL returned from API.");
         }
@@ -779,7 +778,7 @@ async function generateVocabularyTranslations(vocabulary, targetLanguage) {
         const prompt = `
 You are a vocabulary translator. Your task is to translate words from ${targetLanguage} into ${nativeLangName}.
 
-Please translate each of the following words/phrases from ${targetLanguage} into ${nativeLangName}. 
+Please translate each of the following words/phrases from ${targetLanguage} into ${nativeLangName}.
 Return ONLY a JSON array with objects containing "word" (original word) and "translation" (translation in ${nativeLangName}).
 
 Words to translate: ${vocabList}
@@ -878,7 +877,7 @@ function createVocabularyQuizModal(vocabulary, language) {
                         ${uiRef.translateText('question') || 'Question'} ${currentQuestion + 1} ${uiRef.translateText('of') || 'of'} ${shuffledVocab.length}
                     </div>
                     <div class="w-full bg-gray-700 rounded-full h-2 mt-2">
-                        <div class="bg-purple-600 h-2 rounded-full transition-all duration-300" 
+                        <div class="bg-purple-600 h-2 rounded-full transition-all duration-300"
                              style="width: ${((currentQuestion) / shuffledVocab.length) * 100}%"></div>
                     </div>
                 </div>
@@ -991,8 +990,7 @@ export async function reviewLesson(lessonRecord) {
 
 export async function playLineAudio(text, party = 'B') {
     // Abort the main lesson flow's 'ended' listener to prevent turn advancement.
-    stateRef.audioController.abort();
-    stateRef.audioController = new AbortController();
+    stateRef.resetAudioController();
 
     try {
         const cleanText = removeParentheses(text);
@@ -1000,24 +998,22 @@ export async function playLineAudio(text, party = 'B') {
         const audioBlob = await apiRef.fetchPartnerAudio(cleanText, voiceConfig);
         const audioUrl = URL.createObjectURL(audioBlob);
 
-        // Use a new, dedicated Audio object for this manual playback.
-        manualAudioPlayer = new Audio(audioUrl);
-        manualAudioPlayer.playbackRate = parseFloat(domElements.audioSpeedSelect.value);
-        await manualAudioPlayer.play();
+        // If there's an old URL, revoke it to prevent memory leaks
+        if (stateRef.audioPlayer.src) {
+            URL.revokeObjectURL(stateRef.audioPlayer.src);
+        }
 
-        // Add listeners to clean up the object URL and the player instance.
-        manualAudioPlayer.onended = () => {
-            URL.revokeObjectURL(audioUrl);
-            manualAudioPlayer = null;
-        };
-        manualAudioPlayer.onerror = () => {
-            URL.revokeObjectURL(audioUrl);
-            manualAudioPlayer = null;
-            console.error("Error playing manually requested audio.");
-        };
+        // Use the single, global audio player from the state module
+        stateRef.audioPlayer.src = audioUrl;
+        stateRef.audioPlayer.playbackRate = parseFloat(domElements.audioSpeedSelect.value);
+
+        // Call load() to reset the element and ensure the new source is ready
+        stateRef.audioPlayer.load();
+        await stateRef.audioPlayer.play();
 
     } catch (error) {
         console.error("Failed to fetch audio for manual playback:", error);
+        showToast("Error playing audio.", "error");
     }
 }
 
@@ -1025,13 +1021,10 @@ export function playLineAudioDebounced(text, party = 'B') {
     if (audioDebounceTimer) {
         clearTimeout(audioDebounceTimer);
     }
-    // Stop the main lesson's audio player if it's running.
+    // Pause the single global audio player if it's currently playing
     if (stateRef.audioPlayer && !stateRef.audioPlayer.paused) {
         stateRef.audioPlayer.pause();
-    }
-    // Stop the previously triggered manual audio player if it's still running.
-    if (manualAudioPlayer && !manualAudioPlayer.paused) {
-        manualAudioPlayer.pause();
+        stateRef.audioPlayer.currentTime = 0; // Reset playback position
     }
 
     audioDebounceTimer = setTimeout(() => {
