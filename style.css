@@ -742,12 +742,12 @@ body.modal-open {
         width: calc(100vw - 32px) !important;
         box-sizing: border-box !important;
     }
-    
+
     .toastify.toastify-right {
         right: 16px !important;
         left: 16px !important;
     }
-    
+
     .toastify.toastify-top {
         top: 16px !important;
     }
@@ -770,16 +770,16 @@ body.modal-open {
         transform: none !important;
         box-sizing: border-box !important;
     }
-    
+
     .toastify.toastify-right {
         right: 12px !important;
         left: 12px !important;
     }
-    
+
     .toastify.toastify-top {
         top: 12px !important;
     }
-    
+
     /* Smaller close button on mobile */
     .toastify-close {
         width: 20px !important;
@@ -788,7 +788,7 @@ body.modal-open {
         margin-left: 8px !important;
         padding: 2px !important;
     }
-    
+
     /* Smaller icon on mobile */
     .toast-icon {
         margin-right: 6px !important;
@@ -850,7 +850,7 @@ body.modal-open {
             opacity: 1;
         }
     }
-    
+
     @keyframes toastSlideOut {
         0% {
             transform: translateY(0) scale(1);
@@ -1027,43 +1027,35 @@ function showToast(message, type = 'info') {
 
 /* Audio phrase styling */
 .audio-phrase {
-    color: #60a5fa;
-    /* blue-400 */
+    color: #60a5fa; /* blue-400 */
     background: linear-gradient(135deg, rgba(96, 165, 250, 0.15), rgba(59, 130, 246, 0.15));
     border: 1px solid rgba(96, 165, 250, 0.3);
-    border-radius: 4px;
-    padding: 2px 6px;
+    border-radius: 6px; /* Slightly increased for better appearance on inline elements */
+    padding: 1px 5px; /* Adjusted padding for inline flow */
     margin: 0 2px;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease; /* Adjusted transitions */
     font-weight: 500;
     text-decoration: underline;
     text-decoration-color: rgba(96, 165, 250, 0.5);
-    text-underline-offset: 2px;
-    display: inline-block;
-    will-change: transform;
-    position: relative;
-    z-index: 1;
-    max-width: 100%;
-    word-break: break-word;
-    overflow: hidden;
+    text-underline-offset: 3px; /* Adjusted offset */
+    display: inline; /* This is the key fix to ensure text flows correctly. */
 }
 
 .audio-phrase:hover {
-    background: linear-gradient(135deg, rgba(96, 165, 250, 0.25), rgba(59, 130, 246, 0.25));
-    border-color: rgba(96, 165, 250, 0.5);
-    transform: translateY(-1px) scale(1.01);
-    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);
-    text-decoration-color: rgba(96, 165, 250, 0.8);
-    z-index: 2;
+    background: linear-gradient(135deg, rgba(96, 165, 250, 0.3), rgba(59, 130, 246, 0.3));
+    border-color: rgba(96, 165, 250, 0.6);
+    color: #93c5fd; /* light-blue-300 */
+    text-decoration-color: rgba(96, 165, 250, 1);
+    /* transform and box-shadow are removed as they don't work reliably on multi-line inline elements */
 }
 
 .audio-phrase:active {
-    transform: translateY(0) scale(0.99);
+    /* Removed transform as it doesn't apply */
     background: linear-gradient(135deg, rgba(96, 165, 250, 0.35), rgba(59, 130, 246, 0.35));
     transition: all 0.1s ease;
-    z-index: 2;
 }
+
 
 /* Modal positioning fixes for mobile */
 #explanation-modal {
@@ -1113,7 +1105,7 @@ function showToast(message, type = 'info') {
         align-items: center;
         justify-content: center;
     }
-    
+
     #explanation-modal .modal-content {
         max-width: calc(100vw - 1rem);
         max-height: calc(100vh - 2rem);
@@ -1124,7 +1116,7 @@ function showToast(message, type = 'info') {
         font-size: 0.9rem;
         margin: auto;
     }
-    
+
     .audio-phrase {
         margin: 1px;
         padding: 2px 4px;
@@ -1133,7 +1125,7 @@ function showToast(message, type = 'info') {
         display: inline-block;
         word-break: break-word;
     }
-    
+
     /* Smaller close button on mobile */
     #explanation-modal .modal-content button {
         font-size: 1.5rem !important;
@@ -1141,24 +1133,24 @@ function showToast(message, type = 'info') {
         right: 0.5rem !important;
         top: 0.5rem !important;
     }
-    
+
     /* Better spacing for mobile */
     #explanation-modal .modal-content h3 {
         font-size: 1.25rem !important;
         margin-bottom: 1rem !important;
         padding-right: 2rem;
     }
-    
+
     #explanation-modal .modal-content p {
         line-height: 1.5 !important;
         margin-bottom: 1rem !important;
     }
-    
+
     /* YouTube section adjustments */
     #youtube-container {
         margin-top: 1rem !important;
     }
-    
+
     #youtube-iframe {
         height: 200px !important;
     }
@@ -1171,7 +1163,7 @@ function showToast(message, type = 'info') {
         align-items: center;
         justify-content: center;
     }
-    
+
     #explanation-modal .modal-content {
         max-width: calc(100vw - 0.5rem);
         max-height: calc(100vh - 1rem);
@@ -1181,15 +1173,15 @@ function showToast(message, type = 'info') {
         font-size: 0.85rem;
         margin: auto;
     }
-    
+
     #explanation-modal .modal-content h3 {
         font-size: 1.1rem !important;
     }
-    
+
     #youtube-iframe {
         height: 180px !important;
     }
-    
+
     .audio-phrase {
         font-size: 0.8em;
         padding: 1px 3px;
