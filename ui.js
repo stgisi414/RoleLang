@@ -441,46 +441,122 @@ function getVoiceConfigForLanguage(language) {
 // YouTube Data API key - you'll need to get this from Google Cloud Console
 const YOUTUBE_API_KEY = 'AIzaSyDAdiXobuer_CZHdM1llM5RlrfhRbls84M'; // Replace with your actual API key
 
+async function createIntelligentSearchTerm(explanationContent) {
+    try {
+        const targetLanguage = domElements.languageSelect?.value || 'English';
+        const nativeLang = getNativeLang() || 'en';
+        const { title, body } = explanationContent;
+
+        const prompt = `
+You are a YouTube optimization expert for language learning content. Your task is to create the most effective search term for finding educational videos.
+
+Given:
+- Target Language: "${targetLanguage}"
+- User's Native Language: "${nativeLang}"
+- Explanation Title: "${title}"
+- Explanation Body: "${body}"
+
+Instructions:
+1.  **Analyze the Explanation:** Understand the core grammar point or vocabulary.
+2.  **Construct the Search Query:** Create an optimized YouTube query. For grammar, use a format like *"\${targetLanguage} grammar \${keywords} tutorial"*. For vocabulary, use *"\${keywords} meaning in \${targetLanguage}"*.
+3.  **Final Output:** Your response must be a single, concise search phrase, ready for the YouTube API.
+
+Now, create the best search term.`;
+
+        const api = await import('./api.js');
+        const data = await api.callGeminiAPI(prompt);
+        const searchTerm = data.candidates[0].content.parts[0].text.trim().replace(/["""]/g, '');
+
+        if (!searchTerm) throw new Error('Empty search term generated');
+
+        console.log(`Generated intelligent search term: "${searchTerm}"`);
+        return searchTerm;
+
+    } catch (error) {
+        console.error('Failed to generate intelligent search term:', error);
+        const cleanTitle = explanationContent.title.replace(/[^\w\s]/gi, '').trim();
+        const targetLanguage = domElements.languageSelect?.value || 'English';
+        const fallbackQuery = `${targetLanguage} ${cleanTitle} grammar explanation tutorial`;
+        console.log(`Using fallback search term: "${fallbackQuery}"`);
+        return fallbackQuery;
+    }
+}
+
+
 async function searchAndLoadYouTubeVideo(content) {
     const loader = document.getElementById('youtube-loader');
     const videoContent = document.getElementById('video-content');
     const playBtn = document.getElementById('youtube-play-btn');
 
     try {
-        console.log('Searching YouTube for:', content.title);
         showToast(translateText('searchingForVideos'), 'info');
 
-        // Generate intelligent search term using Gemini
         const searchQuery = await createIntelligentSearchTerm(content);
-        console.log('Generated search query:', decodeURIComponent(searchQuery));
+        const { videos } = await yts(searchQuery);
 
-        // Search YouTube using the Data API
-        const videoId = await searchYouTubeVideos(decodeURIComponent(searchQuery));
+        if (!videos || videos.length === 0) {
+            throw new Error('No videos found for this query.');
+        }
 
-        if (videoId) {
-            // Load the video in iframe
-            const iframe = document.getElementById('youtube-iframe');
-            iframe.src = `https://www.youtube.com/embed/${videoId}`;
+        let embeddedVideo = false;
 
-            loader.classList.add('hidden');
-            videoContent.classList.remove('hidden');
+        function tryEmbedVideo(videoId) {
+            return new Promise((resolve, reject) => {
+                let player = new YT.Player('youtube-iframe', {
+                    height: '315',
+                    width: '560',
+                    videoId: videoId,
+                    events: {
+                        'onReady': () => {
+                            player.destroy();
+                            resolve(true);
+                        },
+                        'onError': (event) => {
+                            player.destroy();
+                            if ([100, 101, 150].includes(event.data)) {
+                                console.warn(`Video ${videoId} is not embeddable.`);
+                                reject(new Error('Video not embeddable'));
+                            } else {
+                                // For other errors, we can still try to resolve
+                                resolve(true);
+                            }
+                        }
+                    }
+                });
+            });
+        }
 
-            showToast(translateText('educationalVideoLoaded'), 'success');
-        } else {
-            throw new Error('No suitable videos found');
+        for (const video of videos) {
+            try {
+                await tryEmbedVideo(video.videoId);
+                const iframe = document.getElementById('youtube-iframe');
+                iframe.src = `https://www.youtube.com/embed/${video.videoId}`;
+
+                loader.classList.add('hidden');
+                videoContent.classList.remove('hidden');
+                showToast(translateText('educationalVideoLoaded'), 'success');
+
+                embeddedVideo = true;
+                break; 
+            } catch (error) {
+                console.log(error.message);
+                continue;
+            }
+        }
+
+        if (!embeddedVideo) {
+            throw new Error('None of the top search results were embeddable.');
         }
 
     } catch (error) {
         console.error('Error loading YouTube video:', error);
-
-        // Simple fallback - show search link
-        const searchQuery = encodeURIComponent(`${content.title} grammar explanation tutorial`);
         loader.classList.remove('hidden');
+        const searchQuery = encodeURIComponent(`${content.title} grammar explanation tutorial`);
         loader.innerHTML = `
             <div class="text-center py-8">
                 <p class="text-gray-300 mb-4">${translateText('videoNotAvailable')}</p>
-                <a href="https://www.youtube.com/results?search_query=${searchQuery}" 
-                   target="_blank" 
+                <a href="https://www.youtube.com/results?search_query=${searchQuery}"
+                   target="_blank"
                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center">
                     <i class="fab fa-youtube mr-2"></i>
                     ${translateText('searchYoutube')}
