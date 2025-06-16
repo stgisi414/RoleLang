@@ -300,6 +300,9 @@ Do not add any other text or explanations.`;
     if (domElements.modalBody) {
         domElements.modalBody.innerHTML = `
             <h3 class="text-xl font-bold mb-2 text-cyan-300">${translatedTitle}</h3>
+            ${content.originalSentence ? `<div class="bg-blue-600/20 border border-blue-600/30 rounded-lg p-3 mb-4">
+                <p class="text-blue-300 font-bold" style="font-size: 11px; line-height: 1.4;">${content.originalSentence}</p>
+            </div>` : ''}
             <p class="text-gray-300 mb-4">${processedBody}</p>
             <div class="border-t border-gray-600 pt-6 mt-6">
                 <div class="text-center mb-4">
@@ -891,7 +894,12 @@ function createDialogueLine(turn, index) {
             
             // Debounce the click with a 300ms delay
             clickTimeout = setTimeout(() => {
-                showExplanation(turn.explanation);
+                // Include the original sentence in the explanation
+                const explanationWithSentence = {
+                    ...turn.explanation,
+                    originalSentence: turn.line.display || turn.line.text || ''
+                };
+                showExplanation(explanationWithSentence);
                 clickTimeout = null;
             }, 300);
         };
