@@ -14,6 +14,7 @@ let currentSentences = [];
 let currentSentenceIndex = 0;
 let speechAttempts = 0;
 let audioDebounceTimer = null;
+let manualAudioPlayer = null; // To handle manually triggered line audio
 
 
 // --- Helper Functions (Unique to Lesson Logic) ---
@@ -594,14 +595,14 @@ export async function startVocabularyQuiz(language) {
     try {
         // Extract vocabulary with proper context from dialogue
         const vocabulary = await extractVocabularyFromDialogue();
-        
+
         if (!vocabulary || vocabulary.length === 0) {
             throw new Error("No vocabulary found in the dialogue.");
         }
 
         // Generate native language translations if needed
         const vocabularyWithTranslations = await generateVocabularyTranslations(vocabulary, language);
-        
+
         createVocabularyQuizModal(vocabularyWithTranslations, language);
 
     } catch (error) {
@@ -619,7 +620,7 @@ export async function startVocabularyQuiz(language) {
 
 async function extractVocabularyFromDialogue() {
     const language = domElements.languageSelect?.value;
-    
+
     // For English lessons, use AI to extract vocabulary
     if (language === 'English') {
         if (!stateRef.lessonPlan || !stateRef.lessonPlan.dialogue) return [];
@@ -657,11 +658,11 @@ Now, provide the JSON array.`;
                 const contextTurnIndex = stateRef.lessonPlan.dialogue.findIndex(turn =>
                     turn.line && turn.line.display && turn.line.display.toLowerCase().includes(vocabItem.word.toLowerCase())
                 );
-                
+
                 if (contextTurnIndex !== -1) {
                     // Get surrounding context for better quiz experience
                     const contextParts = [];
-                    
+
                     // Add preceding turn if available
                     if (contextTurnIndex > 0) {
                         const precedingTurn = stateRef.lessonPlan.dialogue[contextTurnIndex - 1];
@@ -669,14 +670,14 @@ Now, provide the JSON array.`;
                             contextParts.push(removeParentheses(precedingTurn.line.display));
                         }
                     }
-                    
+
                     // Add current turn (without the word itself to avoid giving away the answer)
                     const currentTurn = stateRef.lessonPlan.dialogue[contextTurnIndex];
                     const currentText = removeParentheses(currentTurn.line.display);
                     const wordRegex = new RegExp(vocabItem.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
                     const contextWithoutWord = currentText.replace(wordRegex, '___');
                     contextParts.push(contextWithoutWord);
-                    
+
                     // Add following turn if available
                     if (contextTurnIndex < stateRef.lessonPlan.dialogue.length - 1) {
                         const followingTurn = stateRef.lessonPlan.dialogue[contextTurnIndex + 1];
@@ -684,13 +685,13 @@ Now, provide the JSON array.`;
                             contextParts.push(removeParentheses(followingTurn.line.display));
                         }
                     }
-                    
+
                     return {
                         ...vocabItem,
                         context: contextParts.join(' ... ')
                     };
                 }
-                
+
                 return {
                     ...vocabItem,
                     context: vocabItem.word
@@ -719,7 +720,7 @@ Now, provide the JSON array.`;
                     if (word && translationClean && !seenWords.has(word.toLowerCase())) {
                         // Create enhanced context with surrounding turns
                         const contextParts = [];
-                        
+
                         // Add preceding turn if available
                         if (turnIndex > 0) {
                             const precedingTurn = stateRef.lessonPlan.dialogue[turnIndex - 1];
@@ -727,10 +728,10 @@ Now, provide the JSON array.`;
                                 contextParts.push(removeParentheses(precedingTurn.line.display));
                             }
                         }
-                        
+
                         // Add current turn without parenthetical translation
                         contextParts.push(cleanText);
-                        
+
                         // Add following turn if available
                         if (turnIndex < stateRef.lessonPlan.dialogue.length - 1) {
                             const followingTurn = stateRef.lessonPlan.dialogue[turnIndex + 1];
@@ -839,12 +840,12 @@ function createVocabularyQuizModal(vocabulary, language) {
 
         const currentVocab = shuffledVocab[currentQuestion];
         const correctAnswer = currentVocab.nativeTranslation || currentVocab.translation;
-        
+
         // Generate wrong answers from other vocabulary items or generic answers
         const allTranslations = shuffledVocab
             .map(v => v.nativeTranslation || v.translation)
             .filter(t => t !== correctAnswer);
-        
+
         let wrongAnswers = [];
         if (allTranslations.length >= 3) {
             wrongAnswers = allTranslations
@@ -854,14 +855,14 @@ function createVocabularyQuizModal(vocabulary, language) {
             wrongAnswers = [...allTranslations];
             const genericWrongAnswers = getGenericWrongAnswers(language, stateRef.nativeLang);
             const neededAnswers = 3 - wrongAnswers.length;
-            
+
             for (let i = 0; i < neededAnswers && i < genericWrongAnswers.length; i++) {
                 if (!wrongAnswers.includes(genericWrongAnswers[i]) && genericWrongAnswers[i] !== correctAnswer) {
                     wrongAnswers.push(genericWrongAnswers[i]);
                 }
             }
         }
-        
+
         const allOptions = [correctAnswer, ...wrongAnswers.slice(0, 3)]
             .sort(() => 0.5 - Math.random());
 
@@ -943,7 +944,7 @@ function getGenericWrongAnswers(targetLanguage, nativeLangCode) {
         'ko': ['사과', '집', '물', '행복한', '달리다', '아름다운', '돈', '시간'],
         'zh': ['苹果', '房子', '水', '快乐', '跑步', '美丽', '钱', '时间']
     };
-    
+
     return wrongAnswersByNative[nativeLangCode] || wrongAnswersByNative['en'];
 }
 
@@ -989,6 +990,7 @@ export async function reviewLesson(lessonRecord) {
 }
 
 export async function playLineAudio(text, party = 'B') {
+    // Abort the main lesson flow's 'ended' listener to prevent turn advancement.
     stateRef.audioController.abort();
     stateRef.audioController = new AbortController();
 
@@ -998,13 +1000,21 @@ export async function playLineAudio(text, party = 'B') {
         const audioBlob = await apiRef.fetchPartnerAudio(cleanText, voiceConfig);
         const audioUrl = URL.createObjectURL(audioBlob);
 
-        if (stateRef.audioPlayer.src) {
-            URL.revokeObjectURL(stateRef.audioPlayer.src);
-        }
-        stateRef.audioPlayer.src = audioUrl;
-        stateRef.audioPlayer.playbackRate = parseFloat(domElements.audioSpeedSelect.value);
+        // Use a new, dedicated Audio object for this manual playback.
+        manualAudioPlayer = new Audio(audioUrl);
+        manualAudioPlayer.playbackRate = parseFloat(domElements.audioSpeedSelect.value);
+        await manualAudioPlayer.play();
 
-        await stateRef.audioPlayer.play();
+        // Add listeners to clean up the object URL and the player instance.
+        manualAudioPlayer.onended = () => {
+            URL.revokeObjectURL(audioUrl);
+            manualAudioPlayer = null;
+        };
+        manualAudioPlayer.onerror = () => {
+            URL.revokeObjectURL(audioUrl);
+            manualAudioPlayer = null;
+            console.error("Error playing manually requested audio.");
+        };
 
     } catch (error) {
         console.error("Failed to fetch audio for manual playback:", error);
@@ -1015,9 +1025,15 @@ export function playLineAudioDebounced(text, party = 'B') {
     if (audioDebounceTimer) {
         clearTimeout(audioDebounceTimer);
     }
-    if (!stateRef.audioPlayer.paused) {
+    // Stop the main lesson's audio player if it's running.
+    if (stateRef.audioPlayer && !stateRef.audioPlayer.paused) {
         stateRef.audioPlayer.pause();
     }
+    // Stop the previously triggered manual audio player if it's still running.
+    if (manualAudioPlayer && !manualAudioPlayer.paused) {
+        manualAudioPlayer.pause();
+    }
+
     audioDebounceTimer = setTimeout(() => {
         playLineAudio(text, party);
         audioDebounceTimer = null;
