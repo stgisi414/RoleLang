@@ -1014,6 +1014,7 @@ export async function playLineAudio(text, party = 'B') {
 
     } catch (error) {
         console.error("Failed to fetch audio for manual playback:", error);
+        showToast("Error playing audio.", "error");
     }
 }
 
@@ -1024,6 +1025,7 @@ export function playLineAudioDebounced(text, party = 'B') {
     // Pause the single global audio player if it's currently playing
     if (stateRef.audioPlayer && !stateRef.audioPlayer.paused) {
         stateRef.audioPlayer.pause();
+        stateRef.audioPlayer.currentTime = 0; // Reset playback position
     }
 
     audioDebounceTimer = setTimeout(() => {

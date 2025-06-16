@@ -294,16 +294,27 @@ async function initializeApp() {
         console.error('One or more modules failed to load');
         return;
     }
+    
+    // Define the callback that will be passed to the UI module.
+    const playAudioCallback = (turn) => {
+        if (lesson && lesson.playLineAudioDebounced) {
+            lesson.playLineAudioDebounced(turn.line.display, turn.party);
+        }
+    };
 
+    // Initialize the lesson module
     lesson.init(elements, state, api, ui, saveState);
+
+    // Initialize the UI module, passing the new audio callback as the last argument
     ui.init(
         elements,
         state.getTranslations,
         () => state.nativeLang,
         saveState,
         goBackToLanding,
-        state.setNativeLang, // Pass the setNativeLang function
-        state.setCurrentTranslations // Pass the setCurrentTranslations function
+        state.setNativeLang,
+        state.setCurrentTranslations,
+        playAudioCallback // Pass the new callback here
     );
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -351,21 +362,13 @@ async function initializeApp() {
         });
         elements.micBtn?.addEventListener('click', () => lesson.toggleSpeechRecognition());
         elements.toggleLessonsBtn?.addEventListener('click', () => ui.toggleLessonsVisibility());
-        elements.toggleHistoryBtn?.addEventListener('click', ui.toggleHistoryVisibility);
+        elements.toggleHistoryBtn?.addEventListener('click', () => ui.toggleHistoryVisibility);
         elements.difficultyTab?.addEventListener('click', () => ui.switchTab('difficulty'));
         elements.situationsTab?.addEventListener('click', () => ui.switchTab('situations'));
         elements.resetLessonBtn?.addEventListener('click', () => lesson.resetLesson());
         elements.confirmStartLessonBtn?.addEventListener('click', () => lesson.confirmStartLesson());
 
-        // Remove the old, ineffective delegated listener and replace it
-        // with a listener for our new custom event.
-        elements.appContainer?.addEventListener('play-audio-for-turn', (event) => {
-            const { turn } = event.detail;
-            if (turn && lesson.playLineAudioDebounced) {
-                lesson.playLineAudioDebounced(turn.line.display, turn.party);
-            }
-        });
-
+        // This listener handles clicks for pre-made lesson buttons and language options
         document.addEventListener('click', (event) => {
             if (event.target.classList.contains('lesson-btn')) {
                 if (elements.topicInput) {
@@ -378,9 +381,12 @@ async function initializeApp() {
                 const langCode = option.getAttribute('data-lang');
                 const flag = option.getAttribute('data-flag');
                 const name = option.textContent.trim();
+
                 state.setNativeLang(langCode);
                 state.setCurrentTranslations(window.translations[langCode] || window.translations.en);
-                if (ui) ui.setNativeLanguage(langCode, flag, name);
+                if (ui) {
+                    ui.setNativeLanguage(langCode, flag, name);
+                }
                 elements.nativeLangDropdown?.classList.add('hidden');
                 saveState();
             }
@@ -390,7 +396,6 @@ async function initializeApp() {
         elements.languageSelect?.addEventListener('change', (event) => {
             console.log('Target language changed to:', event.target.value);
             setTimeout(() => {
-                console.log('Saving state with target language:', elements.languageSelect.value);
                 saveState();
             }, 50);
         });
@@ -427,6 +432,7 @@ async function initializeApp() {
             }
         });
 
+        // The listener for clicking on previous lessons in the history
         elements.historyLessonsContainer?.addEventListener('click', (event) => {
             const card = event.target.closest('.history-card');
             if (!card) return;
@@ -437,6 +443,8 @@ async function initializeApp() {
                 lesson.reviewLesson(lessonRecord);
             }
         });
+
+        // The listener for the vocabulary quiz button
         elements.lessonScreen?.addEventListener('click', (event) => {
             if (event.target.closest('#vocab-quiz-btn')) {
                 const language = elements.languageSelect?.value;
@@ -445,6 +453,10 @@ async function initializeApp() {
                 }
             }
         });
+
+        // NOTE: The original click listener on 'conversationContainer' has been removed.
+        // The click-to-play audio is now handled by the new callback system
+        // passed into ui.init() and attached directly in ui.js.
     }
 
     // --- Initialization ---

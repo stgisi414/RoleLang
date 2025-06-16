@@ -4,6 +4,7 @@ let getTranslations;
 let getNativeLang;
 let saveState;
 let backToLandingCallback = () => window.location.reload(); // Default fallback
+let playAudioCallback; // For the new direct audio playback
 
 // Add module-level variables for the state setter functions.
 let setNativeLang;
@@ -24,15 +25,15 @@ const exitAnimationClasses = [
 
 
 // --- Initialization ---
-export function init(elements, translationsFunc, nativeLangFunc, saveFunc, backCb, setNativeLangFunc, setCurrentTranslationsFunc) {
+export function init(elements, translationsFunc, nativeLangFunc, saveFunc, backCb, setNativeLangFunc, setCurrentTranslationsFunc, playAudioCb) {
     domElements = elements;
     getTranslations = translationsFunc;
     getNativeLang = nativeLangFunc;
     saveState = saveFunc;
     backToLandingCallback = backCb;
-    // Assign the setter functions to the module-level variables.
     setNativeLang = setNativeLangFunc;
     setCurrentTranslations = setCurrentTranslationsFunc;
+    playAudioCallback = playAudioCb; // Store the callback
 }
 
 // --- Translation ---
@@ -868,7 +869,8 @@ function createDialogueLine(turn, index) {
     const lineDiv = document.createElement('div');
     const party = turn.party ? turn.party.toUpperCase() : 'B';
 
-    lineDiv.className = `dialogue-line text-white cursor-pointer ${party === 'A' ? 'user-line' : 'partner-line'}`;
+    // The whole line is no longer a cursor-pointer, only the icon will be.
+    lineDiv.className = `dialogue-line text-white ${party === 'A' ? 'user-line' : 'partner-line'}`;
     lineDiv.id = `turn-${index}`;
 
     const speakerIcon = party === 'A' ? '👤' : '🤖';
@@ -878,7 +880,6 @@ function createDialogueLine(turn, index) {
         turn.sentences.forEach((sentence, sentenceIndex) => {
             lineContent += `<span class="sentence-span" id="turn-${index}-sentence-${sentenceIndex}">${sentence}</span> `;
         });
-
         const originalLine = turn.line.display;
         if (originalLine.includes('(')) {
             const translationPart = originalLine.substring(originalLine.indexOf('('));
@@ -888,18 +889,20 @@ function createDialogueLine(turn, index) {
         lineContent += turn.line.display;
     }
 
-    lineContent += ` <i class="fas fa-volume-up text-gray-400 ml-2 hover:text-sky-300"></i>`;
+    // Add cursor-pointer directly to the icon to show it's clickable
+    lineContent += ` <i class="fas fa-volume-up text-gray-400 ml-2 hover:text-sky-300 cursor-pointer"></i>`;
     lineDiv.innerHTML = lineContent.trim();
 
-    // Attach a specific event dispatcher for audio playback
-    lineDiv.addEventListener('click', () => {
-        const audioRequestEvent = new CustomEvent('play-audio-for-turn', {
-            detail: { turn },
-            bubbles: true,
-            cancelable: true
+    // Find the icon we just added and attach a direct click listener
+    const volumeIcon = lineDiv.querySelector('.fa-volume-up');
+    if (volumeIcon) {
+        volumeIcon.addEventListener('click', (e) => {
+            e.stopPropagation(); // Stop the click from bubbling up further
+            if (typeof playAudioCallback === 'function') {
+                playAudioCallback(turn); // Use the callback passed during init
+            }
         });
-        lineDiv.dispatchEvent(audioRequestEvent);
-    });
+    }
 
     if (turn.explanation) {
         const explanationSpan = document.createElement('span');
@@ -908,7 +911,7 @@ function createDialogueLine(turn, index) {
 
         let clickTimeout = null;
         explanationSpan.onclick = (e) => {
-            e.stopPropagation(); // This is crucial to prevent the audio from playing
+            e.stopPropagation(); // This prevents the line's click from firing
             if (clickTimeout) clearTimeout(clickTimeout);
             clickTimeout = setTimeout(() => {
                 const explanationWithSentence = { ...turn.explanation, originalSentence: turn.line.display || turn.line.text || '' };
