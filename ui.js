@@ -219,18 +219,18 @@ export async function showExplanation(content) {
                 <div class="text-center mb-4">
                     <h4 class="text-lg font-semibold text-cyan-300 mb-3">
                         <i class="fab fa-youtube text-red-500 mr-2"></i>
-                        Related Educational Video
+                        ${translateText('relatedEducationalVideo')}
                     </h4>
                     <button id="youtube-play-btn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg transition-colors cursor-pointer inline-flex items-center font-semibold">
                         <i class="fab fa-youtube mr-2"></i>
                         <i class="fas fa-play mr-2"></i>
-                        Load Video
+                        ${translateText('loadVideo')}
                     </button>
                 </div>
                 <div id="youtube-container" class="mt-6">
                     <div id="youtube-loader" class="flex items-center justify-center py-8 hidden">
                         <div class="loader"></div>
-                        <span class="ml-3 text-gray-400">Loading video...</span>
+                        <span class="ml-3 text-gray-400">${translateText('loadingVideo')}</span>
                     </div>
                     <div id="video-content" class="hidden">
                         <iframe 
@@ -297,7 +297,7 @@ export async function showExplanation(content) {
 async function playPhraseAudio(phrase) {
     try {
         const targetLanguage = domElements.languageSelect?.value || 'English';
-        showToast(`Playing: "${phrase}"`, 'info');
+        showToast(`${translateText('playingPhrase')}: "${phrase}"`, 'info');
 
         // Import lesson module to get voice config
         const lesson = await import('./lesson.js');
@@ -352,7 +352,7 @@ async function searchAndLoadYouTubeVideo(title) {
 
     try {
         console.log('Searching YouTube for:', title);
-        showToast('Searching for educational videos...', 'info');
+        showToast(translateText('searchingForVideos'), 'info');
 
         // Generate intelligent search term using Gemini
         const searchQuery = await createIntelligentSearchTerm(title);
@@ -369,7 +369,7 @@ async function searchAndLoadYouTubeVideo(title) {
             loader.classList.add('hidden');
             videoContent.classList.remove('hidden');
 
-            showToast('Educational video loaded!', 'success');
+            showToast(translateText('educationalVideoLoaded'), 'success');
         } else {
             throw new Error('No suitable videos found');
         }
@@ -381,12 +381,12 @@ async function searchAndLoadYouTubeVideo(title) {
         const searchQuery = encodeURIComponent(`${title} grammar explanation tutorial`);
         loader.innerHTML = `
             <div class="text-center py-8">
-                <p class="text-gray-300 mb-4">Video not available</p>
+                <p class="text-gray-300 mb-4">${translateText('videoNotAvailable')}</p>
                 <a href="https://www.youtube.com/results?search_query=${searchQuery}" 
                    target="_blank" 
                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center">
                     <i class="fab fa-youtube mr-2"></i>
-                    Search YouTube
+                    ${translateText('searchYoutube')}
                 </a>
             </div>
         `;
