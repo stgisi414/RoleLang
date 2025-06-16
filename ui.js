@@ -207,39 +207,40 @@ export async function showExplanation(content) {
         return;
     }
 
-    // Immediately show modal with loading spinner to prevent multiple clicks
-    if (domElements.modal && domElements.modalBody) {
-        // Show loading state immediately
-        domElements.modalBody.innerHTML = `
-            <div class="flex flex-col items-center justify-center py-12">
-                <div class="loader mb-4"></div>
-                <p class="text-gray-400">${translateText('loadingExplanation') || 'Loading explanation...'}</p>
-            </div>
-        `;
-        
-        domElements.modal.classList.remove('hidden');
-        document.body.classList.add('modal-open'); // Lock body scroll
-        
-        // Add modal close handler immediately
-        const handleModalClose = () => {
-            const iframe = document.getElementById('youtube-iframe');
-            if (iframe && iframe.src) {
-                // Stop video by clearing and resetting the src
-                const currentSrc = iframe.src;
-                iframe.src = '';
-                // Optional: Reset to original src if needed for future use
-                setTimeout(() => {
-                    if (iframe) iframe.src = currentSrc;
-                }, 100);
-            }
-            document.body.classList.remove('modal-open'); // Unlock body scroll
-        };
-
-        // Store the close handler for cleanup
-        if (domElements.modal) {
-            domElements.modal._closeHandler = handleModalClose;
-        }
+    // Ensure modal elements exist
+    if (!domElements.modal || !domElements.modalBody) {
+        console.error('Modal elements not found');
+        return;
     }
+
+    // Show loading state immediately
+    domElements.modalBody.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-12">
+            <div class="loader mb-4"></div>
+            <p class="text-gray-400">${translateText('loadingExplanation') || 'Loading explanation...'}</p>
+        </div>
+    `;
+    
+    domElements.modal.classList.remove('hidden');
+    document.body.classList.add('modal-open'); // Lock body scroll
+    
+    // Add modal close handler immediately
+    const handleModalClose = () => {
+        const iframe = document.getElementById('youtube-iframe');
+        if (iframe && iframe.src) {
+            // Stop video by clearing and resetting the src
+            const currentSrc = iframe.src;
+            iframe.src = '';
+            // Optional: Reset to original src if needed for future use
+            setTimeout(() => {
+                if (iframe) iframe.src = currentSrc;
+            }, 100);
+        }
+        document.body.classList.remove('modal-open'); // Unlock body scroll
+    };
+
+    // Store the close handler for cleanup
+    domElements.modal._closeHandler = handleModalClose;
 
     // Now load content asynchronously
     try {
@@ -361,13 +362,19 @@ Do not add any other text or explanations.`;
             }
 
             // Add click event listeners for audio phrases
-            const audioPhrases = domElements.modalBody.querySelectorAll('.audio-phrase');
-            audioPhrases.forEach(phraseElement => {
-                phraseElement.addEventListener('click', async () => {
-                    const phrase = phraseElement.getAttribute('data-phrase');
-                    await playPhraseAudio(phrase);
+            if (domElements.modalBody) {
+                const audioPhrases = domElements.modalBody.querySelectorAll('.audio-phrase');
+                audioPhrases.forEach(phraseElement => {
+                    if (phraseElement) {
+                        phraseElement.addEventListener('click', async () => {
+                            const phrase = phraseElement.getAttribute('data-phrase');
+                            if (phrase) {
+                                await playPhraseAudio(phrase);
+                            }
+                        });
+                    }
                 });
-            });
+            }
         }
 
     } catch (error) {
@@ -390,11 +397,15 @@ Do not add any other text or explanations.`;
 
 async function playPhraseAudio(phrase) {
     try {
+        if (!phrase || typeof phrase !== 'string') {
+            console.error('Invalid phrase for audio playback:', phrase);
+            return;
+        }
+
         const targetLanguage = domElements.languageSelect?.value || 'English';
         showToast(`${translateText('playingPhrase')}: "${phrase}"`, 'info');
 
         // Import lesson module to get voice config
-        const lesson = await import('./lesson.js');
         const api = await import('./api.js');
 
         // Get appropriate voice config for the target language
@@ -402,12 +413,17 @@ async function playPhraseAudio(phrase) {
 
         // Fetch and play audio
         const audioBlob = await api.fetchPartnerAudio(phrase, voiceConfig);
+        if (!audioBlob) {
+            throw new Error('No audio blob received');
+        }
+
         const audioUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(audioUrl);
 
         audio.play().catch(error => {
             console.error('Error playing phrase audio:', error);
             showToast('Audio playback failed', 'error');
+            URL.revokeObjectURL(audioUrl);
         });
 
         audio.onended = () => URL.revokeObjectURL(audioUrl);
@@ -599,6 +615,10 @@ Create the best search term for the given topic and language:`;
 }
 
 async function parseAndRenderExplanationWithAudio(content) {
+    if (!content || !content.body) {
+        return { processedBody: '', audioItems: [] };
+    }
+
     const targetLanguage = domElements.languageSelect?.value || 'English';
 
     // Parse the explanation text for audio tags
@@ -611,15 +631,17 @@ async function parseAndRenderExplanationWithAudio(content) {
     let index = 0;
     while ((match = audioTagRegex.exec(content.body)) !== null) {
         const phrase = match[1];
-        const audioId = `audio-phrase-${index}`;
-        audioItems.push({ id: audioId, phrase: phrase });
+        if (phrase && phrase.trim()) {
+            const audioId = `audio-phrase-${index}`;
+            audioItems.push({ id: audioId, phrase: phrase });
 
-        // Replace the audio tag with a clickable span
-        processedBody = processedBody.replace(
-            match[0], 
-            `<span class="audio-phrase" data-audio-id="${audioId}" data-phrase="${phrase}">${phrase}</span>`
-        );
-        index++;
+            // Replace the audio tag with a clickable span
+            processedBody = processedBody.replace(
+                match[0], 
+                `<span class="audio-phrase" data-audio-id="${audioId}" data-phrase="${phrase}">${phrase}</span>`
+            );
+            index++;
+        }
     }
 
     return { processedBody, audioItems };
