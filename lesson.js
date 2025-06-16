@@ -30,10 +30,10 @@ async function splitIntoSentences(text) {
     // For languages without spaces, count characters instead of words
     const isSpacelessLanguage = ['Japanese', 'Chinese'].includes(currentLanguage);
     const textLength = isSpacelessLanguage ? cleanText.length : cleanText.split(/\s+/).length;
-    
+
     // Lower threshold for spaceless languages
     const threshold = isSpacelessLanguage ? 15 : 5;
-    
+
     if (textLength <= threshold) {
         return [cleanText];
     }
@@ -73,7 +73,7 @@ function tryFallbackSplit(text, language) {
     const isSpacelessLanguage = ['Japanese', 'Chinese'].includes(language);
     const words = isSpacelessLanguage ? [text] : text.split(/\s+/);
     const threshold = isSpacelessLanguage ? 15 : 5;
-    
+
     if ((isSpacelessLanguage && text.length <= threshold) || (!isSpacelessLanguage && words.length <= threshold)) {
         return [text];
     }
@@ -92,11 +92,11 @@ function tryFallbackSplit(text, language) {
         default: 
             splitPattern = /([.!?]\s+)/;
     }
-    
+
     const parts = text.split(splitPattern).filter(part => part && part.trim().length > 0);
     const sentences = [];
     let currentSentence = '';
-    
+
     for (let i = 0; i < parts.length; i++) {
         currentSentence += parts[i];
         if (splitPattern.test(parts[i]) || i === parts.length - 1) {
@@ -104,7 +104,7 @@ function tryFallbackSplit(text, language) {
             currentSentence = '';
         }
     }
-    
+
     // If still no good split, divide by length
     if (sentences.length <= 1) {
         if (isSpacelessLanguage) {
@@ -115,7 +115,7 @@ function tryFallbackSplit(text, language) {
             return [words.slice(0, midPoint).join(' '), words.slice(midPoint).join(' ')];
         }
     }
-    
+
     return sentences.length > 0 ? sentences : [text];
 }
 
@@ -159,6 +159,23 @@ function saveLessonToHistory(lessonPlan, selectedLanguage, originalTopic) {
     } catch (error) {
         console.warn('Failed to save lesson to history:', error);
     }
+}
+
+// Helper function to convert common kanji names to hiragana approximations
+function convertKanjiToHiragana(kanjiName) {
+    // This is a simplified mapping for common Japanese names
+    // In a production app, you'd want a more comprehensive kanji-to-hiragana converter
+    const kanjiToHiraganaMap = {
+        // Surnames
+        '佐藤': 'さとう', '鈴木': 'すずき', '高橋': 'たかはし', '田中': 'たなか', '伊藤': 'いとう',
+        '渡辺': 'わたなべ', '山本': 'やまもと', '中村': 'なかむら', '小林': 'こばやし', '加藤': 'かとう',
+        '吉田': 'よしだ', '山田': 'やまだ', '佐々木': 'ささき', '山口': 'やまぐち', '松本': 'まつもと',
+        // Given names (examples)
+        '陽葵': 'ひまり', '凛': 'りん', '詩': 'うた', '結菜': 'ゆいな', '咲良': 'さくら',
+        '蓮': 'れん', '陽翔': 'はると', '蒼': 'あおい', '湊': 'みなと', '樹': 'いつき'
+    };
+
+    return kanjiToHiraganaMap[kanjiName] || kanjiName;
 }
 
 function getVoiceConfig(language, party = 'A') {
@@ -219,6 +236,7 @@ Follow these steps precisely:
 8.  **NO PLACEHOLDERS:** Do not use placeholders like "[USER NAME]".
 9.  **Illustration Prompt:** A brief, descriptive prompt in English for an illustration (style: highly detailed, anime-like, stylish, no text).
 10. **AUDIO TAGGING FOR EXPLANATIONS:** In the explanation "body" text, wrap any ${language} words or phrases that would be helpful for pronunciation practice in <audio></audio> tags. For example: "The word <audio>bonjour</audio> is a common greeting" or "Notice how <audio>je suis</audio> means 'I am'". This allows the app to make these phrases clickable for audio playback. Use this for 2-4 key terms per explanation.
+11. **JAPANESE NAMES:** For Japanese, ALWAYS present the names in hiragana with the original kanji in parentheses. For example, "たなか (田中)".
 
 Now, generate the complete JSON lesson plan.`;
 }
@@ -537,7 +555,7 @@ Now, provide the JSON response.`;
         } else {
             // Enhanced logic for Western languages
             let requiredText = (currentSentences.length > 1) ? currentSentences[currentSentenceIndex] : currentTurnData.line.clean_text;
-            
+
             // More aggressive normalization for better matching
             const normalize = (text) => {
                 return text.trim()
@@ -547,22 +565,22 @@ Now, provide the JSON response.`;
                     .replace(/[-_]/g, ' ') // Handle hyphens and underscores
                     .trim();
             };
-            
+
             const normalizedSpoken = normalize(spokenText);
             const normalizedRequired = normalize(requiredText);
-            
+
             console.log('Speech verification:', {
                 original: requiredText,
                 normalized: normalizedRequired,
                 spoken: normalizedSpoken
             });
-            
+
             // Check for exact match first
             if (normalizedSpoken === normalizedRequired) {
                 handleCorrectSpeech();
                 return;
             }
-            
+
             // Check if spoken text contains all major words from required text
             const requiredWords = normalizedRequired.split(' ').filter(w => w.length > 2);
             const spokenWords = normalizedSpoken.split(' ');
@@ -572,14 +590,14 @@ Now, provide the JSON response.`;
                     levenshteinDistance(word, spokenWord) <= 1
                 )
             );
-            
+
             const wordMatchRatio = requiredWords.length > 0 ? matchedWords.length / requiredWords.length : 0;
-            
+
             // Use Levenshtein distance as backup
             const distance = levenshteinDistance(normalizedSpoken, normalizedRequired);
             const maxLength = Math.max(normalizedSpoken.length, normalizedRequired.length);
             const similarity = maxLength === 0 ? 1 : 1 - (distance / maxLength);
-            
+
             // More lenient matching - accept if word match ratio is good OR similarity is decent
             if (wordMatchRatio >= 0.7 || similarity >= 0.6) {
                 handleCorrectSpeech();
@@ -677,46 +695,7 @@ export async function startVocabularyQuiz(language) {
             <div class="bg-gray-800 rounded-xl p-6 max-w-md w-full glassmorphism text-center">
                 <h3 class="text-xl font-bold text-red-400 mb-4">Error</h3>
                 <p class="text-gray-300 mb-6">Could not generate a vocabulary quiz for this lesson.</p>
-                <button id="close-quiz-error-btn" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">Close</button>
-            </div>
-        `;
-        document.getElementById('close-quiz-error-btn').onclick = () => quizModal.remove();
-    }
-}
-
-async function extractVocabularyFromDialogue() {
-    const language = domElements.languageSelect?.value;
-
-    // For English lessons, use AI to extract vocabulary
-    if (language === 'English') {
-        if (!stateRef.lessonPlan || !stateRef.lessonPlan.dialogue) return [];
-
-        const dialogueText = stateRef.lessonPlan.dialogue.map(turn => turn.line.display).join('\n');
-        const nativeLangName = {'en': 'English', 'es': 'Spanish', 'fr': 'French', 'de': 'German', 'it': 'Italian', 'zh': 'Chinese', 'ja': 'Japanese', 'ko': 'Korean'}[stateRef.nativeLang] || 'English';
-
-        const prompt = `
-You are a vocabulary extraction tool for an English language learner. From the following dialogue, identify 5-10 key vocabulary words or phrases that would be useful for a learner.
-
-For each item, provide the word/phrase and a simple definition or synonym in English.
-
-Your response MUST be a valid JSON array of objects, with each object having a "word" key and a "translation" key (where "translation" is the definition/synonym).
-
-Example:
-[
-  {"word": "hectic", "translation": "very busy and full of activity"},
-  {"word": "grab a bite", "translation": "to get something to eat"}
-]
-
-Dialogue:
----
-${dialogueText}
----
-
-Now, provide the JSON array.`;
-
-        try {
-            const data = await apiRef.callGeminiAPI(prompt);
-            const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+                <button id="close-quiz-errorjson|```/g, '').trim();
             const vocabulary = JSON.parse(jsonString);
 
             // Add enhanced context to each vocabulary item
