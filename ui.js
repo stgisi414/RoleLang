@@ -307,12 +307,11 @@ Do not add any other text or explanations.`;
             <div class="border-t border-gray-600 pt-6 mt-6">
                 <div class="text-center mb-4">
                     <h4 class="text-lg font-semibold text-cyan-300 mb-3">
-                        <i class="fab fa-youtube text-red-500 mr-2"></i>
+                        <i class="fab fa-play text-red-500 mr-2"></i>
                         ${translateText('relatedEducationalVideo')}
                     </h4>
                     <button id="youtube-play-btn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg transition-colors cursor-pointer inline-flex items-center font-semibold">
                         <i class="fab fa-youtube mr-2"></i>
-                        <i class="fas fa-play mr-2"></i>
                         ${translateText('loadVideo')}
                     </button>
                 </div>
