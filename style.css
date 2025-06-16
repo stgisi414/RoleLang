@@ -714,61 +714,70 @@ body.modal-open {
     margin: 12px !important;
     min-width: 320px;
     max-width: 420px;
-    transform: translateX(120%) scale(0.95);
     opacity: 0;
     animation: toastSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-    position: relative;
+    position: fixed;
     overflow: hidden;
+    z-index: 10000;
 }
 
 /* Mobile-specific toast optimizations */
 @media (max-width: 768px) {
     .toastify {
-        min-width: 280px !important;
-        max-width: calc(100vw - 24px) !important;
+        min-width: 260px !important;
+        max-width: calc(100vw - 32px) !important;
         padding: 12px 16px !important;
-        margin: 8px !important;
+        margin: 0 !important;
         border-radius: 12px !important;
         font-size: 0.875rem !important;
         line-height: 1.4 !important;
-        right: 12px !important;
-        left: auto !important;
-        top: 12px !important;
+        right: 16px !important;
+        left: 16px !important;
+        top: 16px !important;
+        position: fixed !important;
+        transform: none !important;
         word-wrap: break-word;
         word-break: break-word;
         overflow-wrap: break-word;
+        width: calc(100vw - 32px) !important;
+        box-sizing: border-box !important;
     }
     
     .toastify.toastify-right {
-        right: 12px !important;
-        left: auto !important;
+        right: 16px !important;
+        left: 16px !important;
     }
     
     .toastify.toastify-top {
-        top: 12px !important;
+        top: 16px !important;
     }
 }
 
 /* Extra small devices */
 @media (max-width: 480px) {
     .toastify {
-        min-width: 240px !important;
-        max-width: calc(100vw - 16px) !important;
+        min-width: 220px !important;
+        max-width: calc(100vw - 24px) !important;
         padding: 10px 12px !important;
-        margin: 6px !important;
+        margin: 0 !important;
         border-radius: 10px !important;
         font-size: 0.8rem !important;
-        right: 8px !important;
-        top: 8px !important;
+        right: 12px !important;
+        left: 12px !important;
+        top: 12px !important;
+        width: calc(100vw - 24px) !important;
+        position: fixed !important;
+        transform: none !important;
+        box-sizing: border-box !important;
     }
     
     .toastify.toastify-right {
-        right: 8px !important;
-        left: auto !important;
+        right: 12px !important;
+        left: 12px !important;
     }
     
     .toastify.toastify-top {
-        top: 8px !important;
+        top: 12px !important;
     }
     
     /* Smaller close button on mobile */
@@ -829,30 +838,30 @@ body.modal-open {
 @media (max-width: 768px) {
     @keyframes toastSlideIn {
         0% {
-            transform: translateX(100%) scale(0.9);
+            transform: translateY(-100%) scale(0.9);
             opacity: 0;
         }
         60% {
-            transform: translateX(-2%) scale(1.01);
+            transform: translateY(5%) scale(1.01);
             opacity: 0.9;
         }
         100% {
-            transform: translateX(0) scale(1);
+            transform: translateY(0) scale(1);
             opacity: 1;
         }
     }
     
     @keyframes toastSlideOut {
         0% {
-            transform: translateX(0) scale(1);
+            transform: translateY(0) scale(1);
             opacity: 1;
         }
         40% {
-            transform: translateX(2%) scale(0.99);
+            transform: translateY(-5%) scale(0.99);
             opacity: 0.7;
         }
         100% {
-            transform: translateX(100%) scale(0.9);
+            transform: translateY(-100%) scale(0.9);
             opacity: 0;
         }
     }
