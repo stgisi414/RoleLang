@@ -400,7 +400,9 @@ async function initializeApp() {
 		// Ensure modal is hidden on page load
 		elements.modal?.classList.add('hidden');
 		
-		elements.closeModalBtn?.addEventListener('click', () => {
+		elements.closeModalBtn?.addEventListener('click', (e) => {
+			e.stopPropagation();
+			e.preventDefault();
 			// Stop YouTube video if playing
 			if (elements.modal?._closeHandler) {
 				elements.modal._closeHandler();
@@ -425,6 +427,8 @@ async function initializeApp() {
 			
 			// Close modal when clicking outside and stop video
 			if (e.target === elements.modal && !elements.modal?.classList.contains('hidden')) {
+				e.stopPropagation();
+				e.preventDefault();
 				if (elements.modal?._closeHandler) {
 					elements.modal._closeHandler();
 				}
