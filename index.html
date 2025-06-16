@@ -139,35 +139,17 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <!-- YouTube Search Library -->
-    <script>
-        // Load yt-search library with fallback
-        (function() {
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/yt-search@2.13.1/dist/yt-search.min.js';
-            script.onload = function() {
-                console.log('yt-search library loaded successfully');
-                window.ytsLoaded = true;
-                window.yts = window.yts || yts;
-            };
-            script.onerror = function() {
-                console.error('Failed to load yt-search library from jsdelivr');
-                window.ytsLoaded = false;
-                // Try alternative CDN
-                const fallbackScript = document.createElement('script');
-                fallbackScript.src = 'https://unpkg.com/yt-search@2.13.1/dist/yt-search.min.js';
-                fallbackScript.onload = function() {
-                    console.log('yt-search library loaded from fallback CDN');
-                    window.ytsLoaded = true;
-                    window.yts = window.yts || yts;
-                };
-                fallbackScript.onerror = function() {
-                    console.error('Failed to load yt-search library from all CDNs');
-                    window.ytsLoaded = false;
-                };
-                document.head.appendChild(fallbackScript);
-            };
-            document.head.appendChild(script);
-        })();
+    <script type="module">
+        // Import yt-search as ES6 module
+        try {
+            const ytSearch = await import('https://cdn.jsdelivr.net/npm/yt-search@2.13.1/+esm');
+            window.yts = ytSearch.default || ytSearch;
+            window.ytsLoaded = true;
+            console.log('yt-search ES6 module loaded successfully');
+        } catch (error) {
+            console.error('Failed to load yt-search ES6 module:', error);
+            window.ytsLoaded = false;
+        }
     </script>
     <!-- Custom Stylesheet -->
     <link rel="stylesheet" href="style.css">

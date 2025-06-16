@@ -318,31 +318,17 @@ function showToast(message, type = 'info') {
 
 function checkYTSearchLibrary() {
     return new Promise((resolve) => {
-        // Check if library is already loaded
-        if (typeof yts !== 'undefined') {
-            console.log('yt-search found as global yts');
-            resolve(true);
-            return;
-        }
-        
+        // Check if ES6 module is loaded
         if (typeof window.yts !== 'undefined') {
-            console.log('yt-search found as window.yts');
-            window.yts = window.yts;
+            console.log('yt-search ES6 module found');
             resolve(true);
             return;
         }
         
-        // Check loading status from script
+        // Check loading status
         if (window.ytsLoaded === true) {
-            console.log('yt-search marked as loaded, checking again...');
-            // Give it a moment and check again
-            setTimeout(() => {
-                if (typeof yts !== 'undefined' || typeof window.yts !== 'undefined') {
-                    resolve(true);
-                } else {
-                    resolve(false);
-                }
-            }, 100);
+            console.log('yt-search marked as loaded');
+            resolve(true);
             return;
         }
         
@@ -352,21 +338,18 @@ function checkYTSearchLibrary() {
             return;
         }
         
-        // Wait for the library to load
+        // Wait for the ES6 module to load
         let attempts = 0;
         const checkInterval = setInterval(() => {
             attempts++;
-            console.log(`Checking for yt-search library, attempt ${attempts}/15`);
+            console.log(`Checking for yt-search ES6 module, attempt ${attempts}/15`);
             
-            if (typeof yts !== 'undefined' || typeof window.yts !== 'undefined' || window.ytsLoaded === true) {
+            if (typeof window.yts !== 'undefined' || window.ytsLoaded === true) {
                 clearInterval(checkInterval);
-                if (typeof window.yts !== 'undefined' && typeof yts === 'undefined') {
-                    window.yts = window.yts;
-                }
                 resolve(true);
-            } else if (window.ytsLoaded === false || attempts >= 15) { // 3 seconds total
+            } else if (window.ytsLoaded === false || attempts >= 15) {
                 clearInterval(checkInterval);
-                console.log('yt-search library check timed out or failed');
+                console.log('yt-search ES6 module check timed out or failed');
                 resolve(false);
             }
         }, 200);
@@ -392,21 +375,20 @@ async function loadYouTubeVideo(title) {
         const decodedQuery = decodeURIComponent(searchQuery);
         console.log('Generated search query:', decodedQuery);
         
-        // Use the correct reference to yts
-        const ytsFunction = typeof yts !== 'undefined' ? yts : window.yts;
-        if (!ytsFunction) {
-            console.warn('yt-search function not available, using fallback search');
-            throw new Error('yt-search function not accessible - showing manual search link');
+        // Use the ES6 module reference
+        if (!window.yts) {
+            console.warn('yt-search ES6 module not available, using fallback search');
+            throw new Error('yt-search ES6 module not accessible - showing manual search link');
         }
         
         // Use yt-search library to find videos
-        console.log('Searching YouTube with yt-search...');
+        console.log('Searching YouTube with yt-search ES6 module...');
         
         // Use a promise wrapper to handle potential errors
         let searchResults;
         try {
             searchResults = await Promise.race([
-                ytsFunction(decodedQuery),
+                window.yts(decodedQuery),
                 new Promise((_, reject) => 
                     setTimeout(() => reject(new Error('Search timeout')), 10000)
                 )
