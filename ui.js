@@ -358,7 +358,7 @@ Do not add any other text or explanations.`;
     }
 
     // Add modal close handler to stop video playback and audio
-    const handleModalClose = () => {
+    const handleModalClose = async () => {
         const iframe = document.getElementById('youtube-iframe');
         if (iframe && iframe.src) {
             // Stop video by clearing and resetting the src
@@ -371,10 +371,13 @@ Do not add any other text or explanations.`;
         }
         
         // Stop any ongoing audio playback from dialogue lines
-        const state = window.state || await import('./state.js');
-        if (state.audioPlayer && !state.audioPlayer.paused) {
-            state.audioPlayer.pause();
-            state.audioPlayer.currentTime = 0;
+        try {
+            if (window.state && window.state.audioPlayer && !window.state.audioPlayer.paused) {
+                window.state.audioPlayer.pause();
+                window.state.audioPlayer.currentTime = 0;
+            }
+        } catch (error) {
+            console.error('Error stopping audio:', error);
         }
         
         document.body.classList.remove('modal-open'); // Unlock body scroll

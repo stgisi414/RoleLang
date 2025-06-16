@@ -505,9 +505,18 @@ function goBackToLanding() {
     state.setCurrentTurnIndex(0);
 
     // Stop any ongoing audio playback
-    if (state.audioPlayer && !state.audioPlayer.paused) {
-        state.audioPlayer.pause();
-        state.audioPlayer.currentTime = 0;
+    try {
+        if (state.audioPlayer && !state.audioPlayer.paused) {
+            state.audioPlayer.pause();
+            state.audioPlayer.currentTime = 0;
+        }
+        // Also abort any ongoing audio controller
+        if (state.audioController) {
+            state.audioController.abort();
+            state.audioController = new AbortController();
+        }
+    } catch (error) {
+        console.error('Error stopping audio on back:', error);
     }
 
     ui.showLandingScreen();
