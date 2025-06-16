@@ -200,58 +200,200 @@ export function toggleHistoryVisibility() {
     }
 }
 
-export function showExplanation(content) {
-    try {
-        // Ensure we have valid content before showing modal
-        if (!content || !content.title || !content.body) {
-            console.error('Invalid explanation content:', content);
-            return;
-        }
+export async function showExplanation(content) {
+    // Ensure we have valid content before showing modal
+    if (!content || !content.title || !content.body) {
+        console.error('Invalid explanation content:', content);
+        return;
+    }
 
-        if (!domElements.modal || !domElements.modalBody) {
-            console.error('Modal elements not found');
-            return;
-        }
-
-        // Show modal with content immediately (no async loading to prevent issues)
+    // Immediately show modal with loading spinner to prevent multiple clicks
+    if (domElements.modal && domElements.modalBody) {
+        // Show loading state immediately
         domElements.modalBody.innerHTML = `
-            <h3 class="text-xl font-bold mb-2 text-cyan-300">${content.title}</h3>
-            <p class="text-gray-300 mb-4">${content.body}</p>
+            <div class="flex flex-col items-center justify-center py-12">
+                <div class="loader mb-4"></div>
+                <p class="text-gray-400">${translateText('loadingExplanation') || 'Loading explanation...'}</p>
+            </div>
         `;
         
         domElements.modal.classList.remove('hidden');
-        document.body.classList.add('modal-open');
+        document.body.classList.add('modal-open'); // Lock body scroll
+    }
 
-        // Add modal close handler
-        const handleModalClose = () => {
+    // Now load content asynchronously
+    try {
+        // Translate the explanation title and body if they're in English but the UI is in another language
+        const nativeLang = getNativeLang() || 'en';
+        let translatedTitle = content.title;
+        let translatedBody = content.body;
+
+        // If the native language is not English, translate the explanation content
+        if (nativeLang !== 'en') {
             try {
-                document.body.classList.remove('modal-open');
-            } catch (error) {
-                console.error('Error in modal close handler:', error);
-                document.body.classList.remove('modal-open');
-            }
-        };
+                const api = await import('./api.js');
+                
+                // Get the native language name for translation
+                const languageNames = {
+                    'es': 'Spanish',
+                    'fr': 'French', 
+                    'de': 'German',
+                    'it': 'Italian',
+                    'zh': 'Chinese',
+                    'ja': 'Japanese',
+                    'ko': 'Korean'
+                };
+                const targetLanguageName = languageNames[nativeLang] || 'English';
 
-        // Store the close handler for cleanup
-        if (domElements.modal) {
-            domElements.modal._closeHandler = handleModalClose;
+                // Translate the title and body
+                const translatePrompt = `
+Translate the following grammar explanation title and content into ${targetLanguageName}. Keep the same meaning and technical accuracy:
+
+Title: "${content.title}"
+Content: "${content.body}"
+
+Respond with ONLY the translated content in this exact format:
+TITLE: [translated title]
+CONTENT: [translated content]
+
+Do not add any other text or explanations.`;
+
+                const translationData = await api.callGeminiAPI(translatePrompt);
+                
+                if (translationData?.candidates?.[0]?.content?.parts?.[0]?.text) {
+                    const translationText = translationData.candidates[0].content.parts[0].text.trim();
+                    
+                    // Parse the response
+                    const titleMatch = translationText.match(/TITLE:\s*(.+?)(?=\nCONTENT:)/s);
+                    const contentMatch = translationText.match(/CONTENT:\s*(.+)$/s);
+                    
+                    if (titleMatch && contentMatch) {
+                        translatedTitle = titleMatch[1].trim();
+                        translatedBody = contentMatch[1].trim();
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to translate explanation:', error);
+                // Fall back to original content if translation fails
+            }
+        }
+
+        // Parse the explanation content for audio-tagged phrases
+        const processedData = await parseAndRenderExplanationWithAudio({ 
+            title: translatedTitle, 
+            body: translatedBody 
+        });
+
+        // Update modal content with loaded data
+        if (domElements.modalBody) {
+            domElements.modalBody.innerHTML = `
+                <h3 class="text-xl font-bold mb-2 text-cyan-300">${translatedTitle}</h3>
+                <p class="text-gray-300 mb-4">${processedData.processedBody}</p>
+                <div class="border-t border-gray-600 pt-6 mt-6">
+                    <div class="text-center mb-4">
+                        <h4 class="text-lg font-semibold text-cyan-300 mb-3">
+                            <i class="fab fa-youtube text-red-500 mr-2"></i>
+                            ${translateText('relatedEducationalVideo') || 'Related Educational Video'}
+                        </h4>
+                        <button id="youtube-play-btn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg transition-colors cursor-pointer inline-flex items-center font-semibold">
+                            <i class="fab fa-youtube mr-2"></i>
+                            <i class="fas fa-play mr-2"></i>
+                            ${translateText('loadVideo') || 'Load Video'}
+                        </button>
+                    </div>
+                    <div id="youtube-container" class="mt-6">
+                        <div id="youtube-loader" class="flex items-center justify-center py-8 hidden">
+                            <div class="loader"></div>
+                            <span class="ml-3 text-gray-400">${translateText('loadingVideo') || 'Loading video...'}</span>
+                        </div>
+                        <div id="video-content" class="hidden">
+                            <iframe 
+                                id="youtube-iframe" 
+                                class="w-full h-80 rounded-lg shadow-lg"
+                                frameborder="0" 
+                                allowfullscreen
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                src="">
+                            </iframe>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Add modal close handler now that content is loaded
+            const handleModalClose = () => {
+                try {
+                    const iframe = document.getElementById('youtube-iframe');
+                    if (iframe && iframe.src) {
+                        iframe.src = '';
+                    }
+                    document.body.classList.remove('modal-open');
+                } catch (error) {
+                    console.error('Error in modal close handler:', error);
+                    document.body.classList.remove('modal-open');
+                }
+            };
+
+            // Store the close handler for cleanup
+            if (domElements.modal) {
+                domElements.modal._closeHandler = handleModalClose;
+            }
+
+            // Add click event listener to the YouTube play button
+            const playBtn = document.getElementById('youtube-play-btn');
+            if (playBtn) {
+                playBtn.onclick = () => {
+                    try {
+                        playBtn.classList.add('hidden');
+                        const loader = document.getElementById('youtube-loader');
+                        if (loader) {
+                            loader.classList.remove('hidden');
+                        }
+                        searchAndLoadYouTubeVideo(content.title);
+                    } catch (error) {
+                        console.error('Error loading YouTube video:', error);
+                        playBtn.classList.remove('hidden');
+                        const loader = document.getElementById('youtube-loader');
+                        if (loader) {
+                            loader.classList.add('hidden');
+                        }
+                    }
+                };
+            }
+
+            // Add click event listeners for audio phrases
+            const audioPhrases = domElements.modalBody.querySelectorAll('.audio-phrase');
+            audioPhrases.forEach(phraseElement => {
+                phraseElement.addEventListener('click', async () => {
+                    try {
+                        const phrase = phraseElement.getAttribute('data-phrase');
+                        if (phrase) {
+                            await playPhraseAudio(phrase);
+                        }
+                    } catch (error) {
+                        console.error('Error playing phrase audio:', error);
+                        if (typeof showToast === 'function') {
+                            showToast('Audio playback failed', 'error');
+                        }
+                    }
+                });
+            });
         }
 
     } catch (error) {
-        console.error('Error in showExplanation:', error);
+        console.error('Error loading explanation content:', error);
         
-        // Fallback: try to show modal anyway
-        if (domElements.modal && domElements.modalBody) {
+        // Show error state in modal
+        if (domElements.modalBody) {
             domElements.modalBody.innerHTML = `
                 <div class="flex flex-col items-center justify-center py-12">
                     <i class="fas fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
-                    <p class="text-gray-400 text-center">Error displaying explanation</p>
+                    <p class="text-gray-400 text-center">${translateText('errorLoadingExplanation') || 'Error loading explanation. Please try again.'}</p>
                     <button onclick="document.getElementById('explanation-modal').classList.add('hidden')" class="mt-4 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg">
-                        Close
+                        ${translateText('close') || 'Close'}
                     </button>
                 </div>
             `;
-            domElements.modal.classList.remove('hidden');
         }
     }
 }
