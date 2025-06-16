@@ -232,6 +232,59 @@ async function restoreState(savedState) {
         if (ui) ui.stopTopicRotations();
     }
 
+    if (savedState.lessonPlan && savedState.currentScreen === 'lesson') {
+
+        // *** KEY CHANGE HERE ***
+        // Pre-process the lesson plan to add the 'sentences' array to user turns.
+        // This ensures the UI can render correctly from a saved state.
+        if (lesson) {
+            savedState.lessonPlan = await lesson.preprocessLessonPlan(savedState.lessonPlan);
+        }
+        // *** END OF KEY CHANGE ***
+
+        state.setLessonPlan(savedState.lessonPlan);
+        state.setCurrentTurnIndex(savedState.currentTurnIndex);
+
+        if (!state.lessonPlan.dialogue || state.lessonPlan.dialogue.length === 0) {
+            clearState();
+            isRestoring = false;
+            return;
+        }
+
+        if (state.recognition && lesson) {
+            state.recognition.lang = lesson.getLangCode(savedState.selectedLanguage);
+        }
+
+        elements.landingScreen?.classList.add('hidden');
+        elements.lessonScreen?.classList.remove('hidden');
+
+        if (ui) {
+            // Now this will work correctly because the lessonPlan is preprocessed.
+            await ui.restoreConversation(state.lessonPlan);
+            ui.displayLessonTitleAndContext(state.lessonPlan);
+            ui.addBackToLandingButton();
+
+            if (state.lessonPlan.illustration_url) {
+                ui.restoreIllustration(state.lessonPlan.illustration_url);
+            } else if (state.lessonPlan.illustration_prompt && lesson) {
+                lesson.fetchAndDisplayIllustration(state.lessonPlan.illustration_prompt);
+            }
+        }
+
+        const isCompleted = state.currentTurnIndex >= state.lessonPlan.dialogue.length;
+        if (isCompleted) {
+            if (elements.micStatus) elements.micStatus.innerHTML = `🎉 ${ui.translateText('lessonComplete')}`;
+            if (elements.micBtn) elements.micBtn.disabled = true;
+            state.lessonPlan.isCompleted = true;
+            if (ui) ui.showReviewModeUI(savedState.selectedLanguage);
+        } else {
+            state.lessonPlan.isCompleted = false;
+            if (lesson) lesson.advanceTurn(state.currentTurnIndex);
+        }
+
+        if (ui) ui.stopTopicRotations();
+    }
+    
     isRestoring = false; // Allow saveState to work normally again
 }
 
