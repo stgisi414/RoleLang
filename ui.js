@@ -200,11 +200,14 @@ export function toggleHistoryVisibility() {
     }
 }
 
-export function showExplanation(content) {
+export async function showExplanation(content) {
+    // Parse the explanation content for audio-tagged phrases
+    const { processedBody, audioItems } = await parseAndRenderExplanationWithAudio(content);
+    
     // Create the modal content with explanation text and YouTube video option
     domElements.modalBody.innerHTML = `
         <h3 class="text-xl font-bold mb-2 text-cyan-300">${content.title}</h3>
-        <p class="text-gray-300 mb-4">${content.body}</p>
+        <p class="text-gray-300 mb-4">${processedBody}</p>
         <div class="border-t border-gray-600 pt-6 mt-6">
             <div class="text-center mb-4">
                 <h4 class="text-lg font-semibold text-cyan-300 mb-3">
@@ -267,6 +270,63 @@ export function showExplanation(content) {
             searchAndLoadYouTubeVideo(content.title);
         };
     }
+
+    // Add click event listeners for audio phrases
+    const audioPhrases = domElements.modalBody.querySelectorAll('.audio-phrase');
+    audioPhrases.forEach(phraseElement => {
+        phraseElement.addEventListener('click', async () => {
+            const phrase = phraseElement.getAttribute('data-phrase');
+            await playPhraseAudio(phrase);
+        });
+    });
+}
+
+async function playPhraseAudio(phrase) {
+    try {
+        const targetLanguage = domElements.languageSelect?.value || 'English';
+        showToast(`Playing: "${phrase}"`, 'info');
+        
+        // Import lesson module to get voice config
+        const lesson = await import('./lesson.js');
+        const api = await import('./api.js');
+        
+        // Get appropriate voice config for the target language
+        const voiceConfig = getVoiceConfigForLanguage(targetLanguage);
+        
+        // Fetch and play audio
+        const audioBlob = await api.fetchPartnerAudio(phrase, voiceConfig);
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        
+        audio.play().catch(error => {
+            console.error('Error playing phrase audio:', error);
+            showToast('Audio playback failed', 'error');
+        });
+        
+        audio.onended = () => URL.revokeObjectURL(audioUrl);
+        audio.onerror = () => {
+            URL.revokeObjectURL(audioUrl);
+            showToast('Audio playback failed', 'error');
+        };
+        
+    } catch (error) {
+        console.error('Failed to play phrase audio:', error);
+        showToast('Audio generation failed', 'error');
+    }
+}
+
+function getVoiceConfigForLanguage(language) {
+    const voiceConfigs = {
+        'English': { voice_id: "pNInz6obpgDQGcFmaJgB", language_code: "en" },
+        'Spanish': { voice_id: "XrExE9yKIg1WjnnlVkGX", language_code: "es" },
+        'French': { voice_id: "ThT5KcBeYPX3keUQqHPh", language_code: "fr" },
+        'German': { voice_id: "pNInz6obpgDQGcFmaJgB", language_code: "de" },
+        'Italian': { voice_id: "XB0fDUnXU5powFXDhCwa", language_code: "it" },
+        'Japanese': { voice_id: "jBpfuIE2acCO8z3wKNLl", language_code: "ja" },
+        'Chinese': { voice_id: "2EiwWnXFnvU5JabPnv8n", language_code: "zh" },
+        'Korean': { voice_id: "bVMeCyTHy58xNoL34h3p", language_code: "ko" }
+    };
+    return voiceConfigs[language] || voiceConfigs['English'];
 }
 
 // YouTube Data API key - you'll need to get this from Google Cloud Console
@@ -428,6 +488,33 @@ Create the best search term for the given topic and language:`;
         console.log(`Using fallback search term: "${fallbackQuery}"`);
         return fallbackQuery;
     }
+}
+
+async function parseAndRenderExplanationWithAudio(content) {
+    const targetLanguage = domElements.languageSelect?.value || 'English';
+    
+    // Parse the explanation text for audio tags
+    const audioTagRegex = /<audio>(.*?)<\/audio>/g;
+    let processedBody = content.body;
+    const audioItems = [];
+    
+    // Extract all audio-tagged phrases
+    let match;
+    let index = 0;
+    while ((match = audioTagRegex.exec(content.body)) !== null) {
+        const phrase = match[1];
+        const audioId = `audio-phrase-${index}`;
+        audioItems.push({ id: audioId, phrase: phrase });
+        
+        // Replace the audio tag with a clickable span
+        processedBody = processedBody.replace(
+            match[0], 
+            `<span class="audio-phrase" data-audio-id="${audioId}" data-phrase="${phrase}">${phrase}</span>`
+        );
+        index++;
+    }
+    
+    return { processedBody, audioItems };
 }
 
 function showToast(message, type = 'info') {

@@ -187,6 +187,7 @@ Follow these steps precisely:
 7.  **Character Names:** Use realistic, culturally-appropriate names for ${language}. Examples: ${nameExamples}.
 8.  **NO PLACEHOLDERS:** Do not use placeholders like "[USER NAME]".
 9.  **Illustration Prompt:** A brief, descriptive prompt in English for an illustration (style: highly detailed, anime-like, stylish, no text).
+10. **AUDIO TAGGING FOR EXPLANATIONS:** In the explanation "body" text, wrap any ${language} words or phrases that would be helpful for pronunciation practice in <audio></audio> tags. For example: "The word <audio>bonjour</audio> is a common greeting" or "Notice how <audio>je suis</audio> means 'I am'". This allows the app to make these phrases clickable for audio playback. Use this feature for 2-4 key terms per explanation.
 
 Now, generate the complete JSON lesson plan.`;
 }
