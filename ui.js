@@ -325,29 +325,24 @@ async function loadYouTubeVideo(title) {
         
         // Generate intelligent search term using Gemini
         const searchQuery = await createIntelligentSearchTerm(title);
-        console.log('Generated search query:', decodeURIComponent(searchQuery));
+        const decodedQuery = decodeURIComponent(searchQuery);
+        console.log('Generated search query:', decodedQuery);
         
-        // Use YouTube Data API to search for videos
-        const apiKey = 'AIzaSyCqWc7_hTRoM6_xgofWZWXOOhNDp6mHOQg';
-        const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=${searchQuery}&type=video&key=${apiKey}`;
-        
-        console.log('Making YouTube API request to:', apiUrl);
-        const response = await fetch(apiUrl);
-        
-        if (!response.ok) {
-            throw new Error(`YouTube API error: ${response.status} ${response.statusText}`);
+        // Check if yt-search library is loaded
+        if (typeof yts === 'undefined') {
+            throw new Error('yt-search library not loaded');
         }
         
-        const data = await response.json();
-        console.log('YouTube API response:', data);
+        // Use yt-search library to find videos
+        console.log('Searching YouTube with yt-search...');
+        const searchResults = await yts(decodedQuery);
         
-        if (data.error) {
-            throw new Error(`YouTube API error: ${data.error.message}`);
-        }
+        console.log('yt-search results:', searchResults);
         
-        if (data.items && data.items.length > 0) {
-            const videoId = data.items[0].id.videoId;
-            const videoTitle = data.items[0].snippet.title;
+        if (searchResults && searchResults.videos && searchResults.videos.length > 0) {
+            const video = searchResults.videos[0];
+            const videoId = video.videoId;
+            const videoTitle = video.title;
             const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1`;
             
             console.log('Found video:', videoTitle);
@@ -357,16 +352,15 @@ async function loadYouTubeVideo(title) {
             loader.classList.add('hidden');
             iframe.classList.remove('hidden');
         } else {
-            console.log('No videos found in API response');
+            console.log('No videos found in search results');
             showToast('No videos found automatically', 'warning');
             
             // Fallback: show a search link if no video found
-            const fallbackSearchQuery = await createIntelligentSearchTerm(title);
             loader.innerHTML = `
                 <div class="text-center py-4">
                     <i class="fas fa-search text-gray-400 text-2xl mb-2"></i>
                     <p class="text-gray-400 mb-3">No video found automatically</p>
-                    <a href="https://www.youtube.com/results?search_query=${fallbackSearchQuery}" 
+                    <a href="https://www.youtube.com/results?search_query=${searchQuery}" 
                        target="_blank" 
                        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center">
                         <i class="fab fa-youtube mr-2"></i>
