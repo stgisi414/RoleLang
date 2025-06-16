@@ -197,17 +197,31 @@ export function toggleHistoryVisibility() {
 }
 
 export function showExplanation(content) {
-    // Create the modal content with explanation text and YouTube video
+    // Create the modal content with explanation text and YouTube video option
     domElements.modalBody.innerHTML = `
         <h3 class="text-xl font-bold mb-2 text-cyan-300">${content.title}</h3>
         <p class="text-gray-300 mb-4">${content.body}</p>
         <div class="border-t border-gray-600 pt-4">
-            <h4 class="text-lg font-semibold text-cyan-300 mb-3 flex items-center">
-                <i class="fab fa-youtube text-red-500 mr-2"></i>
-                Related Educational Video
-            </h4>
+            <div class="flex items-center justify-between mb-3">
+                <h4 class="text-lg font-semibold text-cyan-300 flex items-center">
+                    <i class="fab fa-youtube text-red-500 mr-2"></i>
+                    Related Educational Video
+                </h4>
+                <h6 id="youtube-play-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors cursor-pointer inline-flex items-center text-sm font-semibold">
+                    <i class="fab fa-youtube mr-2"></i>
+                    <i class="fas fa-play mr-1"></i>
+                    Load Video
+                </h6>
+            </div>
             <div id="youtube-container" class="relative">
-                <div id="youtube-loader" class="flex items-center justify-center py-8">
+                <div id="youtube-placeholder" class="flex items-center justify-center py-12 bg-gray-700/30 rounded-lg border-2 border-dashed border-gray-600">
+                    <div class="text-center">
+                        <i class="fab fa-youtube text-red-500 text-4xl mb-3"></i>
+                        <p class="text-gray-400 mb-2">Click "Load Video" to search for educational content</p>
+                        <p class="text-sm text-gray-500">Optional - helps reinforce learning</p>
+                    </div>
+                </div>
+                <div id="youtube-loader" class="flex items-center justify-center py-8 hidden">
                     <div class="loader"></div>
                     <span class="ml-3 text-gray-400">Searching for educational content...</span>
                 </div>
@@ -233,8 +247,23 @@ export function showExplanation(content) {
     
     domElements.modal.classList.remove('hidden');
     
-    // Search for and load YouTube video
-    searchAndLoadYouTubeVideo(content.title);
+    // Add click event listener to the YouTube play button
+    const playBtn = document.getElementById('youtube-play-btn');
+    if (playBtn) {
+        playBtn.onclick = () => {
+            // Hide the placeholder and show loader
+            document.getElementById('youtube-placeholder').classList.add('hidden');
+            document.getElementById('youtube-loader').classList.remove('hidden');
+            
+            // Disable the play button and change its text
+            playBtn.style.opacity = '0.5';
+            playBtn.style.cursor = 'not-allowed';
+            playBtn.innerHTML = '<i class="fab fa-youtube mr-2"></i><i class="fas fa-spinner fa-spin mr-1"></i>Loading...';
+            
+            // Search for and load YouTube video
+            searchAndLoadYouTubeVideo(content.title);
+        };
+    }
 }
 
 // YouTube Data API key - you'll need to get this from Google Cloud Console
@@ -243,6 +272,7 @@ const YOUTUBE_API_KEY = 'AIzaSyDAdiXobuer_CZHdM1llM5RlrfhRbls84M'; // Replace wi
 async function searchAndLoadYouTubeVideo(title) {
     const loader = document.getElementById('youtube-loader');
     const videoContent = document.getElementById('video-content');
+    const playBtn = document.getElementById('youtube-play-btn');
     
     try {
         console.log('Searching YouTube for:', title);
@@ -269,6 +299,10 @@ async function searchAndLoadYouTubeVideo(title) {
             
             loader.classList.add('hidden');
             videoContent.classList.remove('hidden');
+            
+            // Hide the play button since video is loaded
+            if (playBtn) playBtn.style.display = 'none';
+            
             showToast('Educational video loaded!', 'success');
         } else {
             throw new Error('No suitable videos found');
@@ -293,6 +327,13 @@ async function searchAndLoadYouTubeVideo(title) {
                 </a>
             </div>
         `;
+        
+        // Reset the play button on error
+        if (playBtn) {
+            playBtn.style.opacity = '1';
+            playBtn.style.cursor = 'pointer';
+            playBtn.innerHTML = '<i class="fab fa-youtube mr-2"></i><i class="fas fa-play mr-1"></i>Load Video';
+        }
     }
 }
 
