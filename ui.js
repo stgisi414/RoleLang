@@ -207,11 +207,6 @@ export async function showExplanation(content) {
         return;
     }
 
-    // Check if modal is already showing - prevent multiple clicks
-    if (domElements.modal && !domElements.modal.classList.contains('hidden')) {
-        return;
-    }
-
     // Immediately show modal with loading spinner to prevent multiple clicks
     if (domElements.modal && domElements.modalBody) {
         // Show loading state immediately
@@ -224,9 +219,24 @@ export async function showExplanation(content) {
         
         domElements.modal.classList.remove('hidden');
         document.body.classList.add('modal-open'); // Lock body scroll
-    } else {
-        console.error('Modal elements not found');
-        return;
+        
+        // Add modal close handler immediately
+        const handleModalClose = () => {
+            const iframe = document.getElementById('youtube-iframe');
+            if (iframe && iframe.src) {
+                // Stop video by clearing and resetting the src
+                const currentSrc = iframe.src;
+                iframe.src = '';
+                // Optional: Reset to original src if needed for future use
+                setTimeout(() => {
+                    if (iframe) iframe.src = currentSrc;
+                }, 100);
+            }
+            document.body.classList.remove('modal-open'); // Unlock body scroll
+        };
+
+        // Store the close handler for cleanup
+        domElements.modal._closeHandler = handleModalClose;
     }
 
     // Now load content asynchronously
@@ -292,8 +302,8 @@ Do not add any other text or explanations.`;
             body: translatedBody 
         });
 
-        // Update modal content with loaded data - check if modal is still open
-        if (domElements.modalBody && !domElements.modal.classList.contains('hidden')) {
+        // Update modal content with loaded data
+        if (domElements.modalBody) {
             domElements.modalBody.innerHTML = `
                 <h3 class="text-xl font-bold mb-2 text-cyan-300">${translatedTitle}</h3>
                 <p class="text-gray-300 mb-4">${processedBody}</p>
@@ -354,13 +364,13 @@ Do not add any other text or explanations.`;
     } catch (error) {
         console.error('Error loading explanation content:', error);
         
-        // Show error state in modal - check if modal is still open
-        if (domElements.modalBody && !domElements.modal.classList.contains('hidden')) {
+        // Show error state in modal
+        if (domElements.modalBody) {
             domElements.modalBody.innerHTML = `
                 <div class="flex flex-col items-center justify-center py-12">
                     <i class="fas fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
                     <p class="text-gray-400 text-center">${translateText('errorLoadingExplanation') || 'Error loading explanation. Please try again.'}</p>
-                    <button onclick="this.closest('.modal-backdrop').classList.add('hidden'); document.body.classList.remove('modal-open');" class="mt-4 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg">
+                    <button onclick="this.closest('.modal-backdrop').classList.add('hidden')" class="mt-4 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg">
                         ${translateText('close') || 'Close'}
                     </button>
                 </div>
