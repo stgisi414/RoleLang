@@ -5,6 +5,15 @@ if (!window.translations) {
     console.error('Translations not loaded! Make sure translations.js is loaded before main.js');
 }
 
+window.triggerAudioPlayback = (turnIndex) => {
+    if (state && lesson && state.lessonPlan) {
+        const turn = state.lessonPlan.dialogue[turnIndex];
+        if (turn) {
+            lesson.playLineAudioDebounced(turn.line.display, turn.party);
+        }
+    }
+};
+
 let api, ui, lesson, state;
 
 try {
@@ -294,27 +303,17 @@ async function initializeApp() {
         console.error('One or more modules failed to load');
         return;
     }
-    
-    // Define the callback that will be passed to the UI module.
-    const playAudioCallback = (turn) => {
-        if (lesson && lesson.playLineAudioDebounced) {
-            lesson.playLineAudioDebounced(turn.line.display, turn.party);
-        }
-    };
 
-    // Initialize the lesson module
     lesson.init(elements, state, api, ui, saveState);
-
-    // Initialize the UI module, passing the new audio callback as the last argument
+    // The init call is now simpler as it doesn't need the audio callback.
     ui.init(
         elements,
         state.getTranslations,
         () => state.nativeLang,
         saveState,
         goBackToLanding,
-        state.setNativeLang,
-        state.setCurrentTranslations,
-        playAudioCallback // Pass the new callback here
+        state.setNativeLang, // Pass the setNativeLang function
+        state.setCurrentTranslations // Pass the setCurrentTranslations function
     );
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -355,112 +354,7 @@ async function initializeApp() {
         if (elements.micBtn) elements.micBtn.disabled = true;
     }
 
-    // --- Event Listeners ---
-    function setupEventListeners() {
-        elements.startLessonBtn?.addEventListener('click', () => {
-            lesson.initializeLesson();
-        });
-        elements.micBtn?.addEventListener('click', () => lesson.toggleSpeechRecognition());
-        elements.toggleLessonsBtn?.addEventListener('click', () => ui.toggleLessonsVisibility());
-        elements.toggleHistoryBtn?.addEventListener('click', () => ui.toggleHistoryVisibility);
-        elements.difficultyTab?.addEventListener('click', () => ui.switchTab('difficulty'));
-        elements.situationsTab?.addEventListener('click', () => ui.switchTab('situations'));
-        elements.resetLessonBtn?.addEventListener('click', () => lesson.resetLesson());
-        elements.confirmStartLessonBtn?.addEventListener('click', () => lesson.confirmStartLesson());
-
-        // This listener handles clicks for pre-made lesson buttons and language options
-        document.addEventListener('click', (event) => {
-            if (event.target.classList.contains('lesson-btn')) {
-                if (elements.topicInput) {
-                    elements.topicInput.value = event.target.getAttribute('data-topic');
-                    saveState();
-                }
-            }
-            if (event.target.closest('.native-lang-option')) {
-                const option = event.target.closest('.native-lang-option');
-                const langCode = option.getAttribute('data-lang');
-                const flag = option.getAttribute('data-flag');
-                const name = option.textContent.trim();
-
-                state.setNativeLang(langCode);
-                state.setCurrentTranslations(window.translations[langCode] || window.translations.en);
-                if (ui) {
-                    ui.setNativeLanguage(langCode, flag, name);
-                }
-                elements.nativeLangDropdown?.classList.add('hidden');
-                saveState();
-            }
-        });
-
-        const debouncedSave = lesson.debounce(saveState, 500);
-        elements.languageSelect?.addEventListener('change', (event) => {
-            console.log('Target language changed to:', event.target.value);
-            setTimeout(() => {
-                saveState();
-            }, 50);
-        });
-        elements.topicInput?.addEventListener('input', debouncedSave);
-        elements.audioSpeedSelect?.addEventListener('change', saveState);
-
-        elements.modal?.classList.add('hidden');
-        elements.closeModalBtn?.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            ui.closeExplanationModal();
-        });
-        elements.modal?.addEventListener('click', (e) => {
-            if (e.target === elements.modal) {
-                e.preventDefault();
-                e.stopPropagation();
-                ui.closeExplanationModal();
-            }
-        });		
-        elements.tutorialBtn?.addEventListener('click', () => ui.showTutorial());
-        elements.closeTutorialBtn?.addEventListener('click', () => elements.tutorialModal?.classList.add('hidden'));
-        elements.startTutorialLessonBtn?.addEventListener('click', () => {
-            elements.tutorialModal?.classList.add('hidden');
-            if (elements.topicInput) elements.topicInput.value = ui.translateText('beginnerExample');
-        });
-
-        elements.nativeLangBtn?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            elements.nativeLangDropdown?.classList.toggle('hidden');
-        });
-        document.addEventListener('click', (e) => {
-            if (!elements.nativeLangBtn?.contains(e.target) && !elements.nativeLangDropdown?.contains(e.target)) {
-                elements.nativeLangDropdown?.classList.add('hidden');
-            }
-        });
-
-        // The listener for clicking on previous lessons in the history
-        elements.historyLessonsContainer?.addEventListener('click', (event) => {
-            const card = event.target.closest('.history-card');
-            if (!card) return;
-            const lessonId = card.dataset.lessonId;
-            const history = ui.getLessonHistory();
-            const lessonRecord = history.find(record => record.id === lessonId);
-            if (lessonRecord) {
-                lesson.reviewLesson(lessonRecord);
-            }
-        });
-
-        // The listener for the vocabulary quiz button
-        elements.lessonScreen?.addEventListener('click', (event) => {
-            if (event.target.closest('#vocab-quiz-btn')) {
-                const language = elements.languageSelect?.value;
-                if (lesson.startVocabularyQuiz) {
-                    lesson.startVocabularyQuiz(language);
-                }
-            }
-        });
-
-        // NOTE: The original click listener on 'conversationContainer' has been removed.
-        // The click-to-play audio is now handled by the new callback system
-        // passed into ui.init() and attached directly in ui.js.
-    }
-
     // --- Initialization ---
-    // Ensure translations are properly initialized
     if (window.translations) {
         state.setCurrentTranslations(window.translations.en);
         ui.updateTranslations();
@@ -471,20 +365,17 @@ async function initializeApp() {
     const savedState = loadState();
     if (savedState) {
         await restoreState(savedState);
-        isRestoring = false; // Clear the flag after successful restoration
+        isRestoring = false;
     } else {
         ui.startTopicRotations();
-        isRestoring = false; // Clear the flag even if no saved state
+        isRestoring = false;
     }
 
-    // Initialize native language AFTER all modules are connected and state is restored
-    // Use setTimeout to ensure the DOM is fully ready and state is properly set
     setTimeout(() => {
         ui.initializeNativeLanguage();
         console.log('Native language initialization completed');
     }, 200);
 
-    // NOW add event listeners after restoration is complete
     setupEventListeners();
 
     if (elements.appContainer) {
