@@ -66,16 +66,16 @@ export function initializeNativeLanguage() {
 export function setNativeLanguage(langCode, flag, name) {
     if (domElements.nativeFlagEl) domElements.nativeFlagEl.textContent = flag;
     if (domElements.nativeLangTextEl) domElements.nativeLangTextEl.textContent = name;
-    
+
     // Update state module - this is for UI language only, not target language
     if (window.state) {
         window.state.setNativeLang(langCode);
         window.state.setCurrentTranslations(window.translations[langCode] || window.translations.en);
     }
-    
+
     updateTranslations();
     updateBackButton(); 
-    
+
     // Refresh review banner if it exists
     const existingBanner = document.querySelector('.review-mode-indicator');
     if (existingBanner) {
@@ -84,7 +84,7 @@ export function setNativeLanguage(langCode, flag, name) {
         hideReviewModeBanner();
         showReviewModeUI(currentLanguage);
     }
-    
+
     stopTopicRotations();
     startTopicRotations();
     localStorage.setItem('rolelang_native_lang', JSON.stringify({ code: langCode, flag, name }));
@@ -231,9 +231,9 @@ export function showExplanation(content) {
             </div>
         </div>
     `;
-    
+
     domElements.modal.classList.remove('hidden');
-    
+
     // Add modal close handler to stop video playback
     const handleModalClose = () => {
         const iframe = document.getElementById('youtube-iframe');
@@ -247,10 +247,10 @@ export function showExplanation(content) {
             }, 100);
         }
     };
-    
+
     // Store the close handler for cleanup
     domElements.modal._closeHandler = handleModalClose;
-    
+
     // Add click event listener to the YouTube play button
     const playBtn = document.getElementById('youtube-play-btn');
     if (playBtn) {
@@ -258,7 +258,7 @@ export function showExplanation(content) {
             // Hide the button and show loader
             playBtn.classList.add('hidden');
             document.getElementById('youtube-loader').classList.remove('hidden');
-            
+
             // Search for and load YouTube video
             searchAndLoadYouTubeVideo(content.title);
         };
@@ -272,34 +272,34 @@ async function searchAndLoadYouTubeVideo(title) {
     const loader = document.getElementById('youtube-loader');
     const videoContent = document.getElementById('video-content');
     const playBtn = document.getElementById('youtube-play-btn');
-    
+
     try {
         console.log('Searching YouTube for:', title);
         showToast('Searching for educational videos...', 'info');
-        
+
         // Generate intelligent search term using Gemini
         const searchQuery = await createIntelligentSearchTerm(title);
         console.log('Generated search query:', decodeURIComponent(searchQuery));
-        
+
         // Search YouTube using the Data API
         const videoId = await searchYouTubeVideos(decodeURIComponent(searchQuery));
-        
+
         if (videoId) {
             // Load the video in iframe
             const iframe = document.getElementById('youtube-iframe');
             iframe.src = `https://www.youtube.com/embed/${videoId}`;
-            
+
             loader.classList.add('hidden');
             videoContent.classList.remove('hidden');
-            
+
             showToast('Educational video loaded!', 'success');
         } else {
             throw new Error('No suitable videos found');
         }
-        
+
     } catch (error) {
         console.error('Error loading YouTube video:', error);
-        
+
         // Simple fallback - show search link
         const searchQuery = encodeURIComponent(`${title} grammar explanation tutorial`);
         loader.innerHTML = `
@@ -321,42 +321,42 @@ async function searchYouTubeVideos(query) {
         console.warn('YouTube API key not configured');
         throw new Error('YouTube API key not configured');
     }
-    
+
     const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}&maxResults=5&order=relevance&relevanceLanguage=en&safeSearch=strict`;
-    
+
     try {
         const response = await fetch(apiUrl);
-        
+
         if (!response.ok) {
             throw new Error(`YouTube API error: ${response.status} ${response.statusText}`);
         }
-        
+
         const data = await response.json();
-        
+
         if (data.items && data.items.length > 0) {
             // Filter for educational content
             const educationalVideo = data.items.find(item => {
                 const title = item.snippet.title.toLowerCase();
                 const description = item.snippet.description.toLowerCase();
                 const channel = item.snippet.channelTitle.toLowerCase();
-                
+
                 // Look for educational keywords
                 const educationalKeywords = ['learn', 'tutorial', 'lesson', 'explanation', 'guide', 'how to', 'grammar', 'language'];
                 const hasEducationalContent = educationalKeywords.some(keyword => 
                     title.includes(keyword) || description.includes(keyword) || channel.includes(keyword)
                 );
-                
+
                 return hasEducationalContent;
             });
-            
+
             // Return the first educational video or fall back to the first result
             const selectedVideo = educationalVideo || data.items[0];
             console.log('Selected video:', selectedVideo.snippet.title);
             return selectedVideo.id.videoId;
         }
-        
+
         throw new Error('No videos found');
-        
+
     } catch (error) {
         console.error('YouTube search failed:', error);
         throw error;
@@ -368,9 +368,9 @@ async function createIntelligentSearchTerm(explanationTitle) {
         // Get current language from the language select element
         const targetLanguage = domElements.languageSelect?.value || 'English';
         const nativeLang = getNativeLang() || 'en';
-        
+
         console.log(`Creating search term for: "${explanationTitle}" in ${targetLanguage}`);
-        
+
         const prompt = `
 You are a YouTube search optimization expert for language learning content. Your task is to create the most effective search term for finding educational videos about a specific grammar or language concept.
 
@@ -399,28 +399,28 @@ Create the best search term for the given topic and language:`;
         // Import api dynamically to avoid circular imports
         const api = await import('./api.js');
         const data = await api.callGeminiAPI(prompt);
-        
+
         if (!data || !data.candidates || !data.candidates[0] || !data.candidates[0].content) {
             throw new Error('Invalid API response structure');
         }
-        
+
         const searchTerm = data.candidates[0].content.parts[0].text.trim().replace(/["""]/g, '');
-        
+
         if (!searchTerm || searchTerm.length === 0) {
             throw new Error('Empty search term generated');
         }
-        
+
         console.log(`Generated intelligent search term: "${searchTerm}"`);
         return searchTerm;
-        
+
     } catch (error) {
         console.error('Failed to generate intelligent search term:', error);
-        
+
         // Fallback to basic search
         const cleanTitle = explanationTitle.replace(/[^\w\s]/gi, '').trim();
         const targetLanguage = domElements.languageSelect?.value || 'English';
         const fallbackQuery = `${targetLanguage} ${cleanTitle} grammar explanation tutorial`;
-        
+
         console.log(`Using fallback search term: "${fallbackQuery}"`);
         return fallbackQuery;
     }
@@ -431,7 +431,7 @@ function showToast(message, type = 'info') {
         const backgroundColor = type === 'error' ? '#ef4444' : 
                               type === 'success' ? '#10b981' : 
                               type === 'warning' ? '#f59e0b' : '#3b82f6';
-        
+
         Toastify({
             text: message,
             duration: 4000,
@@ -473,7 +473,7 @@ export function showReviewModeUI(language) {
             </button>
         </div>
     `;
-    
+
     domElements.lessonScreen.insertBefore(reviewBanner, domElements.lessonScreen.firstChild);
 }
 

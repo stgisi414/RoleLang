@@ -297,6 +297,9 @@ async function initializeApp() {
 
     lesson.init(elements, state, api, ui, saveState);
 	ui.init(elements, state.getTranslations, () => state.nativeLang, saveState, goBackToLanding);
+	
+	// Initialize native language AFTER ui.init to ensure all dependencies are available
+	ui.initializeNativeLanguage();
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
