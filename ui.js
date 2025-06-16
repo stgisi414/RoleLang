@@ -231,6 +231,9 @@ async function createIntelligentSearchTerm(explanationTitle) {
     try {
         // Get current language from the language select element
         const targetLanguage = domElements.languageSelect?.value || 'English';
+        const nativeLang = getNativeLang() || 'en';
+        
+        console.log(`Creating search term for: "${explanationTitle}" in ${targetLanguage}`);
         
         const prompt = `
 You are a YouTube search optimization expert for language learning content. Your task is to create the most effective search term for finding educational videos about a specific grammar or language concept.
@@ -238,7 +241,7 @@ You are a YouTube search optimization expert for language learning content. Your
 Given:
 - Grammar/Language Topic: "${explanationTitle}"
 - Target Language: "${targetLanguage}"
-- User's Native Language: "${getNativeLang() || 'en'}"
+- User's Native Language: "${nativeLang}"
 
 Create an optimized YouTube search query that will find the best educational videos. Consider:
 1. The specific grammar concept or language topic
@@ -260,43 +263,103 @@ Create the best search term for the given topic and language:`;
         // Import api dynamically to avoid circular imports
         const api = await import('./api.js');
         const data = await api.callGeminiAPI(prompt);
+        
+        if (!data || !data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+            throw new Error('Invalid API response structure');
+        }
+        
         const searchTerm = data.candidates[0].content.parts[0].text.trim().replace(/["""]/g, '');
         
-        console.log(`Generated search term: "${searchTerm}"`);
+        if (!searchTerm || searchTerm.length === 0) {
+            throw new Error('Empty search term generated');
+        }
+        
+        console.log(`Generated intelligent search term: "${searchTerm}"`);
+        showToast(`Generated search: "${searchTerm.substring(0, 30)}..."`, 'info');
         return encodeURIComponent(searchTerm);
         
     } catch (error) {
         console.error('Failed to generate intelligent search term:', error);
+        showToast('Using fallback search term', 'warning');
+        
         // Fallback to basic search
         const cleanTitle = explanationTitle.replace(/[^\w\s]/gi, '').trim();
         const targetLanguage = domElements.languageSelect?.value || 'English';
         const fallbackQuery = `${targetLanguage} ${cleanTitle} grammar explanation tutorial`;
+        
+        console.log(`Using fallback search term: "${fallbackQuery}"`);
         return encodeURIComponent(fallbackQuery);
     }
 }
 
+function showToast(message, type = 'info') {
+    if (typeof Toastify !== 'undefined') {
+        const backgroundColor = type === 'error' ? '#ef4444' : 
+                              type === 'success' ? '#10b981' : 
+                              type === 'warning' ? '#f59e0b' : '#3b82f6';
+        
+        Toastify({
+            text: message,
+            duration: 4000,
+            gravity: "top",
+            position: "right",
+            backgroundColor: backgroundColor,
+            stopOnFocus: true,
+            style: {
+                borderRadius: "8px",
+                fontSize: "14px",
+                fontWeight: "500"
+            }
+        }).showToast();
+    } else {
+        console.log(`Toast (${type}): ${message}`);
+    }
+}
+
 async function loadYouTubeVideo(title) {
+    const loader = document.getElementById('youtube-loader');
+    const iframe = document.getElementById('youtube-iframe');
+    
     try {
-        // Use YouTube Data API to search for videos
-        const apiKey = 'AIzaSyCqWc7_hTRoM6_xgofWZWXOOhNDp6mHOQg'; // YouTube Data API key
+        showToast('Searching for related video...', 'info');
         
         // Generate intelligent search term using Gemini
         const searchQuery = await createIntelligentSearchTerm(title);
+        console.log('Generated search query:', decodeURIComponent(searchQuery));
         
-        const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=${searchQuery}&type=video&key=${apiKey}`);
+        // Use YouTube Data API to search for videos
+        const apiKey = 'AIzaSyCqWc7_hTRoM6_xgofWZWXOOhNDp6mHOQg';
+        const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=${searchQuery}&type=video&key=${apiKey}`;
+        
+        console.log('Making YouTube API request to:', apiUrl);
+        const response = await fetch(apiUrl);
+        
+        if (!response.ok) {
+            throw new Error(`YouTube API error: ${response.status} ${response.statusText}`);
+        }
+        
         const data = await response.json();
+        console.log('YouTube API response:', data);
         
-        const loader = document.getElementById('youtube-loader');
-        const iframe = document.getElementById('youtube-iframe');
+        if (data.error) {
+            throw new Error(`YouTube API error: ${data.error.message}`);
+        }
         
         if (data.items && data.items.length > 0) {
             const videoId = data.items[0].id.videoId;
+            const videoTitle = data.items[0].snippet.title;
             const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1`;
+            
+            console.log('Found video:', videoTitle);
+            showToast(`Found video: ${videoTitle.substring(0, 50)}...`, 'success');
             
             iframe.src = embedUrl;
             loader.classList.add('hidden');
             iframe.classList.remove('hidden');
         } else {
+            console.log('No videos found in API response');
+            showToast('No videos found automatically', 'warning');
+            
             // Fallback: show a search link if no video found
             const fallbackSearchQuery = await createIntelligentSearchTerm(title);
             loader.innerHTML = `
@@ -314,7 +377,7 @@ async function loadYouTubeVideo(title) {
         }
     } catch (error) {
         console.error('Error loading YouTube video:', error);
-        const loader = document.getElementById('youtube-loader');
+        showToast(`Video search failed: ${error.message}`, 'error');
         
         try {
             const errorSearchQuery = await createIntelligentSearchTerm(title);
@@ -322,6 +385,7 @@ async function loadYouTubeVideo(title) {
                 <div class="text-center py-4">
                     <i class="fas fa-exclamation-triangle text-yellow-400 text-2xl mb-2"></i>
                     <p class="text-gray-400 mb-3">Could not load video</p>
+                    <p class="text-xs text-gray-500 mb-3">Error: ${error.message}</p>
                     <a href="https://www.youtube.com/results?search_query=${errorSearchQuery}" 
                        target="_blank" 
                        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center">
@@ -331,12 +395,16 @@ async function loadYouTubeVideo(title) {
                 </div>
             `;
         } catch (fallbackError) {
+            console.error('Fallback search term generation also failed:', fallbackError);
+            showToast('Complete video search failure', 'error');
+            
             // Ultimate fallback if even intelligent search fails
             const basicSearchQuery = encodeURIComponent(`${title} grammar explanation english learning`);
             loader.innerHTML = `
                 <div class="text-center py-4">
                     <i class="fas fa-exclamation-triangle text-yellow-400 text-2xl mb-2"></i>
                     <p class="text-gray-400 mb-3">Could not load video</p>
+                    <p class="text-xs text-gray-500 mb-3">Multiple errors occurred</p>
                     <a href="https://www.youtube.com/results?search_query=${basicSearchQuery}" 
                        target="_blank" 
                        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center">
@@ -721,3 +789,6 @@ export function showLessonComplete() {
     updateMicStatusHTML(`🎉 ${translateText('lessonComplete')}`);
     enableMicButton(false);
 }
+
+// Export toast function for use in other modules
+export { showToast };
