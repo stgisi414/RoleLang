@@ -75,10 +75,6 @@ body {
 /* A "glassmorphism" style for main containers */
 .glassmorphism {
     background: rgba(31, 41, 55, 0.85);
-    /* Upped the opacity to compensate for no blur */
-    /* backdrop-filter: blur(12px); */
-    /* This was causing the child elements to be blurry */
-    /* -webkit-backdrop-filter: blur(12px); */
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -92,11 +88,30 @@ body {
     background-size: 40px 40px;
 }
 
-/* Crop illustration image to show top portion */
+/* --- ILLUSTRATION CROPPING & SIZING --- */
 #lesson-illustration {
-    object-position: top center;
+    width: 100%;
+    height: 100%; /* Default height for mobile */
     object-fit: cover;
+    object-position: top center; /* Default position for mobile */
 }
+
+/* Tablet Mode: Per your request, set height to 200% */
+@media (min-width: 768px) and (max-width: 1023px) {
+    #lesson-illustration {
+        height: 200%;
+    }
+}
+
+/* Desktop Mode: Reset height and adjust crop position */
+@media (min-width: 1024px) {
+    #lesson-illustration {
+        height: 100%; /* Reset height to fill the tall container */
+        object-position: center 30%; /* Shift view down */
+    }
+}
+/* --- END ILLUSTRATION STYLES --- */
+
 
 /* Logo styling */
 .banner-logo {
@@ -234,7 +249,7 @@ body.modal-open {
 
 #youtube-iframe {
     border: 2px solid rgba(255, 255, 255, 0.1);
-    transition: border-color 0.3s ease;
+    transition: border-color: 0.3s ease;
 }
 
 #youtube-iframe:hover {
@@ -983,48 +998,6 @@ body.modal-open {
     }
 }
 
-function showToast(message, type = 'info') {
-    if (typeof Toastify !== 'undefined') {
-        const icons = {
-            success: '✅',
-            error: '❌',
-            warning: '⚠️',
-            info: 'ℹ️'
-        };
-
-        const toastInstance = Toastify({
-            text: `<span class="toast-icon">${icons[type] || icons.info}</span>${message}`,
-            duration: 5000,
-            gravity: "top",
-            position: "right",
-            stopOnFocus: true,
-            escapeMarkup: false,
-            className: `toast-${type}`,
-            onClick: function() {
-                toastInstance.hideToast();
-            }
-        });
-
-        // Add exit animation before hiding
-        const originalHide = toastInstance.hideToast;
-        toastInstance.hideToast = function() {
-            const toastElement = this.toastElement;
-            if (toastElement) {
-                toastElement.style.animation = 'toastSlideOut 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
-                setTimeout(() => originalHide.call(this), 300);
-            } else {
-                originalHide.call(this);
-            }
-        };
-
-        toastInstance.showToast();
-        return toastInstance;
-    } else {
-        console.log(`Toast (${type}): ${message}`);
-        return null;
-    }
-}
-
 /* Audio phrase styling */
 .audio-phrase {
     color: #60a5fa; /* blue-400 */
@@ -1047,11 +1020,9 @@ function showToast(message, type = 'info') {
     border-color: rgba(96, 165, 250, 0.6);
     color: #93c5fd; /* light-blue-300 */
     text-decoration-color: rgba(96, 165, 250, 1);
-    /* transform and box-shadow are removed as they don't work reliably on multi-line inline elements */
 }
 
 .audio-phrase:active {
-    /* Removed transform as it doesn't apply */
     background: linear-gradient(135deg, rgba(96, 165, 250, 0.35), rgba(59, 130, 246, 0.35));
     transition: all 0.1s ease;
 }
@@ -1175,7 +1146,7 @@ function showToast(message, type = 'info') {
     }
 
     #explanation-modal .modal-content h3 {
-        font-size: 1.1rem !important;
+        font-siz10e: 1.1rem !important;
     }
 
     #youtube-iframe {

@@ -677,16 +677,13 @@ export async function startVocabularyQuiz(language) {
     document.body.appendChild(quizModal);
 
     try {
-        // Extract vocabulary with proper context from dialogue
         const vocabulary = await extractVocabularyFromDialogue();
 
         if (!vocabulary || vocabulary.length === 0) {
             throw new Error("No vocabulary found in the dialogue.");
         }
 
-        // Generate native language translations if needed
         const vocabularyWithTranslations = await generateVocabularyTranslations(vocabulary, language);
-
         createVocabularyQuizModal(vocabularyWithTranslations, language);
 
     } catch (error) {
@@ -695,20 +692,46 @@ export async function startVocabularyQuiz(language) {
             <div class="bg-gray-800 rounded-xl p-6 max-w-md w-full glassmorphism text-center">
                 <h3 class="text-xl font-bold text-red-400 mb-4">Error</h3>
                 <p class="text-gray-300 mb-6">Could not generate a vocabulary quiz for this lesson.</p>
-                <button id="close-quiz-errorjson|```/g, '').trim();
+                <button id="close-quiz-error-btn" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">Close</button>
+            </div>
+        `;
+        document.getElementById('close-quiz-error-btn').onclick = () => quizModal.remove();
+    }
+}
+
+async function extractVocabularyFromDialogue() {
+    const language = domElements.languageSelect.value;
+
+    if (language === 'English') {
+        if (!stateRef.lessonPlan || !stateRef.lessonPlan.dialogue) return [];
+        const dialogueText = stateRef.lessonPlan.dialogue.map(turn => turn.line.display).join('\n');
+        const prompt = `
+You are a vocabulary extraction tool for an English language learner. From the following dialogue, identify 5-10 key vocabulary words or phrases that would be useful for a learner.
+For each item, provide the word/phrase and a simple definition or synonym in English.
+Your response MUST be a valid JSON array of objects, with each object having a "word" key and a "translation" key (where "translation" is the definition/synonym).
+Example:
+[
+  {"word": "hectic", "translation": "very busy and full of activity"},
+  {"word": "grab a bite", "translation": "to get something to eat"}
+]
+Dialogue:
+---
+${dialogueText}
+---
+Now, provide the JSON array.`;
+
+        try {
+            const data = await apiRef.callGeminiAPI(prompt);
+            const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
             const vocabulary = JSON.parse(jsonString);
 
-            // Add enhanced context to each vocabulary item
             return vocabulary.map(vocabItem => {
                 const contextTurnIndex = stateRef.lessonPlan.dialogue.findIndex(turn =>
                     turn.line && turn.line.display && turn.line.display.toLowerCase().includes(vocabItem.word.toLowerCase())
                 );
 
                 if (contextTurnIndex !== -1) {
-                    // Get surrounding context for better quiz experience
                     const contextParts = [];
-
-                    // Add preceding turn if available
                     if (contextTurnIndex > 0) {
                         const precedingTurn = stateRef.lessonPlan.dialogue[contextTurnIndex - 1];
                         if (precedingTurn && precedingTurn.line && precedingTurn.line.display) {
@@ -716,86 +739,58 @@ export async function startVocabularyQuiz(language) {
                         }
                     }
 
-                    // Add current turn (without the word itself to avoid giving away the answer)
                     const currentTurn = stateRef.lessonPlan.dialogue[contextTurnIndex];
                     const currentText = removeParentheses(currentTurn.line.display);
                     const wordRegex = new RegExp(vocabItem.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
                     const contextWithoutWord = currentText.replace(wordRegex, '___');
                     contextParts.push(contextWithoutWord);
 
-                    // Add following turn if available
                     if (contextTurnIndex < stateRef.lessonPlan.dialogue.length - 1) {
                         const followingTurn = stateRef.lessonPlan.dialogue[contextTurnIndex + 1];
                         if (followingTurn && followingTurn.line && followingTurn.line.display) {
                             contextParts.push(removeParentheses(followingTurn.line.display));
                         }
                     }
-
-                    return {
-                        ...vocabItem,
-                        context: contextParts.join(' ... ')
-                    };
+                    return { ...vocabItem, context: contextParts.join(' ... ') };
                 }
-
-                return {
-                    ...vocabItem,
-                    context: vocabItem.word
-                };
+                return { ...vocabItem, context: vocabItem.word };
             });
         } catch (error) {
             console.error("Failed to extract vocabulary for English lesson:", error);
             return [];
         }
     } else {
-        // Enhanced logic for other languages with better context
         if (!stateRef.lessonPlan || !stateRef.lessonPlan.dialogue) return [];
-
         const vocabulary = [];
         const seenWords = new Set();
-
         stateRef.lessonPlan.dialogue.forEach((turn, turnIndex) => {
             if (turn.line && turn.line.display) {
                 const cleanText = removeParentheses(turn.line.display);
                 const translation = extractTranslation(turn.line.display);
-
                 if (translation) {
                     const word = cleanText.trim();
                     const translationClean = translation.replace(/[()]/g, '').trim();
-
                     if (word && translationClean && !seenWords.has(word.toLowerCase())) {
-                        // Create enhanced context with surrounding turns
                         const contextParts = [];
-
-                        // Add preceding turn if available
                         if (turnIndex > 0) {
                             const precedingTurn = stateRef.lessonPlan.dialogue[turnIndex - 1];
                             if (precedingTurn && precedingTurn.line && precedingTurn.line.display) {
                                 contextParts.push(removeParentheses(precedingTurn.line.display));
                             }
                         }
-
-                        // Add current turn without parenthetical translation
                         contextParts.push(cleanText);
-
-                        // Add following turn if available
                         if (turnIndex < stateRef.lessonPlan.dialogue.length - 1) {
                             const followingTurn = stateRef.lessonPlan.dialogue[turnIndex + 1];
                             if (followingTurn && followingTurn.line && followingTurn.line.display) {
                                 contextParts.push(removeParentheses(followingTurn.line.display));
                             }
                         }
-
-                        vocabulary.push({
-                            word: word,
-                            translation: translationClean,
-                            context: contextParts.join(' ... ')
-                        });
+                        vocabulary.push({ word, translation: translationClean, context: contextParts.join(' ... ') });
                         seenWords.add(word.toLowerCase());
                     }
                 }
             }
         });
-
         return vocabulary.slice(0, 10);
     }
 }
@@ -813,47 +808,37 @@ async function generateVocabularyTranslations(vocabulary, targetLanguage) {
     };
     const nativeLangName = langCodeToName[nativeLangCode] || 'English';
 
-    // If native language is English, just return the original vocabulary
     if (nativeLangName === 'English') {
         return vocabulary;
     }
 
     try {
         const vocabList = vocabulary.map(v => v.word).join(', ');
-
         const prompt = `
 You are a vocabulary translator. Your task is to translate words from ${targetLanguage} into ${nativeLangName}.
-
 Please translate each of the following words/phrases from ${targetLanguage} into ${nativeLangName}.
 Return ONLY a JSON array with objects containing "word" (original word) and "translation" (translation in ${nativeLangName}).
-
 Words to translate: ${vocabList}
-
 Example format:
 [
   {"word": "originalWord1", "translation": "translationInNativeLanguage1"},
   {"word": "originalWord2", "translation": "translationInNativeLanguage2"}
 ]
-
 IMPORTANT: Return ONLY the JSON array, no other text.`;
 
         const data = await apiRef.callGeminiAPI(prompt);
         const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
         const translations = JSON.parse(jsonString);
 
-        // Merge translations with original vocabulary
-        const translatedVocabulary = vocabulary.map(vocabItem => {
+        return vocabulary.map(vocabItem => {
             const translationItem = translations.find(t => t.word === vocabItem.word);
             return {
                 ...vocabItem,
                 nativeTranslation: translationItem ? translationItem.translation : vocabItem.translation
             };
         });
-
-        return translatedVocabulary;
     } catch (error) {
         console.error('Failed to generate native language translations:', error);
-        // Return original vocabulary as fallback
         return vocabulary;
     }
 }
@@ -886,7 +871,6 @@ function createVocabularyQuizModal(vocabulary, language) {
         const currentVocab = shuffledVocab[currentQuestion];
         const correctAnswer = currentVocab.nativeTranslation || currentVocab.translation;
 
-        // Generate wrong answers from other vocabulary items or generic answers
         const allTranslations = shuffledVocab
             .map(v => v.nativeTranslation || v.translation)
             .filter(t => t !== correctAnswer);
@@ -911,7 +895,6 @@ function createVocabularyQuizModal(vocabulary, language) {
         const allOptions = [correctAnswer, ...wrongAnswers.slice(0, 3)]
             .sort(() => 0.5 - Math.random());
 
-        // Clean context to remove English translations to avoid giving away answers
         const cleanContext = removeParentheses(currentVocab.context);
 
         quizModal.innerHTML = `
@@ -947,18 +930,16 @@ function createVocabularyQuizModal(vocabulary, language) {
                 const selectedAnswer = option.dataset.answer;
                 const isCorrect = selectedAnswer === correctAnswer;
 
-                // Disable all options and remove hover effects
                 quizModal.querySelectorAll('.quiz-option').forEach(opt => {
                     opt.classList.remove('hover:bg-gray-600');
                     opt.disabled = true;
 
-                    // Color the buttons to give feedback
                     if (opt.dataset.answer === correctAnswer) {
                         opt.classList.remove('bg-gray-700');
-                        opt.classList.add('bg-green-600'); // Correct answer is always green
+                        opt.classList.add('bg-green-600');
                     } else if (opt === option && !isCorrect) {
                         opt.classList.remove('bg-gray-700');
-                        opt.classList.add('bg-red-600'); // User's wrong choice is red
+                        opt.classList.add('bg-red-600');
                     }
                 });
 
@@ -966,7 +947,6 @@ function createVocabularyQuizModal(vocabulary, language) {
                     score++;
                 }
 
-                // Move to the next question after a delay
                 setTimeout(() => {
                     currentQuestion++;
                     updateQuizContent();
@@ -999,7 +979,6 @@ export async function reviewLesson(lessonRecord) {
         plan.id = `lesson-${lessonRecord.language}-${Date.now()}`;
     }
 
-    // Mark as review mode BEFORE setting lesson plan
     plan.isReviewMode = true;
     plan.isCompleted = true;
 
@@ -1026,7 +1005,6 @@ export async function reviewLesson(lessonRecord) {
 
     uiRef.showReviewModeUI(lessonRecord.language);
 
-    // Just highlight the first line, don't start audio
     uiRef.highlightActiveLine(0);
     uiRef.updateMicStatus('reviewModeReady');
     uiRef.enableMicButton(false);
@@ -1035,7 +1013,6 @@ export async function reviewLesson(lessonRecord) {
 }
 
 export async function playLineAudio(text, party = 'B') {
-    // Abort the main lesson flow's 'ended' listener to prevent turn advancement.
     stateRef.resetAudioController();
 
     try {
@@ -1044,16 +1021,13 @@ export async function playLineAudio(text, party = 'B') {
         const audioBlob = await apiRef.fetchPartnerAudio(cleanText, voiceConfig);
         const audioUrl = URL.createObjectURL(audioBlob);
 
-        // If there's an old URL, revoke it to prevent memory leaks
         if (stateRef.audioPlayer.src) {
             URL.revokeObjectURL(stateRef.audioPlayer.src);
         }
 
-        // Use the single, global audio player from the state module
         stateRef.audioPlayer.src = audioUrl;
         stateRef.audioPlayer.playbackRate = parseFloat(domElements.audioSpeedSelect.value);
 
-        // Call load() to reset the element and ensure the new source is ready
         stateRef.audioPlayer.load();
         await stateRef.audioPlayer.play();
 
@@ -1067,10 +1041,9 @@ export function playLineAudioDebounced(text, party = 'B') {
     if (audioDebounceTimer) {
         clearTimeout(audioDebounceTimer);
     }
-    // Pause the single global audio player if it's currently playing
     if (stateRef.audioPlayer && !stateRef.audioPlayer.paused) {
         stateRef.audioPlayer.pause();
-        stateRef.audioPlayer.currentTime = 0; // Reset playback position
+        stateRef.audioPlayer.currentTime = 0;
     }
 
     audioDebounceTimer = setTimeout(() => {
@@ -1101,7 +1074,6 @@ export function resetLesson() {
     stateRef.recognition?.stop();
     uiRef.hideReviewModeBanner?.();
 
-    // Clear review mode flag when resetting
     if (stateRef.lessonPlan.isReviewMode) {
         delete stateRef.lessonPlan.isReviewMode;
     }
@@ -1109,16 +1081,9 @@ export function resetLesson() {
     advanceTurn(0);
 }
 
-/**
- * Pre-processes a lesson plan to split user dialogue lines into sentences.
- * This is crucial for restoring state correctly.
- * @param {object} plan The lesson plan object.
- * @returns {Promise<object>} The processed lesson plan with 'sentences' arrays.
- */
 export async function preprocessLessonPlan(plan) {
     if (plan && plan.dialogue) {
         for (const turn of plan.dialogue) {
-            // Check if it's a user turn and sentences haven't been generated
             if (turn.party && turn.party.toUpperCase() === 'A' && (!turn.sentences || turn.sentences.length === 0)) {
                 const cleanText = removeParentheses(turn.line.display);
                 turn.sentences = await splitIntoSentences(cleanText);

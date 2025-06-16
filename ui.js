@@ -85,7 +85,12 @@ export function setNativeLanguage(langCode, flag, name) {
     updateBackButton();
 
     stopTopicRotations();
-    startTopicRotations();
+    // Check which tab is active and start the correct rotation
+    if (!domElements.difficultyContent.classList.contains('hidden')) {
+        startTopicRotations();
+    } else {
+        startSituationsRotations();
+    }
     localStorage.setItem('rolelang_native_lang', JSON.stringify({ code: langCode, flag, name }));
     if(typeof saveState === 'function') saveState();
 }
@@ -100,7 +105,7 @@ function detectNativeLanguage() {
         'de': { code: 'de', flag: '🇩🇪', name: 'Deutsch' },
         'it': { code: 'it', flag: '🇮🇹', name: 'Italiano' },
         'zh': { code: 'zh', flag: '🇨🇳', name: '中文' },
-        'ja': { code: 'ja', flag: '🇯🇵', name: '日본語' },
+        'ja': { code: 'ja', flag: '🇯🇵', name: '日本語' },
         'ko': { code: 'ko', flag: '🇰🇷', name: '한국어' }
     };
     const lang = supportedLangs[browserLang] || supportedLangs['en'];
@@ -161,7 +166,13 @@ export function toggleLessonsVisibility(forceShow = null) {
     if (show) {
         domElements.lessonsContainer.classList.remove('hidden');
         chevronIcon.style.transform = 'rotate(180deg)';
-        if (topicRotationIntervals.length === 0) startTopicRotations();
+        if (topicRotationIntervals.length === 0) {
+             if (!domElements.difficultyContent.classList.contains('hidden')) {
+                startTopicRotations();
+            } else {
+                startSituationsRotations();
+            }
+        }
     } else {
         domElements.lessonsContainer.classList.add('hidden');
         chevronIcon.style.transform = 'rotate(0deg)';
@@ -238,7 +249,6 @@ export async function showExplanation(content) {
         playBtn.onclick = () => {
             playBtn.classList.add('hidden');
             document.getElementById('youtube-loader').classList.remove('hidden');
-            // This is the correct call site for the search function.
             searchAndLoadYouTubeVideo(content);
         };
     }
@@ -352,12 +362,10 @@ async function searchAndLoadYouTubeVideo(content) {
 async function parseAndRenderExplanationWithAudio(content) {
     const targetLanguage = domElements.languageSelect?.value || 'English';
 
-    // Parse the explanation text for audio tags
     const audioTagRegex = /<audio>(.*?)<\/audio>/g;
     let processedBody = content.body;
     const audioItems = [];
 
-    // Extract all audio-tagged phrases
     let match;
     let index = 0;
     while ((match = audioTagRegex.exec(content.body)) !== null) {
@@ -365,7 +373,6 @@ async function parseAndRenderExplanationWithAudio(content) {
         const audioId = `audio-phrase-${index}`;
         audioItems.push({ id: audioId, phrase: phrase });
 
-        // Replace the audio tag with a clickable span
         processedBody = processedBody.replace(
             match[0], 
             `<span class="audio-phrase" data-audio-id="${audioId}" data-phrase="${phrase}">${phrase}</span>`
@@ -376,7 +383,7 @@ async function parseAndRenderExplanationWithAudio(content) {
     return { processedBody, audioItems };
 }
 
-function showToast(message, type = 'info') {
+export function showToast(message, type = 'info') {
     if (typeof Toastify !== 'undefined') {
         const icons = {
             success: '✅',
@@ -398,12 +405,10 @@ function showToast(message, type = 'info') {
             }
         });
 
-        // Enhanced exit animation with shadowbox effects
         const originalHide = toastInstance.hideToast;
         toastInstance.hideToast = function() {
             const toastElement = this.toastElement;
             if (toastElement) {
-                // Add a subtle pulse before sliding out
                 toastElement.style.animation = 'toastSlideOut 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards';
                 setTimeout(() => originalHide.call(this), 500);
             } else {
@@ -411,10 +416,8 @@ function showToast(message, type = 'info') {
             }
         };
 
-        // Add hover effects for better interactivity
         toastInstance.showToast();
 
-        // Enhanced hover effects
         setTimeout(() => {
             const toastElement = toastInstance.toastElement;
             if (toastElement) {
@@ -484,19 +487,37 @@ export function showTutorial() {
 
 // --- Tabs ---
 export function switchTab(tabName) {
+    stopTopicRotations();
+
     if (tabName === 'difficulty') {
+        // Activate difficulty tab
         domElements.difficultyTab.classList.add('bg-blue-600', 'text-white');
+        domElements.difficultyTab.classList.remove('text-gray-400');
+
+        // Deactivate situations tab
         domElements.situationsTab.classList.remove('bg-blue-600', 'text-white');
+        domElements.situationsTab.classList.add('text-gray-400');
+
+        // Toggle content visibility
         domElements.difficultyContent.classList.remove('hidden');
         domElements.situationsContent.classList.add('hidden');
-    } else {
+
+        startTopicRotations();
+    } else { // situations tab
+        // Activate situations tab
         domElements.situationsTab.classList.add('bg-blue-600', 'text-white');
+        domElements.situationsTab.classList.remove('text-gray-400');
+
+        // Deactivate difficulty tab
         domElements.difficultyTab.classList.remove('bg-blue-600', 'text-white');
+        domElements.difficultyTab.classList.add('text-gray-400');
+
+        // Toggle content visibility
         domElements.situationsContent.classList.remove('hidden');
         domElements.difficultyContent.classList.add('hidden');
+
+        startSituationsRotations();
     }
-    stopTopicRotations();
-    startTopicRotations();
 }
 
 // --- Topic Rotations ---
@@ -504,6 +525,13 @@ export function startTopicRotations() {
     stopTopicRotations();
     rotateTopics();
     topicRotationIntervals.push(setInterval(rotateTopics, 8000));
+}
+
+// NEW FUNCTION for situations
+export function startSituationsRotations() {
+    stopTopicRotations();
+    rotateSituations();
+    topicRotationIntervals.push(setInterval(rotateSituations, 8000));
 }
 
 export function stopTopicRotations() {
@@ -516,6 +544,27 @@ function rotateTopics() {
         beginner: document.getElementById('beginner-container'),
         intermediate: document.getElementById('intermediate-container'),
         advanced: document.getElementById('advanced-container')
+    };
+    Object.entries(containers).forEach(([level, container]) => {
+        if (container) {
+            animateTopicsOut(container);
+            setTimeout(() => {
+                const newTopics = getRandomTopics(level, 4);
+                animateTopicsIn(container, newTopics, level);
+            }, 500);
+        }
+    });
+}
+
+// NEW FUNCTION to rotate situations
+function rotateSituations() {
+    const containers = {
+        realistic: document.getElementById('realistic-container'),
+        futuristic: document.getElementById('futuristic-container'),
+        historical: document.getElementById('historical-container'),
+        drama: document.getElementById('drama-container'),
+        comedy: document.getElementById('comedy-container'),
+        horror: document.getElementById('horror-container')
     };
     Object.entries(containers).forEach(([level, container]) => {
         if (container) {
@@ -558,7 +607,7 @@ function createTopicButton(topic, level) {
         drama: 'red', comedy: 'yellow', horror: 'purple'
     };
     const color = colorMap[level] || 'gray';
-    button.className = `lesson-btn bg- ${color}-600/20 hover:bg-${color}-600/30 text-${color}-300 text-xs py-2 px-3 rounded-md transition-all border border-${color}-600/30`;
+    button.className = `lesson-btn bg-${color}-600/20 hover:bg-${color}-600/30 text-${color}-300 text-xs py-2 px-3 rounded-md transition-all border border-${color}-600/30`;
     button.setAttribute('data-topic', topic);
     button.textContent = topic;
     button.style.opacity = '0';
@@ -622,19 +671,11 @@ function createDialogueLine(turn, index) {
         explanationSpan.innerHTML = ` <i class="fas fa-info-circle text-sky-300 ml-6"></i>`;
         explanationSpan.classList.add('explanation-link');
 
-        // Add debounced click handler to prevent multiple rapid clicks
         let clickTimeout = null;
         explanationSpan.onclick = (e) => {
             e.stopPropagation();
-
-            // Clear any existing timeout
-            if (clickTimeout) {
-                clearTimeout(clickTimeout);
-            }
-
-            // Debounce the click with a 300ms delay
+            if (clickTimeout) clearTimeout(clickTimeout);
             clickTimeout = setTimeout(() => {
-                // Include the original sentence in the explanation
                 const explanationWithSentence = {
                     ...turn.explanation,
                     originalSentence: turn.line.display || turn.line.text || ''
@@ -679,7 +720,7 @@ export function addBackToLandingButton() {
 
 export function updateBackButton() {
     const backBtn = document.getElementById('back-to-landing-btn');
-if (backBtn) {
+    if (backBtn) {
         backBtn.innerHTML = `<i class="fas fa-arrow-left mr-2"></i>${translateText('back')}`;
     }
 }
@@ -759,7 +800,7 @@ export function enableMicButton(enabled) {
 
 export function highlightActiveSentence(turnIndex, sentenceIndex) {
     document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
-    const sentenceEl = document.getElementById(`turn-${turnIndex}-sentence-${sentenceIndex}`);
+    const sentenceEl = document.getElementById(`turn-${index}-sentence-${sentenceIndex}`);
     if (sentenceEl) {
         sentenceEl.classList.add('active-sentence');
     }
@@ -833,15 +874,12 @@ export function showLessonComplete() {
     enableMicButton(false);
 }
 
-// Modal close handlers are now set up at the bottom of the file
 export function closeExplanationModal() {
-    // Stop YouTube video if playing
     const iframe = document.getElementById('youtube-iframe');
     if (iframe && iframe.src) {
-        iframe.src = ''; // This effectively stops the video
+        iframe.src = ''; 
     }
 
-    // Stop any ongoing audio playback from the lesson
     import('./state.js').then(state => {
         if (state.audioPlayer && !state.audioPlayer.paused) {
             state.audioPlayer.pause();
@@ -852,9 +890,6 @@ export function closeExplanationModal() {
         }
     }).catch(err => console.error("Failed to import state for audio cleanup:", err));
 
-    // Hide the modal and restore page scrolling
     domElements.modal?.classList.add('hidden');
     document.body.classList.remove('modal-open');
 }
-
-export { showToast };
