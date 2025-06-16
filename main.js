@@ -5,17 +5,19 @@ if (!window.translations) {
     console.error('Translations not loaded! Make sure translations.js is loaded before main.js');
 }
 
+let api, ui, lesson, state;
+
 try {
     console.log('Importing modules...');
-    const api = await import('./api.js');
-    console.log('API module loaded:', api);
-    const ui = await import('./ui.js');
-    console.log('UI module loaded:', ui);
-    const lesson = await import('./lesson.js');
-    console.log('Lesson module loaded:', lesson);
-    const state = await import('./state.js');
-    console.log('State module loaded:', state);
-    console.log('main.js loaded');
+    api = await import('./api.js');
+    console.log('API module loaded:', !!api);
+    ui = await import('./ui.js');
+    console.log('UI module loaded:', !!ui);
+    lesson = await import('./lesson.js');
+    console.log('Lesson module loaded:', !!lesson);
+    state = await import('./state.js');
+    console.log('State module loaded:', !!state);
+    console.log('All modules loaded successfully');
 } catch (error) {
     console.error('Failed to load modules:');
     console.error('Error name:', error.name);
@@ -39,6 +41,7 @@ try {
                 </div>
             </div>
         `;
+    throw error; // Re-throw to prevent further execution
 }
 
 console.log('main.js loaded');

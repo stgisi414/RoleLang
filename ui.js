@@ -317,180 +317,56 @@ function showToast(message, type = 'info') {
 }
 
 function checkYTSearchLibrary() {
-    return new Promise((resolve) => {
-        console.log('checkYTSearchLibrary started');
-        console.log('window.yts type:', typeof window.yts);
-        console.log('window.ytsLoaded value:', window.ytsLoaded);
-        
-        // Check if ES6 module is loaded
-        if (typeof window.yts !== 'undefined') {
-            console.log('yt-search ES6 module found, type:', typeof window.yts);
-            console.log('window.yts value:', window.yts);
-            resolve(true);
-            return;
-        }
-        
-        // Check loading status
-        if (window.ytsLoaded === true) {
-            console.log('yt-search marked as loaded but window.yts is undefined');
-            resolve(true);
-            return;
-        }
-        
-        if (window.ytsLoaded === false) {
-            console.log('yt-search marked as failed to load');
-            resolve(false);
-            return;
-        }
-        
-        // Wait for the ES6 module to load
-        let attempts = 0;
-        const checkInterval = setInterval(() => {
-            attempts++;
-            console.log(`Checking for yt-search ES6 module, attempt ${attempts}/15`);
-            console.log(`Current window.yts type: ${typeof window.yts}, ytsLoaded: ${window.ytsLoaded}`);
-            
-            if (typeof window.yts !== 'undefined' || window.ytsLoaded === true) {
-                clearInterval(checkInterval);
-                console.log('yt-search library found after waiting');
-                resolve(true);
-            } else if (window.ytsLoaded === false || attempts >= 15) {
-                clearInterval(checkInterval);
-                console.log('yt-search ES6 module check timed out or failed after', attempts, 'attempts');
-                resolve(false);
-            }
-        }, 200);
-    });
+    // Always return false since yt-search doesn't work in browsers
+    return Promise.resolve(false);
 }
 
 async function loadYouTubeVideo(title) {
     const loader = document.getElementById('youtube-loader');
-    const iframe = document.getElementById('youtube-iframe');
     
     try {
         console.log('loadYouTubeVideo called with title:', title);
-        showToast('Searching for related video...', 'info');
-        
-        // Check if yt-search library is available
-        console.log('Checking if yt-search library is available...');
-        const isLibraryLoaded = await checkYTSearchLibrary();
-        console.log('Library loaded check result:', isLibraryLoaded);
-        
-        if (!isLibraryLoaded) {
-            console.warn('yt-search library not available, proceeding with fallback');
-            throw new Error('yt-search library not available after waiting');
-        }
+        showToast('Generating YouTube search link...', 'info');
         
         // Generate intelligent search term using Gemini
         const searchQuery = await createIntelligentSearchTerm(title);
-        const decodedQuery = decodeURIComponent(searchQuery);
-        console.log('Generated search query:', decodedQuery);
+        console.log('Generated search query:', decodeURIComponent(searchQuery));
         
-        // Use the ES6 module reference
-        if (!window.yts) {
-            console.warn('yt-search ES6 module not available, using fallback search');
-            throw new Error('yt-search ES6 module not accessible - showing manual search link');
-        }
+        // Show manual search link (since yt-search doesn't work in browsers)
+        loader.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fab fa-youtube text-red-500 text-3xl mb-3"></i>
+                <p class="text-gray-300 mb-3">Search for related videos</p>
+                <p class="text-sm text-gray-400 mb-3">Click below to find educational content about this topic</p>
+                <a href="https://www.youtube.com/results?search_query=${searchQuery}" 
+                   target="_blank" 
+                   class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center">
+                    <i class="fab fa-youtube mr-2"></i>
+                    Search on YouTube
+                </a>
+            </div>
+        `;
         
-        // Use yt-search library to find videos
-        console.log('Searching YouTube with yt-search ES6 module...');
-        console.log('About to call window.yts with query:', decodedQuery);
-        console.log('window.yts function:', window.yts);
+        showToast('YouTube search link ready', 'success');
         
-        // Use a promise wrapper to handle potential errors
-        let searchResults;
-        try {
-            console.log('Calling window.yts...');
-            const searchPromise = window.yts(decodedQuery);
-            console.log('window.yts returned:', searchPromise);
-            
-            searchResults = await Promise.race([
-                searchPromise,
-                new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Search timeout after 10 seconds')), 10000)
-                )
-            ]);
-            console.log('Search completed successfully');
-        } catch (searchError) {
-            console.error('yt-search failed with detailed error:');
-            console.error('Error name:', searchError.name);
-            console.error('Error message:', searchError.message);
-            console.error('Error stack:', searchError.stack);
-            console.error('Full error object:', searchError);
-            throw new Error(`Search failed: ${searchError.message}`);
-        }
-        
-        console.log('yt-search results:', searchResults);
-        
-        if (searchResults && searchResults.videos && searchResults.videos.length > 0) {
-            const video = searchResults.videos[0];
-            const videoId = video.videoId;
-            const videoTitle = video.title;
-            const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1`;
-            
-            console.log('Found video:', videoTitle);
-            showToast(`Found video: ${videoTitle.substring(0, 50)}...`, 'success');
-            
-            iframe.src = embedUrl;
-            loader.classList.add('hidden');
-            iframe.classList.remove('hidden');
-        } else {
-            console.log('No videos found in search results');
-            showToast('No videos found automatically', 'warning');
-            
-            // Fallback: show a search link if no video found
-            loader.innerHTML = `
-                <div class="text-center py-4">
-                    <i class="fas fa-search text-gray-400 text-2xl mb-2"></i>
-                    <p class="text-gray-400 mb-3">No video found automatically</p>
-                    <a href="https://www.youtube.com/results?search_query=${searchQuery}" 
-                       target="_blank" 
-                       class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center">
-                        <i class="fab fa-youtube mr-2"></i>
-                        Search on YouTube
-                    </a>
-                </div>
-            `;
-        }
     } catch (error) {
-        console.error('Error loading YouTube video:', error);
-        showToast(`Video search failed: ${error.message}`, 'error');
+        console.error('Error generating YouTube search:', error);
+        showToast('Using basic search', 'warning');
         
-        try {
-            const errorSearchQuery = await createIntelligentSearchTerm(title);
-            loader.innerHTML = `
-                <div class="text-center py-4">
-                    <i class="fas fa-exclamation-triangle text-yellow-400 text-2xl mb-2"></i>
-                    <p class="text-gray-400 mb-3">Could not load video</p>
-                    <p class="text-xs text-gray-500 mb-3">Error: ${error.message}</p>
-                    <a href="https://www.youtube.com/results?search_query=${errorSearchQuery}" 
-                       target="_blank" 
-                       class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center">
-                        <i class="fab fa-youtube mr-2"></i>
-                        Search on YouTube
-                    </a>
-                </div>
-            `;
-        } catch (fallbackError) {
-            console.error('Fallback search term generation also failed:', fallbackError);
-            showToast('Complete video search failure', 'error');
-            
-            // Ultimate fallback if even intelligent search fails
-            const basicSearchQuery = encodeURIComponent(`${title} grammar explanation english learning`);
-            loader.innerHTML = `
-                <div class="text-center py-4">
-                    <i class="fas fa-exclamation-triangle text-yellow-400 text-2xl mb-2"></i>
-                    <p class="text-gray-400 mb-3">Could not load video</p>
-                    <p class="text-xs text-gray-500 mb-3">Multiple errors occurred</p>
-                    <a href="https://www.youtube.com/results?search_query=${basicSearchQuery}" 
-                       target="_blank" 
-                       class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center">
-                        <i class="fab fa-youtube mr-2"></i>
-                        Search on YouTube
-                    </a>
-                </div>
-            `;
-        }
+        // Ultimate fallback if even intelligent search fails
+        const basicSearchQuery = encodeURIComponent(`${title} grammar explanation english learning`);
+        loader.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fab fa-youtube text-red-500 text-3xl mb-3"></i>
+                <p class="text-gray-300 mb-3">Search for related videos</p>
+                <a href="https://www.youtube.com/results?search_query=${basicSearchQuery}" 
+                   target="_blank" 
+                   class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors inline-flex items-center">
+                    <i class="fab fa-youtube mr-2"></i>
+                    Search on YouTube
+                </a>
+            </div>
+        `;
     }
 }
 

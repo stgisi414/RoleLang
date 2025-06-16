@@ -138,51 +138,12 @@
     <!-- Toast notifications -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-    <!-- YouTube Search Library -->
-    <script type="module">
-        // Import yt-search as ES6 module with detailed error logging
-        try {
-            console.log('Attempting to import yt-search...');
-            const ytSearch = await import('https://cdn.jsdelivr.net/npm/yt-search@2.13.1/+esm');
-            console.log('Raw ytSearch import result:', ytSearch);
-            
-            window.yts = ytSearch.default || ytSearch;
-            window.ytsLoaded = true;
-            console.log('yt-search ES6 module loaded successfully, window.yts:', typeof window.yts);
-        } catch (error) {
-            console.error('Failed to load yt-search ES6 module:');
-            console.error('Error name:', error.name);
-            console.error('Error message:', error.message);
-            console.error('Error stack:', error.stack);
-            console.error('Full error object:', error);
-            window.ytsLoaded = false;
-        }
-    </script>
-    
-    <!-- Global Error Handler -->
+    <!-- Initialize YouTube search fallback -->
     <script>
-        // Catch all unhandled errors and log them properly
-        window.addEventListener('error', function(event) {
-            console.error('Global error caught:');
-            console.error('Message:', event.message);
-            console.error('Filename:', event.filename);
-            console.error('Line:', event.lineno);
-            console.error('Column:', event.colno);
-            console.error('Error object:', event.error);
-            if (event.error && event.error.stack) {
-                console.error('Stack trace:', event.error.stack);
-            }
-        });
-        
-        // Catch unhandled promise rejections
-        window.addEventListener('unhandledrejection', function(event) {
-            console.error('Unhandled promise rejection:');
-            console.error('Reason:', event.reason);
-            console.error('Promise:', event.promise);
-            if (event.reason && event.reason.stack) {
-                console.error('Stack trace:', event.reason.stack);
-            }
-        });
+        // Since yt-search doesn't work in browsers, we'll use fallback approach
+        window.ytsLoaded = false;
+        window.yts = null;
+        console.log('YouTube search will use fallback manual search links');
     </script>
     <!-- Custom Stylesheet -->
     <link rel="stylesheet" href="style.css">
