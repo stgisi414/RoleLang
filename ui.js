@@ -429,7 +429,7 @@ export function showReviewModeUI(language) {
 
     const reviewModeText = translateText('reviewMode');
     const lessonCompleteText = translateText('lessonCompleteReview');
-    const vocabQuizText = translateText('vocabQuiz');
+    const vocabQuizText = translateText('vocabularyQuiz');
 
     reviewBanner.innerHTML = `
         <div class="flex items-center justify-between">
