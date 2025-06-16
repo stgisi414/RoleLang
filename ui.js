@@ -75,6 +75,16 @@ export function setNativeLanguage(langCode, flag, name) {
     
     updateTranslations();
     updateBackButton(); 
+    
+    // Refresh review banner if it exists
+    const existingBanner = document.querySelector('.review-mode-indicator');
+    if (existingBanner) {
+        const languageSelect = domElements.languageSelect || document.getElementById('language-select');
+        const currentLanguage = languageSelect ? languageSelect.value : 'English';
+        hideReviewModeBanner();
+        showReviewModeUI(currentLanguage);
+    }
+    
     stopTopicRotations();
     startTopicRotations();
     localStorage.setItem('rolelang_native_lang', JSON.stringify({ code: langCode, flag, name }));
