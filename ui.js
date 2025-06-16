@@ -236,7 +236,9 @@ export async function showExplanation(content) {
         };
 
         // Store the close handler for cleanup
-        domElements.modal._closeHandler = handleModalClose;
+        if (domElements.modal) {
+            domElements.modal._closeHandler = handleModalClose;
+        }
     }
 
     // Now load content asynchronously
@@ -262,6 +264,11 @@ export async function showExplanation(content) {
                     'ko': 'Korean'
                 };
                 const targetLanguageName = languageNames[nativeLang] || 'English';
+                
+                // Validate that we have content to translate
+                if (!content.title || !content.body) {
+                    throw new Error('Invalid content structure for translation');
+                }
 
                 // Translate the title and body
                 const translatePrompt = `
@@ -288,6 +295,8 @@ Do not add any other text or explanations.`;
                     if (titleMatch && contentMatch) {
                         translatedTitle = titleMatch[1].trim();
                         translatedBody = contentMatch[1].trim();
+                    } else {
+                        console.warn('Translation parsing failed, using original content');
                     }
                 }
             } catch (error) {
