@@ -1100,18 +1100,33 @@ domElements.closeModalBtn?.addEventListener('click', (e) => {
         iframe.src = '';
     }
 
-    // Stop any ongoing audio playback from dialogue lines
-    try {
-        if (window.state && window.state.audioPlayer && !window.state.audioPlayer.paused) {
-            window.state.audioPlayer.pause();
-            window.state.audioPlayer.currentTime = 0;
+    // Stop any ongoing audio playback - import state dynamically
+    import('./state.js').then(state => {
+        try {
+            if (state.audioPlayer && !state.audioPlayer.paused) {
+                state.audioPlayer.pause();
+                state.audioPlayer.currentTime = 0;
+            }
+            // Also stop any ongoing audio controller
+            if (state.audioController) {
+                state.audioController.abort();
+            }
+        } catch (error) {
+            console.error('Error stopping audio:', error);
         }
-    } catch (error) {
-        console.error('Error stopping audio:', error);
-    }
+    });
+
+    // Clean up any active audio URLs
+    activeAudioUrls.forEach(url => {
+        URL.revokeObjectURL(url);
+    });
+    activeAudioUrls.length = 0;
 
     domElements.modal?.classList.add('hidden');
     document.body.classList.remove('modal-open');
+    
+    // Prevent any scrolling
+    return false;
 });
 
 // Also add a handler for the modal backdrop in case users click outside the modal
@@ -1127,18 +1142,33 @@ domElements.modal?.addEventListener('click', (e) => {
             iframe.src = '';
         }
 
-        // Stop any ongoing audio playback from dialogue lines
-        try {
-            if (window.state && window.state.audioPlayer && !window.state.audioPlayer.paused) {
-                window.state.audioPlayer.pause();
-                window.state.audioPlayer.currentTime = 0;
+        // Stop any ongoing audio playback - import state dynamically
+        import('./state.js').then(state => {
+            try {
+                if (state.audioPlayer && !state.audioPlayer.paused) {
+                    state.audioPlayer.pause();
+                    state.audioPlayer.currentTime = 0;
+                }
+                // Also stop any ongoing audio controller
+                if (state.audioController) {
+                    state.audioController.abort();
+                }
+            } catch (error) {
+                console.error('Error stopping audio:', error);
             }
-        } catch (error) {
-            console.error('Error stopping audio:', error);
-        }
+        });
+
+        // Clean up any active audio URLs
+        activeAudioUrls.forEach(url => {
+            URL.revokeObjectURL(url);
+        });
+        activeAudioUrls.length = 0;
 
         domElements.modal?.classList.add('hidden');
         document.body.classList.remove('modal-open');
+        
+        // Prevent any scrolling
+        return false;
     }
 });
 
