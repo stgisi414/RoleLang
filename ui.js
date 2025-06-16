@@ -5,6 +5,10 @@ let getNativeLang;
 let saveState;
 let backToLandingCallback = () => window.location.reload(); // Default fallback
 
+// Add module-level variables for the state setter functions.
+let setNativeLang;
+let setCurrentTranslations;
+
 // --- Constants ---
 const LESSON_HISTORY_KEY = 'rolelang_lesson_history';
 
@@ -20,12 +24,15 @@ const exitAnimationClasses = [
 
 
 // --- Initialization ---
-export function init(elements, translationsFunc, nativeLangFunc, saveFunc, backCb) {
+export function init(elements, translationsFunc, nativeLangFunc, saveFunc, backCb, setNativeLangFunc, setCurrentTranslationsFunc) {
     domElements = elements;
     getTranslations = translationsFunc;
     getNativeLang = nativeLangFunc;
     saveState = saveFunc;
-    backToLandingCallback = backCb; // Assign the callback
+    backToLandingCallback = backCb;
+    // Assign the setter functions to the module-level variables.
+    setNativeLang = setNativeLangFunc;
+    setCurrentTranslations = setCurrentTranslationsFunc;
 }
 
 // --- Translation ---
@@ -67,28 +74,20 @@ export function setNativeLanguage(langCode, flag, name) {
     if (domElements.nativeFlagEl) domElements.nativeFlagEl.textContent = flag;
     if (domElements.nativeLangTextEl) domElements.nativeLangTextEl.textContent = name;
 
-    // Update state module - this is for UI language only, not target language
-    if (window.state) {
-        window.state.setNativeLang(langCode);
-        window.state.setCurrentTranslations(window.translations[langCode] || window.translations.en);
+    // Use the functions passed via init instead of the fragile window.state
+    if (setNativeLang && setCurrentTranslations) {
+        setNativeLang(langCode);
+        setCurrentTranslations(window.translations[langCode] || window.translations.en);
+    } else {
+        console.error("UI module has not been initialized with state setters.");
+        return; // Guard against race conditions
     }
 
-    // Force a translation update with a small delay to ensure state is properly set
-    setTimeout(() => {
-        updateTranslations();
-        updateBackButton(); 
-        console.log(`Translations updated for language: ${langCode}`);
-    }, 100);
+    // Now that the state is reliably updated, the UI can be translated.
+    updateTranslations();
+    updateBackButton();
 
-    // Refresh review banner if it exists
-    const existingBanner = document.querySelector('.review-mode-indicator');
-    if (existingBanner) {
-        const languageSelect = domElements.languageSelect || document.getElementById('language-select');
-        const currentLanguage = languageSelect ? languageSelect.value : 'English';
-        hideReviewModeBanner();
-        showReviewModeUI(currentLanguage);
-    }
-
+    // Refresh other dynamic elements
     stopTopicRotations();
     startTopicRotations();
     localStorage.setItem('rolelang_native_lang', JSON.stringify({ code: langCode, flag, name }));

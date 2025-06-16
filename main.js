@@ -296,7 +296,15 @@ async function initializeApp() {
     }
 
     lesson.init(elements, state, api, ui, saveState);
-	ui.init(elements, state.getTranslations, () => state.nativeLang, saveState, goBackToLanding);
+    ui.init(
+        elements,
+        state.getTranslations,
+        () => state.nativeLang,
+        saveState,
+        goBackToLanding,
+        state.setNativeLang, // Pass the setNativeLang function
+        state.setCurrentTranslations // Pass the setCurrentTranslations function
+    );
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
