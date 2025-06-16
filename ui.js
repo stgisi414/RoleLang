@@ -235,8 +235,10 @@ export async function showExplanation(content) {
             document.body.classList.remove('modal-open'); // Unlock body scroll
         };
 
-        // Store the close handler for cleanup
-        domElements.modal._closeHandler = handleModalClose;
+        // Store the close handler for cleanup - only if modal exists
+        if (domElements.modal) {
+            domElements.modal._closeHandler = handleModalClose;
+        }
     }
 
     // Now load content asynchronously
