@@ -346,16 +346,54 @@ async function initializeApp() {
 
     // --- Event Listeners ---
 	function setupEventListeners() {
-		elements.startLessonBtn?.addEventListener('click', () => {
-			lesson.initializeLesson();
-		});
-		elements.micBtn?.addEventListener('click', () => lesson.toggleSpeechRecognition());
-		elements.toggleLessonsBtn?.addEventListener('click', () => ui.toggleLessonsVisibility());
-		elements.toggleHistoryBtn?.addEventListener('click', ui.toggleHistoryVisibility);
-		elements.difficultyTab?.addEventListener('click', () => ui.switchTab('difficulty'));
-		elements.situationsTab?.addEventListener('click', () => ui.switchTab('situations'));
-		elements.resetLessonBtn?.addEventListener('click', () => lesson.resetLesson());
-		elements.confirmStartLessonBtn?.addEventListener('click', () => lesson.confirmStartLesson());
+		if (elements.startLessonBtn) {
+			elements.startLessonBtn.addEventListener('click', () => {
+				console.log('Start lesson button clicked');
+				lesson.initializeLesson();
+			});
+		}
+		if (elements.micBtn) {
+			elements.micBtn.addEventListener('click', () => {
+				console.log('Mic button clicked');
+				lesson.toggleSpeechRecognition();
+			});
+		}
+		if (elements.toggleLessonsBtn) {
+			elements.toggleLessonsBtn.addEventListener('click', () => {
+				console.log('Toggle lessons button clicked');
+				ui.toggleLessonsVisibility();
+			});
+		}
+		if (elements.toggleHistoryBtn) {
+			elements.toggleHistoryBtn.addEventListener('click', () => {
+				console.log('Toggle history button clicked');
+				ui.toggleHistoryVisibility();
+			});
+		}
+		if (elements.difficultyTab) {
+			elements.difficultyTab.addEventListener('click', () => {
+				console.log('Difficulty tab clicked');
+				ui.switchTab('difficulty');
+			});
+		}
+		if (elements.situationsTab) {
+			elements.situationsTab.addEventListener('click', () => {
+				console.log('Situations tab clicked');
+				ui.switchTab('situations');
+			});
+		}
+		if (elements.resetLessonBtn) {
+			elements.resetLessonBtn.addEventListener('click', () => {
+				console.log('Reset lesson button clicked');
+				lesson.resetLesson();
+			});
+		}
+		if (elements.confirmStartLessonBtn) {
+			elements.confirmStartLessonBtn.addEventListener('click', () => {
+				console.log('Confirm start lesson button clicked');
+				lesson.confirmStartLesson();
+			});
+		}
 
 		document.addEventListener('click', (event) => {
 			if (event.target.classList.contains('lesson-btn')) {
