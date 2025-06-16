@@ -316,6 +316,38 @@ function showToast(message, type = 'info') {
     }
 }
 
+function checkYTSearchLibrary() {
+    return new Promise((resolve) => {
+        // Check multiple ways the library might be available
+        if (typeof yts !== 'undefined') {
+            resolve(true);
+            return;
+        }
+        
+        if (typeof window.yts !== 'undefined') {
+            window.yts = window.yts;
+            resolve(true);
+            return;
+        }
+        
+        // Wait a bit more for the library to load
+        let attempts = 0;
+        const checkInterval = setInterval(() => {
+            attempts++;
+            if (typeof yts !== 'undefined' || typeof window.yts !== 'undefined') {
+                clearInterval(checkInterval);
+                if (typeof window.yts !== 'undefined' && typeof yts === 'undefined') {
+                    window.yts = window.yts;
+                }
+                resolve(true);
+            } else if (attempts >= 10) { // 2 seconds total
+                clearInterval(checkInterval);
+                resolve(false);
+            }
+        }, 200);
+    });
+}
+
 async function loadYouTubeVideo(title) {
     const loader = document.getElementById('youtube-loader');
     const iframe = document.getElementById('youtube-iframe');
@@ -323,19 +355,39 @@ async function loadYouTubeVideo(title) {
     try {
         showToast('Searching for related video...', 'info');
         
+        // Check if yt-search library is available
+        const isLibraryLoaded = await checkYTSearchLibrary();
+        if (!isLibraryLoaded) {
+            throw new Error('yt-search library not available after waiting');
+        }
+        
         // Generate intelligent search term using Gemini
         const searchQuery = await createIntelligentSearchTerm(title);
         const decodedQuery = decodeURIComponent(searchQuery);
         console.log('Generated search query:', decodedQuery);
         
         // Check if yt-search library is loaded
-        if (typeof yts === 'undefined') {
-            throw new Error('yt-search library not loaded');
+        if (typeof yts === 'undefined' || typeof window.yts === 'undefined') {
+            console.warn('yt-search library not available, using fallback search');
+            throw new Error('yt-search library not loaded - showing manual search link');
         }
         
         // Use yt-search library to find videos
         console.log('Searching YouTube with yt-search...');
-        const searchResults = await yts(decodedQuery);
+        
+        // Use a promise wrapper to handle potential errors
+        let searchResults;
+        try {
+            searchResults = await Promise.race([
+                yts(decodedQuery),
+                new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Search timeout')), 10000)
+                )
+            ]);
+        } catch (searchError) {
+            console.error('yt-search failed:', searchError);
+            throw new Error(`Search failed: ${searchError.message}`);
+        }
         
         console.log('yt-search results:', searchResults);
         

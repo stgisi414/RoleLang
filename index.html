@@ -139,7 +139,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <!-- YouTube Search Library -->
-    <script src="https://cdn.jsdelivr.net/npm/yt-search@2.13.1/dist/yt-search.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/yt-search@2.13.1/dist/yt-search.min.js" 
+            onload="console.log('yt-search library loaded successfully'); window.ytsLoaded = true;" 
+            onerror="console.error('Failed to load yt-search library'); window.ytsLoaded = false;"></script>
     <!-- Custom Stylesheet -->
     <link rel="stylesheet" href="style.css">
     <!-- Translations -->
