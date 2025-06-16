@@ -809,7 +809,7 @@ function createTopicButton(topic, level) {
         drama: 'red', comedy: 'yellow', horror: 'purple'
     };
     const color = colorMap[level] || 'gray';
-    button.className = `lesson-btn bg`- ${color}-600/20 hover:bg-${color}-600/30 text-${color}-300 text-xs py-2 px-3 rounded-md transition-all border border-${color}-600/30`;
+    button.className = `lesson-btn bg- ${color}-600/20 hover:bg-${color}-600/30 text-${color}-300 text-xs py-2 px-3 rounded-md transition-all border border-${color}-600/30`;
     button.setAttribute('data-topic', topic);
     button.textContent = topic;
     button.style.opacity = '0';
@@ -1085,91 +1085,27 @@ export function showLessonComplete() {
 }
 
 // Modal close handlers are now set up at the bottom of the file
-
-// Export toast function for use in other modules
-
-// Add event listeners to close modal and stop any playing audio
-domElements.closeModalBtn?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-
-    // Stop YouTube video and audio if playing
+export function closeExplanationModal() {
+    // Stop YouTube video if playing
     const iframe = document.getElementById('youtube-iframe');
     if (iframe && iframe.src) {
-        // Stop video by clearing and resetting the src
-        iframe.src = '';
+        iframe.src = ''; // This effectively stops the video
     }
 
-    // Stop any ongoing audio playback - import state dynamically
+    // Stop any ongoing audio playback from the lesson
     import('./state.js').then(state => {
-        try {
-            if (state.audioPlayer && !state.audioPlayer.paused) {
-                state.audioPlayer.pause();
-                state.audioPlayer.currentTime = 0;
-            }
-            // Also stop any ongoing audio controller
-            if (state.audioController) {
-                state.audioController.abort();
-            }
-        } catch (error) {
-            console.error('Error stopping audio:', error);
+        if (state.audioPlayer && !state.audioPlayer.paused) {
+            state.audioPlayer.pause();
+            state.audioPlayer.currentTime = 0;
         }
-    });
+        if (state.audioController) {
+            state.audioController.abort();
+        }
+    }).catch(err => console.error("Failed to import state for audio cleanup:", err));
 
-    // Clean up any active audio URLs
-    activeAudioUrls.forEach(url => {
-        URL.revokeObjectURL(url);
-    });
-    activeAudioUrls.length = 0;
-
+    // Hide the modal and restore page scrolling
     domElements.modal?.classList.add('hidden');
     document.body.classList.remove('modal-open');
-    
-    // Prevent any scrolling
-    return false;
-});
-
-// Also add a handler for the modal backdrop in case users click outside the modal
-domElements.modal?.addEventListener('click', (e) => {
-    if (e.target === domElements.modal) {
-        e.stopPropagation();
-        e.preventDefault();
-
-        // Stop YouTube video and audio if playing
-        const iframe = document.getElementById('youtube-iframe');
-        if (iframe && iframe.src) {
-            // Stop video by clearing the src
-            iframe.src = '';
-        }
-
-        // Stop any ongoing audio playback - import state dynamically
-        import('./state.js').then(state => {
-            try {
-                if (state.audioPlayer && !state.audioPlayer.paused) {
-                    state.audioPlayer.pause();
-                    state.audioPlayer.currentTime = 0;
-                }
-                // Also stop any ongoing audio controller
-                if (state.audioController) {
-                    state.audioController.abort();
-                }
-            } catch (error) {
-                console.error('Error stopping audio:', error);
-            }
-        });
-
-        // Clean up any active audio URLs
-        activeAudioUrls.forEach(url => {
-            URL.revokeObjectURL(url);
-        });
-        activeAudioUrls.length = 0;
-
-        domElements.modal?.classList.add('hidden');
-        document.body.classList.remove('modal-open');
-        
-        // Prevent any scrolling
-        return false;
-    }
-});
+}
 
 export { showToast };

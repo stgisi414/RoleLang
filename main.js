@@ -400,7 +400,20 @@ async function initializeApp() {
 		// Ensure modal is hidden on page load
 		elements.modal?.classList.add('hidden');
 		
-		
+        elements.closeModalBtn?.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            ui.closeExplanationModal();
+        });
+
+        elements.modal?.addEventListener('click', (e) => {
+            // Only close if the click is on the backdrop itself
+            if (e.target === elements.modal) {
+                e.preventDefault();
+                e.stopPropagation();
+                ui.closeExplanationModal();
+            }
+        });		
 		elements.tutorialBtn?.addEventListener('click', () => ui.showTutorial());
 		elements.closeTutorialBtn?.addEventListener('click', () => elements.tutorialModal?.classList.add('hidden'));
 		elements.startTutorialLessonBtn?.addEventListener('click', () => {
@@ -417,15 +430,6 @@ async function initializeApp() {
 				elements.nativeLangDropdown?.classList.add('hidden');
 			}
 			
-			// Close modal when clicking outside and stop video
-			if (e.target === elements.modal && !elements.modal?.classList.contains('hidden')) {
-				e.stopPropagation();
-				e.preventDefault();
-				if (elements.modal?._closeHandler) {
-					elements.modal._closeHandler();
-				}
-				elements.modal?.classList.add('hidden');
-			}
 		});
 
 		elements.conversationContainer?.addEventListener('click', (event) => {
