@@ -200,17 +200,45 @@ export function toggleHistoryVisibility() {
     }
 }
 
+// Add a flag to prevent multiple simultaneous explanation requests
+let isExplanationLoading = false;
+
 export async function showExplanation(content) {
+    // Prevent multiple simultaneous calls
+    if (isExplanationLoading) {
+        console.log('Explanation already loading, ignoring duplicate request');
+        return;
+    }
+
     // Ensure we have valid content before showing modal
     if (!content || !content.title || !content.body) {
         console.error('Invalid explanation content:', content);
         return;
     }
 
-    // Translate the explanation title and body if they're in English but the UI is in another language
-    const nativeLang = getNativeLang() || 'en';
-    let translatedTitle = content.title;
-    let translatedBody = content.body;
+    // Set loading flag and show loading state
+    isExplanationLoading = true;
+    
+    // Show modal immediately with loading content
+    if (domElements.modalBody) {
+        domElements.modalBody.innerHTML = `
+            <div class="flex items-center justify-center py-8">
+                <div class="loader mr-3"></div>
+                <span class="text-gray-300">${translateText('loadingExplanation') || 'Loading explanation...'}</span>
+            </div>
+        `;
+    }
+    
+    if (domElements.modal) {
+        domElements.modal.classList.remove('hidden');
+        document.body.classList.add('modal-open');
+    }
+
+    try {
+        // Translate the explanation title and body if they're in English but the UI is in another language
+        const nativeLang = getNativeLang() || 'en';
+        let translatedTitle = content.title;
+        let translatedBody = content.body;
 
     // If the native language is not English, translate the explanation content
     if (nativeLang !== 'en') {
@@ -305,10 +333,26 @@ Do not add any other text or explanations.`;
         `;
     }
 
-    // Only show modal if we have valid content
-    if (domElements.modal && domElements.modalBody?.innerHTML.trim()) {
-        domElements.modal.classList.remove('hidden');
-        document.body.classList.add('modal-open'); // Lock body scroll
+    } catch (error) {
+        console.error('Error loading explanation:', error);
+        
+        // Show error state in modal
+        if (domElements.modalBody) {
+            domElements.modalBody.innerHTML = `
+                <div class="text-center py-8">
+                    <div class="text-red-400 text-4xl mb-4">⚠️</div>
+                    <h3 class="text-xl font-bold mb-2 text-red-400">${translateText('errorLoadingExplanation') || 'Error Loading Explanation'}</h3>
+                    <p class="text-gray-300 mb-4">${translateText('explanationLoadFailed') || 'Failed to load explanation. Please try again.'}</p>
+                    <button class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg" onclick="document.getElementById('explanation-modal').classList.add('hidden'); document.body.classList.remove('modal-open');">
+                        ${translateText('close') || 'Close'}
+                    </button>
+                </div>
+            `;
+        }
+        showToast('Failed to load explanation', 'error');
+    } finally {
+        // Always clear the loading flag
+        isExplanationLoading = false;
     }
 
     // Add modal close handler to stop video playback
@@ -834,9 +878,22 @@ function createDialogueLine(turn, index) {
         const explanationSpan = document.createElement('span');
         explanationSpan.innerHTML = ` <i class="fas fa-info-circle text-sky-300 ml-6"></i>`;
         explanationSpan.classList.add('explanation-link');
+        
+        // Add debounced click handler to prevent multiple rapid clicks
+        let clickTimeout = null;
         explanationSpan.onclick = (e) => {
             e.stopPropagation();
-            showExplanation(turn.explanation);
+            
+            // Clear any existing timeout
+            if (clickTimeout) {
+                clearTimeout(clickTimeout);
+            }
+            
+            // Debounce the click with a 300ms delay
+            clickTimeout = setTimeout(() => {
+                showExplanation(turn.explanation);
+                clickTimeout = null;
+            }, 300);
         };
         lineDiv.appendChild(explanationSpan);
     }

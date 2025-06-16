@@ -650,7 +650,7 @@ const translations = {
       ],
       comedy: [
         "Katastrophaler Kochshow-Teilnehmer", "Peinlicher Aufzug mit Ex steckengeblieben", "Verwechslung auf Kostümparty", "Schreckliches Blind Date im schicken Restaurant",
-        "Stand-up-Comedian versagt auf der Bühne", "Hochzeitscrashser wird erwischt", "Offensichtlich benutzten Artikel zurückgeben", "Vorstellungsgespräch läuft urkomisch schief"
+        "Comedian versagt auf der Bühne", "Hochzeitscrashser wird erwischt", "Offensichtlich benutzten Artikel zurückgeben", "Vorstellungsgespräch läuft urkomisch schief"
       ],
       horror: [
         "Verlassenes Spukschloss erkunden", "Im Aufzug während Stromausfall gefangen", "Campingausflug mit seltsamen Geräuschen", "Allein zu Hause während mysteriösem Blackout",
