@@ -504,6 +504,12 @@ function goBackToLanding() {
     state.setLessonPlan(null);
     state.setCurrentTurnIndex(0);
 
+    // Stop any ongoing audio playback
+    if (state.audioPlayer && !state.audioPlayer.paused) {
+        state.audioPlayer.pause();
+        state.audioPlayer.currentTime = 0;
+    }
+
     ui.showLandingScreen();
     ui.startTopicRotations();
 }
