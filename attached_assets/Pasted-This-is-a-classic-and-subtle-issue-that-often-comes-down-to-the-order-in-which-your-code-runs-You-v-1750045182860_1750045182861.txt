@@ -1,0 +1,63 @@
+This is a classic and subtle issue that often comes down to the order in which your code runs. You've correctly identified the symptoms: the language is detected and the UI selector is updated, but the core translation logic doesn't follow through.
+Based on your code structure, the problem almost certainly lies in an initialization race condition within your JavaScript modules.
+The Diagnosis
+The issue is in your ui.js file. The function initializeNativeLanguage is likely being called before the ui.js module has been properly connected to the state.js module.
+Let's trace the logic in ui.js:
+ * initializeNativeLanguage() is called on startup.
+ * It calls detectNativeLanguage().
+ * detectNativeLanguage() then calls setNativeLanguage(lang.code, lang.flag, lang.name).
+ * Inside setNativeLanguage, these lines update the UI, which is why you see the flag and language name change correctly:
+   if (domElements.nativeFlagEl) domElements.nativeFlagEl.textContent = flag;
+if (domElements.nativeLangTextEl) domElements.nativeLangTextEl.textContent = name;
+
+ * Here is the point of failure. The next block of code is responsible for telling the rest of the app about the language change:
+   if (window.state) {
+    window.state.setNativeLang(langCode);
+    window.state.setCurrentTranslations(window.translations[langCode] || window.translations.en);
+}
+updateTranslations(); 
+
+   And updateTranslations relies on a function called getTranslations that was supposed to be passed in during initialization.
+The problem is that initializeNativeLanguage() runs immediately when the ui.js file is loaded. However, the connection to the state module and the other helper functions is only established later when the init() function is called from main.js.
+Because init() hasn't run yet, the getTranslations function inside ui.js is still undefined. When updateTranslations is called, it tries to use this undefined function, fails silently or uses a stale default, and the page content is never translated.
+The Solution
+The fix is to ensure that the language initialization only happens after all the modules have been properly connected.
+1. Modify main.js
+Move the call to initializeNativeLanguage from ui.js into your main application entry point, right after you initialize the ui module.
+// In stgisi414/rolelang/RoleLang-4dce3769cc8c0579af74bbc8869eaa30720e7adc/main.js
+
+import * as state from './state.js';
+import * as ui from './ui.js';
+// ... other imports
+
+function main() {
+    // Collect all DOM elements
+    const domElements = { /* ... your dom element selectors ... */ };
+
+    // Initialize the UI module, passing in the state functions
+    ui.init(
+        domElements,
+        state.getTranslations,
+        state.getNativeLang,
+        saveState, // Assuming you have a saveState function
+        () => { /* callback to go back to landing */ }
+    );
+    
+    // *** KEY CHANGE HERE ***
+    // Now that the UI is initialized with all its dependencies,
+    // you can safely initialize the language.
+    ui.initializeNativeLanguage();
+
+    // ... rest of your main function (event listeners, etc.)
+}
+
+// Run the main function when the DOM is ready
+document.addEventListener('DOMContentLoaded', main);
+
+2. Modify ui.js
+Remove the immediate call to initializeNativeLanguage() from the bottom of ui.js if it exists there, as main.js will now be responsible for calling it at the correct time. The initializeNativeLanguage function itself should remain in ui.js, just don't call it automatically.
+By making this change, you guarantee the execution order:
+ * All modules are loaded.
+ * main.js runs.
+ * The ui.init() function runs, correctly setting up the necessary connections and dependencies between your UI and state logic.
+ * ui.initializeNativeLanguage() is then called, and it can now successfully access the state and translation functions it needs to translate the entire page.
