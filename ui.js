@@ -228,7 +228,7 @@ export function showExplanation(content) {
 }
 
 // YouTube Data API key - you'll need to get this from Google Cloud Console
-const YOUTUBE_API_KEY = 'YOUR_YOUTUBE_API_KEY'; // Replace with your actual API key
+const YOUTUBE_API_KEY = 'AIzaSyDAdiXobuer_CZHdM1llM5RlrfhRbls84M'; // Replace with your actual API key
 
 async function searchAndLoadYouTubeVideo(title) {
     const loader = document.getElementById('youtube-loader');
