@@ -400,15 +400,7 @@ async function initializeApp() {
 		// Ensure modal is hidden on page load
 		elements.modal?.classList.add('hidden');
 		
-		elements.closeModalBtn?.addEventListener('click', (e) => {
-			e.stopPropagation();
-			e.preventDefault();
-			// Stop YouTube video if playing
-			if (elements.modal?._closeHandler) {
-				elements.modal._closeHandler();
-			}
-			elements.modal?.classList.add('hidden');
-		});
+		
 		elements.tutorialBtn?.addEventListener('click', () => ui.showTutorial());
 		elements.closeTutorialBtn?.addEventListener('click', () => elements.tutorialModal?.classList.add('hidden'));
 		elements.startTutorialLessonBtn?.addEventListener('click', () => {
