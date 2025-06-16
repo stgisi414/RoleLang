@@ -201,7 +201,7 @@ export function toggleHistoryVisibility() {
 }
 
 export async function showExplanation(content) {
-    // Ensure we have valid content before showing explanation
+    // Ensure we have valid content before showing modal
     if (!content || !content.title || !content.body) {
         console.error('Invalid explanation content:', content);
         return;
@@ -210,42 +210,32 @@ export async function showExplanation(content) {
     // Parse the explanation content for audio-tagged phrases
     const { processedBody, audioItems } = await parseAndRenderExplanationWithAudio(content);
 
-    // Create a mobile-friendly toast message instead of modal
-    const explanationToast = document.createElement('div');
-    explanationToast.id = 'explanation-toast';
-    explanationToast.className = 'fixed top-0 left-0 right-0 z-[9999] bg-gray-800/95 backdrop-blur-lg border-b border-gray-600 shadow-2xl transform -translate-y-full transition-transform duration-500 ease-out';
-    
-    explanationToast.innerHTML = `
-        <div class="max-w-full mx-auto p-4 max-h-[80vh] overflow-y-auto">
-            <div class="flex items-start justify-between mb-3">
-                <h3 class="text-lg font-bold text-cyan-300 flex-1 pr-3">${content.title}</h3>
-                <button id="close-explanation-toast" class="text-gray-400 hover:text-white transition-colors text-xl leading-none flex-shrink-0">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="text-gray-300 text-sm leading-relaxed mb-4">${processedBody}</div>
-            
-            <div class="border-t border-gray-600 pt-4">
-                <div class="text-center mb-3">
-                    <h4 class="text-base font-semibold text-cyan-300 mb-2 flex items-center justify-center">
+    // Create the modal content with explanation text and YouTube video option
+    if (domElements.modalBody) {
+        domElements.modalBody.innerHTML = `
+            <h3 class="text-xl font-bold mb-2 text-cyan-300">${content.title}</h3>
+            <p class="text-gray-300 mb-4">${processedBody}</p>
+            <div class="border-t border-gray-600 pt-6 mt-6">
+                <div class="text-center mb-4">
+                    <h4 class="text-lg font-semibold text-cyan-300 mb-3">
                         <i class="fab fa-youtube text-red-500 mr-2"></i>
-                        Educational Video
+                        Related Educational Video
                     </h4>
-                    <button id="youtube-play-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors cursor-pointer inline-flex items-center text-sm font-medium">
+                    <button id="youtube-play-btn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg transition-colors cursor-pointer inline-flex items-center font-semibold">
                         <i class="fab fa-youtube mr-2"></i>
-                        <i class="fas fa-play mr-1"></i>
+                        <i class="fas fa-play mr-2"></i>
                         Load Video
                     </button>
                 </div>
-                <div id="youtube-container" class="mt-4">
-                    <div id="youtube-loader" class="flex items-center justify-center py-6 hidden">
+                <div id="youtube-container" class="mt-6">
+                    <div id="youtube-loader" class="flex items-center justify-center py-8 hidden">
                         <div class="loader"></div>
-                        <span class="ml-3 text-gray-400 text-sm">Loading video...</span>
+                        <span class="ml-3 text-gray-400">Loading video...</span>
                     </div>
                     <div id="video-content" class="hidden">
                         <iframe 
                             id="youtube-iframe" 
-                            class="w-full h-64 rounded-lg shadow-lg"
+                            class="w-full h-80 rounded-lg shadow-lg"
                             frameborder="0" 
                             allowfullscreen
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -254,53 +244,32 @@ export async function showExplanation(content) {
                     </div>
                 </div>
             </div>
-        </div>
-    `;
-
-    // Remove any existing explanation toast
-    const existingToast = document.getElementById('explanation-toast');
-    if (existingToast) {
-        existingToast.remove();
+        `;
     }
 
-    // Add to document body
-    document.body.appendChild(explanationToast);
+    // Only show modal if we have valid content
+    if (domElements.modal && domElements.modalBody?.innerHTML.trim()) {
+        domElements.modal.classList.remove('hidden');
+        document.body.classList.add('modal-open'); // Lock body scroll
+    }
 
-    // Animate in
-    setTimeout(() => {
-        explanationToast.classList.remove('-translate-y-full');
-        explanationToast.classList.add('translate-y-0');
-    }, 50);
-
-    // Close handler
-    const handleToastClose = () => {
+    // Add modal close handler to stop video playback
+    const handleModalClose = () => {
         const iframe = document.getElementById('youtube-iframe');
         if (iframe && iframe.src) {
             // Stop video by clearing and resetting the src
             const currentSrc = iframe.src;
             iframe.src = '';
+            // Optional: Reset to original src if needed for future use
             setTimeout(() => {
                 if (iframe) iframe.src = currentSrc;
             }, 100);
         }
-        
-        // Animate out
-        explanationToast.classList.add('-translate-y-full');
-        explanationToast.classList.remove('translate-y-0');
-        
-        // Remove from DOM after animation
-        setTimeout(() => {
-            if (explanationToast.parentNode) {
-                explanationToast.parentNode.removeChild(explanationToast);
-            }
-        }, 500);
+        document.body.classList.remove('modal-open'); // Unlock body scroll
     };
 
-    // Add close button event listener
-    const closeBtn = document.getElementById('close-explanation-toast');
-    if (closeBtn) {
-        closeBtn.onclick = handleToastClose;
-    }
+    // Store the close handler for cleanup
+    domElements.modal._closeHandler = handleModalClose;
 
     // Add click event listener to the YouTube play button
     const playBtn = document.getElementById('youtube-play-btn');
@@ -316,20 +285,13 @@ export async function showExplanation(content) {
     }
 
     // Add click event listeners for audio phrases
-    const audioPhrases = explanationToast.querySelectorAll('.audio-phrase');
+    const audioPhrases = domElements.modalBody.querySelectorAll('.audio-phrase');
     audioPhrases.forEach(phraseElement => {
         phraseElement.addEventListener('click', async () => {
             const phrase = phraseElement.getAttribute('data-phrase');
             await playPhraseAudio(phrase);
         });
     });
-
-    // Auto-close after 15 seconds (optional - remove if you want manual close only)
-    setTimeout(() => {
-        if (document.getElementById('explanation-toast')) {
-            handleToastClose();
-        }
-    }, 15000);
 }
 
 async function playPhraseAudio(phrase) {
