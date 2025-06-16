@@ -434,11 +434,26 @@ async function initializeApp() {
 
 		elements.conversationContainer?.addEventListener('click', (event) => {
 			const lineElement = event.target.closest('.dialogue-line');
-			if (!lineElement || event.target.closest('.explanation-link')) return;
+			if (!lineElement) return;
 
-			const turnIndex = parseInt(lineElement.id.split('-')[1], 10);
-			const turn = state.lessonPlan?.dialogue[turnIndex];
-			if (turn) lesson.playLineAudioDebounced(turn.line.display, turn.party);
+			// Handle explanation icon clicks
+			if (event.target.closest('.explanation-link')) return;
+
+			// Handle volume icon clicks specifically
+			if (event.target.classList.contains('fa-volume-up') || event.target.closest('.fa-volume-up')) {
+				event.stopPropagation();
+				const turnIndex = parseInt(lineElement.id.split('-')[1], 10);
+				const turn = state.lessonPlan?.dialogue[turnIndex];
+				if (turn) lesson.playLineAudioDebounced(turn.line.display, turn.party);
+				return;
+			}
+
+			// Handle general line clicks (but not on volume or explanation icons)
+			if (!event.target.classList.contains('fa-volume-up') && !event.target.closest('.fa-volume-up') && !event.target.closest('.explanation-link')) {
+				const turnIndex = parseInt(lineElement.id.split('-')[1], 10);
+				const turn = state.lessonPlan?.dialogue[turnIndex];
+				if (turn) lesson.playLineAudioDebounced(turn.line.display, turn.party);
+			}
 		});
 
 		elements.historyLessonsContainer?.addEventListener('click', (event) => {
