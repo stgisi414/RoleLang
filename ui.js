@@ -218,7 +218,7 @@ export async function showExplanation(content) {
 
     // Set loading flag and show loading state
     isExplanationLoading = true;
-    
+
     // Show modal immediately with loading content
     if (domElements.modalBody) {
         domElements.modalBody.innerHTML = `
@@ -228,7 +228,7 @@ export async function showExplanation(content) {
             </div>
         `;
     }
-    
+
     if (domElements.modal) {
         domElements.modal.classList.remove('hidden');
         document.body.classList.add('modal-open');
@@ -244,7 +244,7 @@ export async function showExplanation(content) {
     if (nativeLang !== 'en') {
         try {
             const api = await import('./api.js');
-            
+
             // Get the native language name for translation
             const languageNames = {
                 'es': 'Spanish',
@@ -271,14 +271,14 @@ CONTENT: [translated content]
 Do not add any other text or explanations.`;
 
             const translationData = await api.callGeminiAPI(translatePrompt);
-            
+
             if (translationData?.candidates?.[0]?.content?.parts?.[0]?.text) {
                 const translationText = translationData.candidates[0].content.parts[0].text.trim();
-                
+
                 // Parse the response
                 const titleMatch = translationText.match(/TITLE:\s*(.+?)(?=\nCONTENT:)/s);
                 const contentMatch = translationText.match(/CONTENT:\s*(.+)$/s);
-                
+
                 if (titleMatch && contentMatch) {
                     translatedTitle = titleMatch[1].trim();
                     translatedBody = contentMatch[1].trim();
@@ -337,7 +337,7 @@ Do not add any other text or explanations.`;
 
     } catch (error) {
         console.error('Error loading explanation:', error);
-        
+
         // Show error state in modal
         if (domElements.modalBody) {
             domElements.modalBody.innerHTML = `
@@ -369,7 +369,7 @@ Do not add any other text or explanations.`;
                 if (iframe) iframe.src = currentSrc;
             }, 100);
         }
-        
+
         // Stop any ongoing audio playback from dialogue lines
         try {
             if (window.state && window.state.audioPlayer && !window.state.audioPlayer.paused) {
@@ -379,7 +379,7 @@ Do not add any other text or explanations.`;
         } catch (error) {
             console.error('Error stopping audio:', error);
         }
-        
+
         document.body.classList.remove('modal-open'); // Unlock body scroll
     };
 
@@ -409,6 +409,9 @@ Do not add any other text or explanations.`;
     });
 }
 
+// Store active audio URLs for cleanup
+let activeAudioUrls = [];
+
 async function playPhraseAudio(phrase) {
     try {
         const targetLanguage = domElements.languageSelect?.value || 'English';
@@ -424,6 +427,8 @@ async function playPhraseAudio(phrase) {
         // Fetch and play audio
         const audioBlob = await api.fetchPartnerAudio(phrase, voiceConfig);
         const audioUrl = URL.createObjectURL(audioBlob);
+        activeAudioUrls.push(audioUrl); // Track the audio URL
+
         const audio = new Audio(audioUrl);
 
         audio.play().catch(error => {
@@ -431,9 +436,14 @@ async function playPhraseAudio(phrase) {
             showToast('Audio playback failed', 'error');
         });
 
-        audio.onended = () => URL.revokeObjectURL(audioUrl);
+        audio.onended = () => {
+            URL.revokeObjectURL(audioUrl);
+            activeAudioUrls = activeAudioUrls.filter(url => url !== audioUrl);
+        };
+
         audio.onerror = () => {
             URL.revokeObjectURL(audioUrl);
+            activeAudioUrls = activeAudioUrls.filter(url => url !== audioUrl);
             showToast('Audio playback failed', 'error');
         };
 
@@ -891,17 +901,17 @@ function createDialogueLine(turn, index) {
         const explanationSpan = document.createElement('span');
         explanationSpan.innerHTML = ` <i class="fas fa-info-circle text-sky-300 ml-6"></i>`;
         explanationSpan.classList.add('explanation-link');
-        
+
         // Add debounced click handler to prevent multiple rapid clicks
         let clickTimeout = null;
         explanationSpan.onclick = (e) => {
             e.stopPropagation();
-            
+
             // Clear any existing timeout
             if (clickTimeout) {
                 clearTimeout(clickTimeout);
             }
-            
+
             // Debounce the click with a 300ms delay
             clickTimeout = setTimeout(() => {
                 // Include the original sentence in the explanation
@@ -1102,6 +1112,19 @@ export function showLessonComplete() {
     updateMicStatusHTML(`🎉 ${translateText('lessonComplete')}`);
     enableMicButton(false);
 }
+
+// Add event listener to close modal and stop any playing audio
+domElements.closeModalBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        // Stop YouTube video and audio if playing
+        if (domElements.modal?._closeHandler) {
+            domElements.modal._closeHandler();
+        }
+        domElements.modal?.classList.add('hidden');
+        // Prevent any default scrolling behavior
+        return false;
+    });
 
 // Export toast function for use in other modules
 export { showToast };
