@@ -389,7 +389,13 @@ async function initializeApp() {
 		elements.topicInput?.addEventListener('input', debouncedSave);
 		elements.audioSpeedSelect?.addEventListener('change', saveState);
 
-		elements.closeModalBtn?.addEventListener('click', () => elements.modal?.classList.add('hidden'));
+		elements.closeModalBtn?.addEventListener('click', () => {
+			// Stop YouTube video if playing
+			if (elements.modal?._closeHandler) {
+				elements.modal._closeHandler();
+			}
+			elements.modal?.classList.add('hidden');
+		});
 		elements.tutorialBtn?.addEventListener('click', () => ui.showTutorial());
 		elements.closeTutorialBtn?.addEventListener('click', () => elements.tutorialModal?.classList.add('hidden'));
 		elements.startTutorialLessonBtn?.addEventListener('click', () => {
@@ -404,6 +410,14 @@ async function initializeApp() {
 		document.addEventListener('click', (e) => {
 			if (!elements.nativeLangBtn?.contains(e.target) && !elements.nativeLangDropdown?.contains(e.target)) {
 				elements.nativeLangDropdown?.classList.add('hidden');
+			}
+			
+			// Close modal when clicking outside and stop video
+			if (e.target === elements.modal && !elements.modal?.classList.contains('hidden')) {
+				if (elements.modal?._closeHandler) {
+					elements.modal._closeHandler();
+				}
+				elements.modal?.classList.add('hidden');
 			}
 		});
 

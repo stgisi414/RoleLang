@@ -247,6 +247,23 @@ export function showExplanation(content) {
     
     domElements.modal.classList.remove('hidden');
     
+    // Add modal close handler to stop video playback
+    const handleModalClose = () => {
+        const iframe = document.getElementById('youtube-iframe');
+        if (iframe && iframe.src) {
+            // Stop video by clearing and resetting the src
+            const currentSrc = iframe.src;
+            iframe.src = '';
+            // Optional: Reset to original src if needed for future use
+            setTimeout(() => {
+                if (iframe) iframe.src = currentSrc;
+            }, 100);
+        }
+    };
+    
+    // Store the close handler for cleanup
+    domElements.modal._closeHandler = handleModalClose;
+    
     // Add click event listener to the YouTube play button
     const playBtn = document.getElementById('youtube-play-btn');
     if (playBtn) {
