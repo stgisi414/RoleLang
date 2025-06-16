@@ -207,13 +207,71 @@ export async function showExplanation(content) {
         return;
     }
 
+    // Translate the explanation title and body if they're in English but the UI is in another language
+    const nativeLang = getNativeLang() || 'en';
+    let translatedTitle = content.title;
+    let translatedBody = content.body;
+
+    // If the native language is not English, translate the explanation content
+    if (nativeLang !== 'en') {
+        try {
+            const api = await import('./api.js');
+            
+            // Get the native language name for translation
+            const languageNames = {
+                'es': 'Spanish',
+                'fr': 'French', 
+                'de': 'German',
+                'it': 'Italian',
+                'zh': 'Chinese',
+                'ja': 'Japanese',
+                'ko': 'Korean'
+            };
+            const targetLanguageName = languageNames[nativeLang] || 'English';
+
+            // Translate the title and body
+            const translatePrompt = `
+Translate the following grammar explanation title and content into ${targetLanguageName}. Keep the same meaning and technical accuracy:
+
+Title: "${content.title}"
+Content: "${content.body}"
+
+Respond with ONLY the translated content in this exact format:
+TITLE: [translated title]
+CONTENT: [translated content]
+
+Do not add any other text or explanations.`;
+
+            const translationData = await api.callGeminiAPI(translatePrompt);
+            
+            if (translationData?.candidates?.[0]?.content?.parts?.[0]?.text) {
+                const translationText = translationData.candidates[0].content.parts[0].text.trim();
+                
+                // Parse the response
+                const titleMatch = translationText.match(/TITLE:\s*(.+?)(?=\nCONTENT:)/s);
+                const contentMatch = translationText.match(/CONTENT:\s*(.+)$/s);
+                
+                if (titleMatch && contentMatch) {
+                    translatedTitle = titleMatch[1].trim();
+                    translatedBody = contentMatch[1].trim();
+                }
+            }
+        } catch (error) {
+            console.error('Failed to translate explanation:', error);
+            // Fall back to original content if translation fails
+        }
+    }
+
     // Parse the explanation content for audio-tagged phrases
-    const { processedBody, audioItems } = await parseAndRenderExplanationWithAudio(content);
+    const { processedBody, audioItems } = await parseAndRenderExplanationWithAudio({ 
+        title: translatedTitle, 
+        body: translatedBody 
+    });
 
     // Create the modal content with explanation text and YouTube video option
     if (domElements.modalBody) {
         domElements.modalBody.innerHTML = `
-            <h3 class="text-xl font-bold mb-2 text-cyan-300">${content.title}</h3>
+            <h3 class="text-xl font-bold mb-2 text-cyan-300">${translatedTitle}</h3>
             <p class="text-gray-300 mb-4">${processedBody}</p>
             <div class="border-t border-gray-600 pt-6 mt-6">
                 <div class="text-center mb-4">
@@ -379,6 +437,7 @@ async function searchAndLoadYouTubeVideo(title) {
 
         // Simple fallback - show search link
         const searchQuery = encodeURIComponent(`${title} grammar explanation tutorial`);
+        loader.classList.remove('hidden');
         loader.innerHTML = `
             <div class="text-center py-8">
                 <p class="text-gray-300 mb-4">${translateText('videoNotAvailable')}</p>
