@@ -750,12 +750,12 @@ export function disableStartButton(disabled) {
     }
 }
 
-export function highlightActiveLine(turnIndex) {
-    document.querySelectorAll('.dialogue-line.active').forEach(el => el.classList.remove('active'));
-    const lineEl = document.getElementById(`turn-${turnIndex}`);
-    if (lineEl) {
-        lineEl.classList.add('active');
-        lineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+export function highlightActiveSentence(turnIndex, sentenceIndex) {
+    document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
+    // CORRECTED: Replaced 'index' with the correct parameter name 'turnIndex'
+    const sentenceEl = document.getElementById(`turn-${turnIndex}-sentence-${sentenceIndex}`);
+    if (sentenceEl) {
+        sentenceEl.classList.add('active-sentence');
     }
 }
 
