@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- API & State ---
     // IMPORTANT: Replace with your actual Gemini API Key.
     // It's highly recommended to use a backend proxy to protect this key in a real application.
-    const GEMINI_API_KEY = 'AIzaSyDIFeql6HUpkZ8JJlr_kuN0WDFHUyOhijA';
+    const GEMINI_API_KEY = 'AIzaSyDtLyUB-2wocE-uNG5e3pwNFArjn1GVTco';
     const GEMINI_MODELS = {
         'ultra': 'gemini-2.5-flash-preview-05-20',
         'super': 'gemini-2.0-flash',

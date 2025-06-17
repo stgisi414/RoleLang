@@ -86,7 +86,7 @@ export function setNativeLanguage(langCode, flag, name) {
 
     stopTopicRotations();
     // Check which tab is active and start the correct rotation
-    if (!domElements.difficultyContent.classList.contains('hidden')) {
+    if (domElements.difficultyContent && !domElements.difficultyContent.classList.contains('hidden')) {
         startTopicRotations();
     } else {
         startSituationsRotations();
@@ -167,7 +167,7 @@ export function toggleLessonsVisibility(forceShow = null) {
         domElements.lessonsContainer.classList.remove('hidden');
         chevronIcon.style.transform = 'rotate(180deg)';
         if (topicRotationIntervals.length === 0) {
-             if (!domElements.difficultyContent.classList.contains('hidden')) {
+             if (domElements.difficultyContent && !domElements.difficultyContent.classList.contains('hidden')) {
                 startTopicRotations();
             } else {
                 startSituationsRotations();
@@ -527,7 +527,6 @@ export function startTopicRotations() {
     topicRotationIntervals.push(setInterval(rotateTopics, 8000));
 }
 
-// NEW FUNCTION for situations
 export function startSituationsRotations() {
     stopTopicRotations();
     rotateSituations();
@@ -556,7 +555,6 @@ function rotateTopics() {
     });
 }
 
-// NEW FUNCTION to rotate situations
 function rotateSituations() {
     const containers = {
         realistic: document.getElementById('realistic-container'),
@@ -589,6 +587,7 @@ function animateTopicsOut(container) {
 }
 
 function animateTopicsIn(container, topics, level) {
+    container.innerHTML = ''; // Clear previous buttons before adding new ones
     topics.forEach((topic, index) => {
         setTimeout(() => {
             const button = createTopicButton(topic, level);
