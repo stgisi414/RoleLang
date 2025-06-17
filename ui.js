@@ -11,7 +11,7 @@ let setCurrentTranslations;
 
 // --- Constants ---
 const LESSON_HISTORY_KEY = 'rolelang_lesson_history';
-const YOUTUBE_API_KEY = 'AIzaSyDAdiXobuer_CZHdM1llM5RlrfhRbls84M'; // Your API key
+const YOUTUBE_API_KEY = 'AIzaSyBQLgFiUYdSNvpbyO_TgdzXmSvT9BFgal4'; // Your API key
 
 // --- Topic Rotation State ---
 let topicRotationIntervals = [];
