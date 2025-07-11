@@ -450,7 +450,7 @@ export function confirmStartLesson() {
     }
 }
 
-async function fetchAndDisplayIllustration(prompt) {
+export async function fetchAndDisplayIllustration(prompt) {
     try {
         uiRef.showImageLoader();
         const result = await apiRef.generateImage(`${prompt}, digital art, minimalist, educational illustration`);

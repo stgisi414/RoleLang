@@ -750,6 +750,21 @@ export function disableStartButton(disabled) {
     }
 }
 
+export function highlightActiveLine(turnIndex) {
+    // First, remove the 'active' class from any currently highlighted line
+    document.querySelectorAll('.dialogue-line.active').forEach(el => el.classList.remove('active'));
+
+    // Find the new line element by its ID, e.g., "turn-0", "turn-1", etc.
+    const lineEl = document.getElementById(`turn-${turnIndex}`);
+
+    // If the line element exists, add the 'active' class to highlight it
+    // and scroll it smoothly into the center of the view.
+    if (lineEl) {
+        lineEl.classList.add('active');
+        lineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
 export function highlightActiveSentence(turnIndex, sentenceIndex) {
     document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
     // CORRECTED: Replaced 'index' with the correct parameter name 'turnIndex'
@@ -794,14 +809,6 @@ export function updateMicStatusForSentence(current, total, sentenceText) {
 export function enableMicButton(enabled) {
     if (domElements.micBtn) {
         domElements.micBtn.disabled = !enabled;
-    }
-}
-
-export function highlightActiveSentence(turnIndex, sentenceIndex) {
-    document.querySelectorAll('.sentence-span.active-sentence').forEach(el => el.classList.remove('active-sentence'));
-    const sentenceEl = document.getElementById(`turn-${index}-sentence-${sentenceIndex}`);
-    if (sentenceEl) {
-        sentenceEl.classList.add('active-sentence');
     }
 }
 
